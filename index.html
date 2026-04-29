@@ -7,9 +7,9 @@
 <link rel="manifest" href="data:application/manifest+json,{&quot;name&quot;:&quot;Inkstride&quot;,&quot;short_name&quot;:&quot;Inkstride&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;#0d0d14&quot;,&quot;theme_color&quot;:&quot;#0d0d14&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230d0d14'/><text y='75' font-size='70'>✒️</text></svg>&quot;,&quot;sizes&quot;:&quot;any&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;}]}">
 <meta name="apple-mobile-web-app-title" content="Inkstride">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Inkstride v21r35</title>
+<title>Inkstride v21r77</title>
 <!--
-  Inkstride v21r35 (BinaryPaint v20 派生)
+  Inkstride v21r77 (BinaryPaint v20 派生)
   ============================================================
   v21 改修内容 (Phase T + Phase 2′):
   ============================================================
@@ -61,15 +61,15 @@ html,body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;b
 #paper{position:absolute;width:0;height:0;overflow:visible}
 #sel-ov{position:fixed;top:0;left:0;pointer-events:none;z-index:150}
 /* Top bar */
-.topbtn{position:fixed;top:10px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:6px;padding:6px 12px;font-size:12px;color:var(--tx2);cursor:pointer;min-width:42px;text-align:center;display:flex;align-items:center;gap:5px;touch-action:manipulation;white-space:nowrap}
-#sz-btn{left:10px;width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* Top button positions: 書き出し / 保存 / 開く / PSD */
-#export-btn{right:10px}
+.topbtn{position:fixed;top:6px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:52px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
+#sz-btn{left:6px;font-size:8px}
+.topbtn.on{border-color:var(--acc);color:var(--acc)}/* Top button positions: 書き出し / 保存 / 開く / PSD */
+#export-btn{right:6px}
 /* 右側ボタン群: 書き出し→保存→開く→新規 (右から) */
-#bpf-save-btn{right:96px}
-#open-btn{right:150px}
+#bpf-save-btn{right:72px}
+#open-btn{right:138px}
 #new-btn{right:204px}
-#reset-view-btn{position:fixed;top:10px;left:128px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:6px;padding:6px 10px;font-size:11px;color:var(--tx2);cursor:pointer;display:flex;align-items:center;gap:4px;touch-action:manipulation;white-space:nowrap}
+#reset-view-btn{position:fixed;top:6px;left:72px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:52px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
 /* rotate-canvas-btn repositioned below */
 /* New dialog */
 #new-dialog{position:fixed;inset:0;z-index:500;background:#000000cc;display:none;align-items:center;justify-content:center}
@@ -110,6 +110,22 @@ html,body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;b
 .rtab{width:var(--tw);height:52px;border:1px solid var(--bd);border-right:none;border-radius:8px 0 0 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;touch-action:manipulation;flex-shrink:0;background:var(--sf);color:var(--tx)}
 .rtab.act{outline:2px solid var(--tx2);outline-offset:-2px}
 .rtab-label{font-size:7px;font-family:'DM Mono',monospace;letter-spacing:.04em;pointer-events:none;opacity:.7}
+/* v54: ワープトグル用 — 全周ボーダー、 角丸 */
+.rtab.xtog{border-right:1px solid var(--bd);border-radius:8px}
+/* v54: 上部ツールボタン (rtab と統一スタイル). 横並び、 高さ 52px. */
+.topbar-tool{
+  position:fixed;top:6px;height:52px;
+  width:60px;
+  border:1px solid var(--bd);border-radius:8px;
+  background:var(--sf);color:var(--tx);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  cursor:pointer;touch-action:manipulation;
+  font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;
+  z-index:220;
+  user-select:none;-webkit-user-select:none;
+}
+.topbar-tool.act{outline:2px solid var(--tx2);outline-offset:-2px}
+.topbar-tool.on{border-color:var(--acc);color:var(--acc)}
 .er-ico::before{content:'';position:absolute;inset:0;background:linear-gradient(to right,#e8c0c0 62%,#b07070 62%);border-radius:2px;border:1.5px solid #aaaaaa}
 /* Right panels */
 .rpanel{contain:layout style;position:fixed;right:calc(-1 * var(--pw));top:50%;transform:translateY(-50%);width:var(--pw);max-height:88vh;background:var(--sf);border:1px solid var(--bd);border-right:none;border-radius:6px 0 0 14px;z-index:205;display:flex;flex-direction:column;overflow:hidden}
@@ -247,10 +263,9 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
 #cpicker-hex:focus{border-color:var(--acc)}
 
 /* Fill button */
-/* rotate moves right */
-#rotate-canvas-btn{position:fixed;top:10px;left:184px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:6px;padding:6px 10px;font-size:11px;color:var(--tx2);cursor:pointer;display:flex;align-items:center;gap:4px;touch-action:manipulation;white-space:nowrap}
-/* ref-btn on right side */
-#ref-btn{position:fixed;top:10px;right:266px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:6px;padding:6px 12px;font-size:12px;color:var(--tx2);cursor:pointer;min-width:42px;text-align:center;display:flex;align-items:center;gap:5px;touch-action:manipulation;white-space:nowrap}
+/* v54: rotate / ref / tl ボタンを 60×52 で統一 */
+#rotate-canvas-btn{position:fixed;top:6px;left:138px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:52px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
+#ref-btn{position:fixed;top:6px;right:270px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:52px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
 #ref-btn.on{border-color:var(--acc);color:var(--acc)}
 /* ref-panel */
 #ref-panel{left:10px;min-width:240px}
@@ -259,7 +274,7 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
 .ref-preview.show{display:block}
 
 /* タイムラプスプレーヤー */
-#tl-btn{position:fixed;top:10px;left:240px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:6px;padding:6px 12px;font-size:12px;color:var(--tx2);cursor:pointer;min-width:64px;text-align:center;display:flex;align-items:center;justify-content:center;gap:5px;touch-action:manipulation;white-space:nowrap}
+#tl-btn{position:fixed;top:6px;left:270px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:52px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
 #tl-overlay{position:fixed;inset:0;z-index:600;background:#000c;display:none;flex-direction:column;align-items:center;justify-content:center;touch-action:none}
 #tl-overlay.show{display:flex}
 #tl-canvas{border-radius:8px;max-width:92vw;max-height:72vh;background:#fff;image-rendering:pixelated}
@@ -292,7 +307,7 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
 50%{opacity:0.3}}
 
 /* ギャラリー */
-#gallery-btn{position:fixed;top:10px;left:332px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:6px;padding:6px 12px;font-size:12px;color:var(--tx2);cursor:pointer;min-width:42px;text-align:center;display:flex;align-items:center;gap:5px;touch-action:manipulation;white-space:nowrap}
+#gallery-btn{position:fixed;top:6px;left:204px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:52px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
 #gallery-overlay{position:fixed;inset:0;z-index:550;background:#0a0a14;display:none;flex-direction:column}
 #gallery-overlay.show{display:flex}
 #gallery-header{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--bd);flex-shrink:0}
@@ -445,13 +460,13 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
       <span>全体筆圧感度</span>
       <span id="ps-val" style="font-family:'DM Mono',monospace;color:var(--tx)">1.00</span>
     </div>
-    <input type="range" id="ps-slider" class="native" min="0.3" max="3.0" step="0.05" value="1.0" style="width:100%">
+    <input type="range" id="ps-slider" class="native" min="0.05" max="3.0" step="0.05" value="1.00" style="width:100%">
     <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--tx2);margin-top:2px">
       <span>軽い</span><span>標準</span><span>重い</span>
     </div>
     <button id="ps-reset" style="width:100%;margin-top:6px;padding:6px;background:var(--sf2);border:1px solid var(--bd2);border-radius:6px;color:var(--tx2);font-size:11px;cursor:pointer;touch-action:manipulation">標準に戻す (1.0)</button>
   </div>
-  <div id="sz-ver">Inkstride v21r35<br>WebGL2 + bbox undo + Pointer Events<br>iPad / Apple Pencil 対応<br>© 2025 Claude / Anthropic</div>
+  <div id="sz-ver">Inkstride v21r77<br>WebGL2 + bbox undo + Pointer Events<br>iPad / Apple Pencil 対応<br>© 2025 Claude / Anthropic</div>
   <button id="sz-reset" style="width:100%;margin-top:6px;padding:8px;background:var(--sf2);border:1px solid var(--ora);border-radius:8px;color:var(--ora);font-size:11px;cursor:pointer;touch-action:manipulation">🔧 ブラシ・パレット設定をリセット</button>
 </div>
 <div class="toppanel" id="sv-panel">
@@ -492,9 +507,17 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
     <canvas class="curve-cv" id="curve-cv" width="244" height="100"></canvas>
     <div style="font-size:9px;color:var(--tx2);margin-bottom:6px">点をドラッグ（端点はY軸のみ）</div>
     <div class="row"><label>1px閾値</label><div class="csl" id="csl-thr" data-min="0" data-max="30" data-ratio="8"></div><span class="val" id="v-thr">5%</span></div>
+    <div class="row"><label>始点無視</label><div class="csl" id="csl-deadzone" data-min="0" data-max="100" data-ratio="5"></div><span class="val" id="v-deadzone">50</span></div>
+    <div class="row"><label>入り (px)</label><div class="csl" id="csl-stap" data-min="0" data-max="200" data-ratio="3"></div><span class="val" id="v-stap">0</span></div>
+    <div class="row"><label>抜き (px)</label><div class="csl" id="csl-etap" data-min="0" data-max="200" data-ratio="3"></div><span class="val" id="v-etap">0</span></div>
   </div>
   <div class="togrow"><span class="lbl">鉛筆モード</span><label class="tog"><input type="checkbox" id="cb-pencil"><div class="ttr"></div><div class="tth"></div></label></div>
   <div class="togrow"><span class="lbl">筆圧→不透明度</span><label class="tog"><input type="checkbox" id="cb-pr-opac" checked><div class="ttr"></div><div class="tth"></div></label></div>
+  <div id="pr-opac-sec">
+    <div class="slabel" style="margin-top:4px">不透明度カーブ</div>
+    <canvas class="curve-cv" id="opac-curve-cv" width="244" height="100"></canvas>
+    <div style="font-size:9px;color:var(--tx2);margin-bottom:6px">点をドラッグ（端点はY軸のみ）</div>
+  </div>
 </div></div>
 <div class="rpanel" id="mk-panel"><div class="ph">マーカー設定</div><div class="pb">
   <div class="slabel">サイズ（直径 px）</div>
@@ -519,9 +542,17 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
     <canvas class="curve-cv" id="mk-curve-cv" width="244" height="100"></canvas>
     <div style="font-size:9px;color:var(--tx2);margin-bottom:6px">点をドラッグ（端点はY軸のみ）</div>
     <div class="row"><label>1px閾値</label><div class="csl" id="csl-mk-thr" data-min="0" data-max="30" data-ratio="8"></div><span class="val" id="v-mk-thr">5%</span></div>
+    <div class="row"><label>始点無視</label><div class="csl" id="csl-mk-deadzone" data-min="0" data-max="100" data-ratio="5"></div><span class="val" id="v-mk-deadzone">50</span></div>
+    <div class="row"><label>入り (px)</label><div class="csl" id="csl-mk-stap" data-min="0" data-max="200" data-ratio="3"></div><span class="val" id="v-mk-stap">0</span></div>
+    <div class="row"><label>抜き (px)</label><div class="csl" id="csl-mk-etap" data-min="0" data-max="200" data-ratio="3"></div><span class="val" id="v-mk-etap">0</span></div>
   </div>
   <div class="togrow"><span class="lbl">鉛筆モード</span><label class="tog"><input type="checkbox" id="cb-mk-pencil"><div class="ttr"></div><div class="tth"></div></label></div>
   <div class="togrow"><span class="lbl">筆圧→不透明度</span><label class="tog"><input type="checkbox" id="cb-mk-pr-opac"><div class="ttr"></div><div class="tth"></div></label></div>
+  <div id="mk-pr-opac-sec" style="opacity:.4">
+    <div class="slabel" style="margin-top:4px">不透明度カーブ</div>
+    <canvas class="curve-cv" id="mk-opac-curve-cv" width="244" height="100"></canvas>
+    <div style="font-size:9px;color:var(--tx2);margin-bottom:6px">点をドラッグ（端点はY軸のみ）</div>
+  </div>
 </div></div>
 <div class="rpanel" id="er-panel"><div class="ph">消しゴム設定</div><div class="pb">
   <div class="slabel">サイズ（直径 px）</div>
@@ -553,7 +584,18 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
 <canvas id="sel-ov"></canvas>
 <div id="badge">消しゴム ON</div>
 <div id="sel-hint">なげなわで範囲を描いてください</div>
+<!-- v52/v53/v54: 変形モード時のサブモード切替トグル. ツールボタン形式 (rtab スタイル).
+     selState='transform' の時のみ表示. 位置は PEN タブの左隣 (画面右、 タブ幅分内側) -->
+<div id="xform-toggle" style="position:fixed;right:38px;top:80px;z-index:280;display:none;flex-direction:column;gap:4px">
+  <div id="xform-grid-btn" class="rtab xtog act">
+    <div class="rtab-label">GRID</div>
+  </div>
+  <div id="xform-warp-btn" class="rtab xtog">
+    <div class="rtab-label">WARP</div>
+  </div>
+</div>
 <div id="toast"></div>
+<div id="dbg-info" style="position:fixed;top:40px;left:10px;z-index:9999;background:rgba(0,0,0,0.85);color:#0f0;font:10px/1.4 monospace;padding:4px 8px;border-radius:4px;pointer-events:none;max-width:50vw;white-space:pre;display:none"></div>
 <div id="prc"></div>
 <div id="zl">100%</div>
 <div id="undo-busy">⏳ undo準備中…</div>
@@ -678,18 +720,72 @@ let inkTransparent=false;
 let rulerMode=0,rulerStart=null;
 
 // === Phase 3: 全体筆圧感度 ===
-// 入力筆圧 p (0..1) を Math.pow(p, pressureSensitivity) で再マッピングし,
-// サイズ計算と pressureOpac 計算の両方に共通適用する.
-//   = 1.0 (default) : 等倍 (従来通り)
-//   < 1.0 (例 0.5)  : 軽い力で最大に達する (柔らかく感度高い)
-//   > 1.0 (例 2.0)  : 強い力が必要 (硬く感度低い)
-// UI スライダ範囲: 0.3 ～ 3.0
+// 入力筆圧 p (0..1) を再マッピング. サイズ計算と pressureOpac 計算の両方に共通適用する.
+// v30: Apple Pencil の有効荷重範囲が広すぎ、人間の通常使用域 (最大荷重の 1/3 以下) で
+// 100% に到達できない問題を解消. PRESSURE_CEIL 以上は 100% 飽和、それ以下を 0〜1 にリマップ.
+//   PRESSURE_CEIL=0.33: 最大荷重の 1/3 で 100% に到達 (Procreate 等と同様の感覚).
+// その後 pressureSensitivity (UI スライダ) の Math.pow を適用.
+//   = 1.0 (default) : 等倍
+//   < 1.0 (例 0.5)  : さらに軽い力で最大に達する (柔らかい)
+//   > 1.0 (例 2.0)  : 強い力が必要 (硬い)
 let pressureSensitivity=1.0;
+const PRESSURE_CEIL=0.33; // v30: この値以上の筆圧入力は 100% に飽和
+const DEAD_ZONE_MAX=0.20; // v47: デッドゾーン最大値 (筆圧入力の 20% まで切り捨て可能)
 function _remapPressure(p){
-  if(p<=0)return 0;
-  if(p>=1)return 1;
-  if(pressureSensitivity===1.0)return p;
-  return Math.min(1.0, Math.pow(p, pressureSensitivity));
+  p=Math.max(0,Math.min(1,p||0));
+  if(p===0)return 0;
+  // v47: デッドゾーン適用. ツール毎の deadZone (1〜100) で先頭 X% を切り捨て.
+  // deadZone=50 → 先頭 10% (0.10) を 0 として扱う.
+  // deadZone=100 → 先頭 20% (0.20) を 0 として扱う (最大).
+  // 切り捨て後の範囲を 0〜1 にリスケール.
+  const tool=eraserOn?TOOLS.eraser:(activeTool==='marker'?TOOLS.marker:TOOLS.pen);
+  const dzSlider=Math.max(0,Math.min(100,tool.deadZone||0));
+  const deadZone=(dzSlider/100)*DEAD_ZONE_MAX;
+  if(deadZone>0){
+    if(p<=deadZone)return 0;
+    p=(p-deadZone)/(1-deadZone); // デッドゾーン後をフルレンジに再マップ
+  }
+  // v30: 0〜PRESSURE_CEIL を 0〜1 にリマップ、それ以上は 1.0 でクランプ
+  const scaled=Math.min(1,p/PRESSURE_CEIL);
+  return Math.pow(scaled,pressureSensitivity);
+}
+function _calcPointOpac(rawF){
+  const usePO=!eraserOn&&(activeTool==='marker'?TOOLS.marker.pressureOpac:TOOLS.pen.pressureOpac);
+  if(!usePO)return 1.0;
+  // v32: PRESSURE_CEIL リマップ + 急峻なカーブ.
+  // 「軽筆圧で濃い」は PRESSURE_CEIL=0.33 のリマップで実現.
+  // 「払いで自然にフェードアウト」のため、入力 0 → 出力 0 を維持.
+  // OPAC_FLOOR の人工的底上げは「払いのグラデーション」を破壊するため削除.
+  const p=_remapPressure(rawF);
+  const tool=activeTool==='marker'?TOOLS.marker:TOOLS.pen;
+  const pts=tool.opacPts||tool.pts;
+  return Math.max(0,Math.min(1,evalCurvePts(pts,p)));
+}
+
+// v51: 距離ベース入り抜き — 業界標準 (Procreate/CSP/Krita) のアプローチ.
+// 物理筆圧では始点が綺麗にテーパーしないため、 ストローク開始からの距離 (px) ベースで
+// 強制的に入りを作る. 終点も同様にストローク全長から逆算して抜きを作る.
+// 筆圧感知とは独立しており、 ON/OFF・距離が個別に設定可能.
+//
+// _strokeDistAcc: ストローク開始からの累積距離 (始点入りで使用)
+// totalLen: ストローク全長 (終点抜きで使用、 finishStroke で集計)
+//
+// 戻り値: 0..1 の係数. 1 = 入り抜きの影響なし、 0 = 完全フェード
+function _calcStartTaperFactor(){
+  if(eraserOn)return 1.0;
+  const tool=activeTool==='marker'?TOOLS.marker:TOOLS.pen;
+  const tp=tool.startTaper||0;
+  if(tp<=0)return 1.0;
+  if(_strokeDistAcc>=tp)return 1.0;
+  // 線形フェードイン (0→1)
+  return _strokeDistAcc/tp;
+}
+// 終点抜き用: 末尾補完 segment 内での累積距離 distFromEnd と taper 距離 tp から係数算出.
+// distFromEnd=0 (= 終点) で係数 0、 distFromEnd>=tp で係数 1.
+function _calcEndTaperFactor(distFromEnd, tp){
+  if(tp<=0)return 1.0;
+  if(distFromEnd>=tp)return 1.0;
+  return distFromEnd/tp;
 }
 
 function _mkC(w,h){
@@ -706,10 +802,13 @@ const DEFAULT_PTS=CURVE_X.map((x,i)=>({x,y:DEFAULT_Y[i]}));
 // ── ツール設定 ─────────────────────────────────────────────
 // thresh: この筆圧以下は常に1px（0=閾値なし）
 // TOOLS.pen/marker に thresh を追加
+// v32: opacPts カーブを「急峻に立ち上がるが入力0は出力0」に再設計.
+// PRESSURE_CEIL=0.33 で入力筆圧の有効域が拡大されているので、軽筆圧でも素早く高濃度に.
+// 入力 0 → 出力 0 を維持することで「始点フェードイン」と「払い」を物理的筆圧で自然表現.
 const TOOLS={
-  pen:   {sz:12,min:1,pressure:true, curve:2.0,stab:1,thresh:0.05,soft:0.0, opacity:1.0,spacing:1.0,shape:2,airbrush:false,pencil:false,pressureOpac:true,pts:DEFAULT_PTS.map(p=>({...p}))},  // pencil:true=鉛筆モード
-  marker:{sz:12,min:1,pressure:false,curve:2.0,stab:1,thresh:0.05,soft:0.15,opacity:0.8,spacing:0.5, shape:1,airbrush:false,pencil:false,pressureOpac:false,pts:DEFAULT_PTS.map(p=>({...p}))},
-  eraser:{sz:20,min:1,pressure:false,curve:2.0,stab:1,thresh:0,  soft:0.0, opacity:1.0,spacing:0.8, shape:0,pencil:false,pressureOpac:false,pts:DEFAULT_PTS.map(p=>({...p}))}
+  pen:   {sz:12,min:1,pressure:true, curve:2.0,stab:1,thresh:0.05,soft:0.0, opacity:1.0,spacing:1.0,shape:2,airbrush:false,pencil:false,pressureOpac:true,deadZone:50,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]},
+  marker:{sz:12,min:1,pressure:false,curve:2.0,stab:1,thresh:0.05,soft:0.15,opacity:0.8,spacing:0.5, shape:1,airbrush:false,pencil:false,pressureOpac:false,deadZone:50,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]},
+  eraser:{sz:20,min:1,pressure:false,curve:2.0,stab:1,thresh:0,  soft:0.0, opacity:1.0,spacing:0.8, shape:0,pencil:false,pressureOpac:false,deadZone:0,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p}))}
 };
 let activeTool='pen';
 let bSize=12,bMin=1,bPressure=true,bCurve=2.0,stabLen=1,eSize=20,eMin=1,eStab=1,ePressure=false,eThresh=0,bThresh=0.05;
@@ -745,14 +844,16 @@ function evalCurvePts(pts,pressure){
 function calcD(f,isFirst){
   if(eraserOn){
     if(!ePressure)return Math.max(1,eSize|0);
-    const p=Math.max(0,Math.min(1,f||0));
+    // v30: _remapPressure 適用 (PRESSURE_CEIL でフルレンジに飽和).
+    const p=_remapPressure(f);
     if(isFirst&&p===0)return 1;
     if(eThresh>0&&p<=eThresh)return 1;
     const ratio=evalCurvePts(TOOLS.eraser.pts,p);
     return Math.max(1,Math.min(eSize,Math.round(eMin+(eSize-eMin)*ratio)))|0;
   }
   if(!bPressure)return Math.max(1,bSize|0);
-  const p=Math.max(0,Math.min(1,f||0));
+  // v30: _remapPressure 適用 (PRESSURE_CEIL でフルレンジに飽和).
+  const p=_remapPressure(f);
   if(isFirst&&p===0)return 1;
   if(bThresh>0&&p<=bThresh)return 1;
   const ratio=evalCurvePts(bPts,p);
@@ -803,9 +904,10 @@ const BRUSH_VS=`#version 300 es
 layout(location=0) in vec2 a_quad;
 layout(location=1) in vec4 a_p0p1;
 layout(location=2) in vec2 a_r;
+layout(location=3) in float a_opac;
 uniform vec2 u_res;
-uniform vec2 u_offset; // Phase 4a: canvas→strokeBuf座標変換オフセット (default 0,0)
-out vec2 v_uv;out float v_hw,v_hh,v_r0,v_r1,v_len;
+uniform vec2 u_offset;
+out vec2 v_uv;out float v_hw,v_hh,v_r0,v_r1,v_len,v_opac;
 void main(){
   vec2 p0=a_p0p1.xy,p1=a_p0p1.zw;
   float maxR=max(a_r.x,a_r.y);
@@ -818,7 +920,7 @@ void main(){
   vec2 world=center+tang*local.x+norm*local.y;
   vec2 clip=(world-u_offset)/u_res*2.0-1.0;
   gl_Position=vec4(clip.x,-clip.y,0,1);
-  v_uv=a_quad;v_hw=hw;v_hh=hh;v_r0=a_r.x;v_r1=a_r.y;v_len=len;
+  v_uv=a_quad;v_hw=hw;v_hh=hh;v_r0=a_r.x;v_r1=a_r.y;v_len=len;v_opac=a_opac;
 }`;
  
 
@@ -827,7 +929,7 @@ void main(){
 const BRUSH_FS=`#version 300 es
 precision highp float;
 in vec2 v_uv;
-in float v_hw,v_hh,v_r0,v_r1,v_len;
+in float v_hw,v_hh,v_r0,v_r1,v_len,v_opac;
 uniform vec4 u_inkColor;uniform int u_shape;uniform bool u_erase;
 out vec4 o;
 void main(){
@@ -839,8 +941,9 @@ void main(){
   else if(u_shape==1){alpha=1.0-smoothstep(-0.4,0.4,dist);if(alpha<0.01)discard;}
   else if(u_shape==2){alpha=1.0-smoothstep(-1.0,1.0,dist);if(alpha<0.01)discard;}
   else{float d=clamp(-dist/max(r,1.0),0.0,1.0);alpha=d*d;if(alpha<0.005)discard;}
-  if(u_erase)o=vec4(0,0,0,alpha*u_inkColor.a);
-  else{float fa=u_inkColor.a*alpha;o=vec4(u_inkColor.rgb*fa,fa);}
+  float fa=u_inkColor.a*v_opac*alpha;
+  if(u_erase)o=vec4(0,0,0,fa);
+  else{o=vec4(u_inkColor.rgb*fa,fa);}
 }`;
  
 
@@ -888,42 +991,56 @@ void main(){
   o=vec4(rgb,1);
 }`;
 const BLIT_FS=`#version 300 es
+precision highp float;in vec2 v_uv;uniform sampler2D u_tex;out vec4 o;
+void main(){o=texture(u_tex,v_uv);}`;
+// Phase 4b: チャンク blit 専用シェーダー (strokeBuf の部分領域をチャンクに転送)
+const CHUNK_BLIT_FS=`#version 300 es
 precision highp float;in vec2 v_uv;uniform sampler2D u_tex;
-uniform vec2 u_srcOff; // Phase 4b: ソース UV オフセット (default 0,0)
-uniform vec2 u_srcScl; // Phase 4b: ソース UV スケール (default 1,1)
+uniform vec2 u_srcOff;uniform vec2 u_srcScl;
 out vec4 o;
 void main(){o=texture(u_tex,u_srcOff+v_uv*u_srcScl);}`;
 const STROKE_BLIT_FS=`#version 300 es
 precision highp float;
 in vec2 v_uv;
-uniform sampler2D u_layer;
+uniform sampler2D u_layer; // strokeBuf
+uniform sampler2D u_base;  // rev39: 合成済みレイヤー群
 uniform vec2 u_screen,u_canvas,u_vxy;
 uniform float u_vscale,u_vrot;
 uniform bool u_flip;
-uniform int u_previewMode; // 0=normal (premult color), 1=transparent guide (output white tint by alpha)
-uniform vec2 u_sbOffset; // Phase 4a: strokeBuf の canvas 座標オフセット (default 0,0)
-uniform vec2 u_sbSize;   // Phase 4a: strokeBuf のサイズ (default CW,CH)
+uniform int u_previewMode; // 0=normal, 1=transparent guide
+uniform int u_blend;       // rev39: 0=normal, 1=multiply, 2=overlay
+uniform vec2 u_sbOffset;
+uniform vec2 u_sbSize;
 out vec4 o;
 void main(){
+  vec3 base=texture(u_base,v_uv).rgb;
   float cx2=v_uv.x*u_screen.x,cy2=(1.0-v_uv.y)*u_screen.y;
   float ccx=u_vxy.x+u_canvas.x*0.5*u_vscale,ccy=u_vxy.y+u_canvas.y*0.5*u_vscale;
   if(u_flip)cx2=u_screen.x-cx2;
   float dx=cx2-ccx,dy=cy2-ccy;
   float cosR=cos(-u_vrot),sinR=sin(-u_vrot);
   cx2=dx*cosR-dy*sinR+ccx;cy2=dx*sinR+dy*cosR+ccy;
-  // Phase 4a: canvas 座標 → strokeBuf ローカル UV に変換
-  // 旧 (全体): tu = canvasX/CW, tv = 1-canvasY/CH
-  // 新 (bbox): tu = (canvasX-sbOffset.x)/sbSize.x, tv = 1-(canvasY-sbOffset.y)/sbSize.y
   float canvasX=(cx2-u_vxy.x)/u_vscale;
   float canvasY=(cy2-u_vxy.y)/u_vscale;
   float tu=(canvasX-u_sbOffset.x)/u_sbSize.x;
   float tv=1.0-(canvasY-u_sbOffset.y)/u_sbSize.y;
-  if(tu<0.0||tu>1.0||tv<0.0||tv>1.0){o=vec4(0.0);return;}
+  if(tu<0.0||tu>1.0||tv<0.0||tv>1.0){o=vec4(base,1);return;}
   vec4 s=texture(u_layer,vec2(tu,tv));
+  if(s.a<0.001){o=vec4(base,1);return;}
   if(u_previewMode==1){
-    o=vec4(s.a, s.a, s.a, s.a);
+    // 透明色ガイド: 白く透ける
+    o=vec4(mix(base,vec3(1.0),s.a),1);
   } else {
-    o=s;
+    // un-premultiply stroke color
+    vec3 ink=s.rgb/s.a;
+    float a=s.a;
+    vec3 rgb;
+    if(u_blend==1){rgb=mix(base,base*ink,a);}        // multiply
+    else if(u_blend==2){                              // overlay
+      vec3 ov=mix(2.0*base*ink,1.0-2.0*(1.0-base)*(1.0-ink),step(0.5,base));
+      rgb=mix(base,ov,a);
+    } else {rgb=mix(base,ink,a);}                     // normal
+    o=vec4(rgb,1);
   }
 }`;
 
@@ -963,15 +1080,74 @@ function makeProgram(vs,fs){const p=gl.createProgram();gl.attachShader(p,compile
 const _ulCache=new Map();
 function ul(p,n){const k=p+'|'+n;let loc=_ulCache.get(k);if(loc===undefined){loc=gl.getUniformLocation(p,n);_ulCache.set(k,loc);}return loc;}
 
-let strokeBufTex=null,strokeBufFBO=null,_abActive=false,_pencilMode=false;
+let strokeBufTex=null,strokeBufFBO=null,_abActive=false,_pencilMode=false,_sbNeedsClear=false;
 // Phase 4a: strokeBuf の canvas 座標オフセットとサイズ.
 // 現在は全面 (0,0,CW,CH). Phase 4a Step B で bbox 限定に変更予定.
 let _sbOffsetX=0, _sbOffsetY=0, _sbW=0, _sbH=0; // beginStroke で設定
 let _strokeOnset=0; // 描き始めランプ用カウンタ
-const ONSET_COUNT=8; // 8touchmove(≈67ms@120Hz)でフル圧力に
+// === 鉛筆モード: 等間隔スタンプ方式 (croquis.js 方式) ===
+let _pencilLastX=0,_pencilLastY=0,_pencilDist=0,_pencilStarted=false;
+function _pencilBegin(sx,sy,f){
+  _pencilStampCount=0;
+  const pt=screenToCanvas(sx,sy);
+  _pencilLastX=pt.x;_pencilLastY=pt.y;_pencilDist=0;_pencilStarted=true;
+  _lastPressure=f>0?f:0.01;_lastRawPressure=_lastPressure;
+}
+let _pencilStampCount=0;
+function _pencilMove(sx,sy,f){
+  if(!_pencilStarted)return;
+  const pt=screenToCanvas(sx,sy);
+  const inputF=f>0?f:_lastPressure;
+  // v36: 上昇緩やか、減衰瞬時 (始点フェードイン、払いフェードアウトのため)
+  const rawF=inputF<=_lastPressure?inputF:_lastPressure*0.7+inputF*0.3;
+  _lastPressure=rawF;_lastRawPressure=rawF;
+  const d=Math.max(1,calcD(rawF,false));
+  const opac=_calcPointOpac(rawF);
+  const dx=pt.x-_pencilLastX,dy=pt.y-_pencilLastY;
+  const dist=Math.hypot(dx,dy);
+  if(dist<0.1)return;
+  // v49: spacing スライダー (TOOLS.{tool}.spacing) を尊重.
+  // 100% = ブラシ径と等しい間隔, 50% = 半分の間隔, 200% = 2倍間隔.
+  // 旧版はハードコード d*0.2 (20%) で固定でスライダーが効かなかった.
+  const _toolForSp=eraserOn?TOOLS.eraser:(activeTool==='marker'?TOOLS.marker:TOOLS.pen);
+  const _spRatio=Math.max(0.05, _toolForSp.spacing||1.0);
+  const spacing=Math.max(0.5, d*_spRatio);
+  _pencilDist+=dist;
+  // 等間隔でスタンプを配置
+  while(_pencilDist>=spacing){
+    const t=1-(_pencilDist-spacing)/dist;
+    const sx2=_pencilLastX+dx*Math.max(0,Math.min(1,t));
+    const sy2=_pencilLastY+dy*Math.max(0,Math.min(1,t));
+    _ensureStrokeBufCovers(sx2,sy2,d/2);
+    if(segCount>=MAX_SEG)flushBrushGPU();
+    // v51: 始点入り抜き適用
+    _strokeDistAcc+=spacing;
+    const _stf=_calcStartTaperFactor();
+    const _r=Math.max(0.5, (d/2)*(_stf<1.0?_stf:1.0));
+    const b=segCount*7;
+    segArr[b]=sx2;segArr[b+1]=sy2;segArr[b+2]=sx2;segArr[b+3]=sy2;
+    segArr[b+4]=_r;segArr[b+5]=_r;
+    segArr[b+6]=opac*_stf;
+    segCount++;_pencilStampCount++;
+
+    _expandStrokeBBox(sx2,sy2,sx2,sy2,_r);
+    _pencilDist-=spacing;
+  }
+  _pencilLastX=pt.x;_pencilLastY=pt.y;
+  if(segCount>0)flushBrushGPU();
+  scheduleDraw();
+}
+function _pencilEnd(){
+  _pencilStarted=false;
+  if(segCount>0)flushBrushGPU();
+}
+
+let _strokePointCount=0; // rev59: Apple Pencil 初期筆圧補正用
+let _strokeMaxOpac=0; // rev43: ストローク中の最大筆圧不透明度 (MAX blend 用)
+const ONSET_COUNT=6; // rev50: 6点(≈50ms) — インクだまり防止のみ、ストローク濃度に影響しない
 let brushVAO=null,instBuf=null,quadVAO=null;
 const MAX_SEG=16384;
-let segArr=new Float32Array(MAX_SEG*6),segCount=0;
+let segArr=new Float32Array(MAX_SEG*7),segCount=0; // rev40: 7 floats [x0,y0,x1,y1,r0,r1,opac]
 let compA_tex=null,compA_fbo=null,compB_tex=null,compB_fbo=null;
 let gLayers=[],gActiveIdx=0;
 
@@ -982,7 +1158,8 @@ let _strokeBBox=null;        // {minX,minY,maxX,maxY} ストローク中に拡�
 let _strokeMaxRadius=0;      // ストローク中に観測した最大ブラシ半径 (パディング用)
 let _strokeShadowValid=false;// shadow が現ストロークの BEFORE を保持しているか
 let _strokeBeforeLayerId=null;// shadow が示すレイヤーID
-const MAX_STROKE_DIFF_INMEM=200; // この件数を超えた古い stroke_diff の pixel data を解放
+const MAX_STROKE_DIFF_INMEM=20; // rev38 fix: 200→20. 4x (9440×6560) では各 snapshot が
+// 数十 MB になるため GPU メモリ蓄積で OOM クラッシュする. 20 で ~1-2GB 上限.
 
 // === rev23 案 B: GPU snapshot 化により rev21 の遅延キュー機構は撤去 ===
 // rev21 では readPixels が同期で重いため AFTER 取得を rAF キューに遅延していた.
@@ -1295,10 +1472,7 @@ function initWebGL(){
   PROG.brush=makeProgram(BRUSH_VS,BRUSH_FS);
   PROG.comp=makeProgram(QUAD_VS,COMP_FS);
   PROG.blit=makeProgram(QUAD_VS,BLIT_FS);
-  // Phase 4b: BLIT_FS のデフォルト UV オフセット/スケール (全面)
-  gl.useProgram(PROG.blit);
-  gl.uniform2f(gl.getUniformLocation(PROG.blit,'u_srcOff'),0,0);
-  gl.uniform2f(gl.getUniformLocation(PROG.blit,'u_srcScl'),1,1);
+  PROG.chunkBlit=makeProgram(QUAD_VS,CHUNK_BLIT_FS); // Phase 4b: チャンク blit 専用
   PROG.sb=makeProgram(QUAD_VS,STROKE_BLIT_FS);
   PROG.ref=makeProgram(QUAD_VS,REF_FS);
   initCompUniforms();
@@ -1308,90 +1482,85 @@ function initWebGL(){
   gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
   instBuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,instBuf);
   gl.bufferData(gl.ARRAY_BUFFER,segArr.byteLength,gl.DYNAMIC_DRAW);
-  gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,4,gl.FLOAT,false,24,0);gl.vertexAttribDivisor(1,1);
-  gl.enableVertexAttribArray(2);gl.vertexAttribPointer(2,2,gl.FLOAT,false,24,16);gl.vertexAttribDivisor(2,1);
+  gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,4,gl.FLOAT,false,28,0);gl.vertexAttribDivisor(1,1);
+  gl.enableVertexAttribArray(2);gl.vertexAttribPointer(2,2,gl.FLOAT,false,28,16);gl.vertexAttribDivisor(2,1);
+  gl.enableVertexAttribArray(3);gl.vertexAttribPointer(3,1,gl.FLOAT,false,28,24);gl.vertexAttribDivisor(3,1);
   gl.bindVertexArray(null);
   quadVAO=gl.createVertexArray();gl.bindVertexArray(quadVAO);
   const qb2=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,qb2);gl.bufferData(gl.ARRAY_BUFFER,qv,gl.STATIC_DRAW);
   gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);gl.bindVertexArray(null);
   compA_tex=makeRGBATexture(glW,glH);compA_fbo=makeFBO(compA_tex);
   compB_tex=makeRGBATexture(glW,glH);compB_fbo=makeFBO(compB_tex);
-  strokeBufTex=makeRGBATexture(CW,CH);strokeBufFBO=makeFBO(strokeBufTex);
-  _sbW=CW;_sbH=CH;_sbOffsetX=0;_sbOffsetY=0; // Phase 4a: 初期サイズ設定
+  _sbW=Math.min(CW,4096);_sbH=Math.min(CH,4096);_sbOffsetX=0;_sbOffsetY=0;
+  strokeBufTex=makeRGBATexture(_sbW,_sbH);strokeBufFBO=makeFBO(strokeBufTex);
   gl.bindFramebuffer(gl.FRAMEBUFFER,strokeBufFBO);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.bindFramebuffer(gl.FRAMEBUFFER,null);
   canvas.addEventListener('webglcontextlost',function(e){e.preventDefault();drawScheduled=false;undoBusy=false;document.getElementById('undo-busy').classList.remove('show');cancelSel();showToast('⚠ GPU メモリ不足 — 再読み込みしてください');},false);
   canvas.addEventListener('webglcontextrestored',function(){showToast('GPU 復帰 — 再読み込みを推奨します');},false);
   return true;
 }
 
+let _dbgLog=[];
+function _dbgAdd(msg){_dbgLog.push(msg);if(_dbgLog.length>50)_dbgLog.shift();const el=document.getElementById('dbg-info');if(el)el.textContent=_dbgLog.join('\n');}
 function flushBrushGPU(){
   if(segCount===0||!gLayers[gActiveIdx])return;
+  _dbgFlushCount++;
+  // ストロークの最初の16 FLUSHは2セグメント分まで詳細表示
+  if(_dbgFlushCount<=16){
+    const _x0=segArr[0].toFixed(0), _y0=segArr[1].toFixed(0);
+    const _x1=segArr[2].toFixed(0), _y1=segArr[3].toFixed(0);
+    let _xN0='-',_yN0='-',_xN1='-',_yN1='-';
+    if(segCount>=2){
+      const b=(segCount-1)*7;
+      _xN0=segArr[b].toFixed(0);_yN0=segArr[b+1].toFixed(0);
+      _xN1=segArr[b+2].toFixed(0);_yN1=segArr[b+3].toFixed(0);
+    }
+    _dbgAdd('FLUSH#'+_dbgFlushCount+' c='+_dbgContCount+' seg='+segCount+' first('+_x0+','+_y0+'→'+_x1+','+_y1+') last('+_xN0+','+_yN0+'→'+_xN1+','+_yN1+') op='+segArr[6].toFixed(2)+' ab='+(_abActive?1:0));
+  } else {
+    _dbgAdd('FLUSH seg='+segCount+' x='+segArr[0].toFixed(0)+','+segArr[1].toFixed(0)+' r='+segArr[4].toFixed(1)+' op='+segArr[6].toFixed(3)+' ab='+(_abActive?1:0));
+  }
   const layer=gLayers[gActiveIdx];
-  gl.bindBuffer(gl.ARRAY_BUFFER,instBuf);gl.bufferSubData(gl.ARRAY_BUFFER,0,segArr,0,segCount*6);
+  gl.bindBuffer(gl.ARRAY_BUFFER,instBuf);gl.bufferSubData(gl.ARRAY_BUFFER,0,segArr,0,segCount*7);
   const _fboTarget=_abActive?strokeBufFBO:layer.fbo;
-  // Phase 4a: strokeBuf は _sbW×_sbH サイズ, _sbOffsetX/Y がオフセット.
-  // 直接描画 (消しゴム) は CW×CH + offset (0,0).
   const vpW=_abActive?_sbW:CW, vpH=_abActive?_sbH:CH;
   const offX=_abActive?_sbOffsetX:0, offY=_abActive?_sbOffsetY:0;
+  if(_sbNeedsClear&&_fboTarget===strokeBufFBO){gl.bindFramebuffer(gl.FRAMEBUFFER,strokeBufFBO);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);_sbNeedsClear=false;}
   gl.bindFramebuffer(gl.FRAMEBUFFER,_fboTarget);gl.viewport(0,0,vpW,vpH);
   gl.useProgram(PROG.brush);
   gl.uniform2f(ul(PROG.brush,'u_res'),vpW,vpH);
   gl.uniform2f(ul(PROG.brush,'u_offset'),offX,offY);
   const shape=eraserOn?0:(activeTool==='marker'?TOOLS.marker.shape:TOOLS.pen.shape);
   gl.uniform1i(ul(PROG.brush,'u_shape'),shape||0);
-  // v21 rev6: replay 時は _replayOverrideOpac を優先する (TOOLS を汚染しないため)
+  // rev40: u_inkColor.a は基本不透明度のみ. 筆圧不透明度は per-instance (v_opac) で処理.
   const opac = (_replayOverrideOpac!==null)
     ? _replayOverrideOpac
     : (eraserOn?TOOLS.eraser.opacity:(activeTool==='marker'?TOOLS.marker.opacity:TOOLS.pen.opacity));
   const baseO=opac!==undefined?opac:1.0;
-  // 筆圧による不透明度: pressureOpacフラグON時に不透明度にも筆圧を適用
-  // pressureOpacは筆圧感知(pressure)がONのときのみ有効 → OFFなら常に不透明度1.0
-  const pressureEnabled=!eraserOn&&(activeTool==='marker'?TOOLS.marker.pressure:TOOLS.pen.pressure);
-  // rev16 修正: pressureOpac はサイズの pressure と独立に動作させる.
-  // 旧 (rev15 まで) は pressureEnabled の and 条件で, サイズ筆圧を切ると不透明度筆圧も
-  // 自動的に無効化される結合があった. ユーザー要望「不透明度の筆圧感知オンオフが
-  // 単独で機能しない」に対応.
-  const usePressureOpac=!eraserOn&&(activeTool==='marker'?TOOLS.marker.pressureOpac:TOOLS.pen.pressureOpac);
-  // Phase 3 修正 (rev18): 不透明度が薄いとの報告に対応し閾値をさらに下げる.
-  //   threshold = 0.3 * sensitivity (rev17 の 0.5 から 0.3 へ)
-  //   sensitivity=1.0: threshold 0.3 (普通の力で必ず 100%)
-  //   sensitivity=0.5: threshold 0.15 (軽い力で 100%)
-  //   sensitivity=0.3: threshold 0.09 (フェザータッチでもほぼ 100%)
-  // 「100% なら濃すぎてもいいので濃くしてほしい」要望に対応.
-  let pressureO = 1.0;
-  if(usePressureOpac){
-    const p = Math.min(1.0, _lastRawPressure);
-    const threshold = 0.3 * pressureSensitivity;
-    pressureO = threshold > 0 ? Math.min(1.0, p / threshold) : 1.0;
-  }
-  const o=baseO*pressureO;
   const [r,g,b,a]=inkRGBA;
   gl.enable(gl.BLEND);
-  // Phase 3: 透明色描画 (inkTransparent) も strokeBuf 経由 (_abActive==true) なら
-  // カプセル間隔痕を防ぐため MAX 蓄積 → コミット時 dst-out で焼き付け方式に変更.
-  // 消しゴムは従来通り直接 layer.fbo に書く (パイプ縮退時の挙動互換).
   if(eraserOn||(inkTransparent && !_abActive)){
-    // 直接 dst-out 書き込み (消しゴム / strokeBuf 不能時の透明色)
     gl.blendEquation(gl.FUNC_ADD);
     gl.blendFuncSeparate(gl.ZERO,gl.ONE,gl.ZERO,gl.ONE_MINUS_SRC_ALPHA);
-    gl.uniform4f(ul(PROG.brush,'u_inkColor'),0,0,0,o);
+    gl.uniform4f(ul(PROG.brush,'u_inkColor'),0,0,0,baseO);
     gl.uniform1i(ul(PROG.brush,'u_erase'),1);
   } else if(inkTransparent && _abActive){
-    // Phase 3 NEW: 透明色 + strokeBuf 経路.
-    // strokeBuf にはアルファだけを MAX 蓄積する (色は黒で問題なし, コミット時に色は使わない).
-    // フィニッシュ時に layer.fbo へ dst-out (1, 1-srcA) で焼き付ける.
     gl.blendEquation(gl.MAX);
     gl.blendFunc(gl.ONE,gl.ONE);
-    gl.uniform4f(ul(PROG.brush,'u_inkColor'),0,0,0,o);
+    gl.uniform4f(ul(PROG.brush,'u_inkColor'),0,0,0,baseO);
+    gl.uniform1i(ul(PROG.brush,'u_erase'),0);
+  } else if(_pencilMode && _abActive){
+    // rev41 fix: 鉛筆モード — フロー的な濃度蓄積 (src-over on strokeBuf).
+    // v_opac を 0.15 倍にして 1 カプセルの寄与を小さくし、
+    // 重なりの蓄積で自然なグラデーションを生む.
+    gl.blendEquation(gl.FUNC_ADD);
+    gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+    gl.uniform4f(ul(PROG.brush,'u_inkColor'),r,g,b,a*baseO*0.5);
     gl.uniform1i(ul(PROG.brush,'u_erase'),0);
   } else {
-    // 通常モード (色描画 + strokeBuf): 既存ロジック維持
-    // strokeBuf 内は常に MAX blend:
-    // カプセル接合部の二重描画・CR補間の密集カプセルによる蓄積を防ぐ
-    // ストローク間の蓄積はstrokeBuf→layerのsrc-overコミット時に発生（正常）
+    // rev44: 通常モード — MAX blend + 固定不透明度.
+    // 筆圧はサイズのみに影響。不透明度は baseO 固定 (バンディングなし).
     gl.blendEquation(gl.MAX);
     gl.blendFunc(gl.ONE,gl.ONE);
-    gl.uniform4f(ul(PROG.brush,'u_inkColor'),r,g,b,a*o);
+    gl.uniform4f(ul(PROG.brush,'u_inkColor'),r,g,b,a*baseO);
     gl.uniform1i(ul(PROG.brush,'u_erase'),0);
   }
   gl.bindVertexArray(brushVAO);gl.drawArraysInstanced(gl.TRIANGLES,0,6,segCount);gl.bindVertexArray(null);
@@ -1406,23 +1575,44 @@ function flushBrush(){flushBrushGPU();scheduleDraw();}
 function scheduleMipmap(layer){}
 // ストローク描画方式: ドットのスタンプではなくカプセル形状セグメントとして描画
 // ストローク描画方式: 1セグメント = 1カプセル
-function queueDot(x,y,d){
-  _ensureStrokeBufCovers(x,y,d/2); // Phase 4a: 窓外なら中間コミット
-  if(segCount>=MAX_SEG)flushBrushGPU();
-  const b=segCount*6,r=d/2;
-  segArr[b]=x;segArr[b+1]=y;segArr[b+2]=x;segArr[b+3]=y;segArr[b+4]=r;segArr[b+5]=r;
-  segCount++;
-  _expandStrokeBBox(x,y,x,y,r); // Phase 2′: bbox 追跡
+// v32: 距離ベースの始点フェードイン補正は撤去.
+// 「滑らかな始点濃淡」は Apple Pencil の物理的な弱い筆圧で自然に発生するべき.
+// 強制フェードは入力の繊細さを壊して「フェードらしい不自然さ」を生むため削除.
+function _fadeInMul(d0,d1){
+  return 1.0;
 }
-function queueLine(x0,y0,x1,y1,d0,d1){
-  if(d1===undefined)d1=d0; // d1省略時は均一径
-  _ensureStrokeBufCovers(x1,y1,Math.max(d0,d1)/2); // Phase 4a: 窓外なら中間コミット
+
+function queueDot(x,y,d,opac){
+  _ensureStrokeBufCovers(x,y,d/2);
   if(segCount>=MAX_SEG)flushBrushGPU();
-  const b=segCount*6;
-  segArr[b]=x0;segArr[b+1]=y0;segArr[b+2]=x1;segArr[b+3]=y1;
-  segArr[b+4]=d0/2;segArr[b+5]=d1/2; // テーパー: 始端r0, 終端r1
+  const b=segCount*7,r=d/2;
+  segArr[b]=x;segArr[b+1]=y;segArr[b+2]=x;segArr[b+3]=y;segArr[b+4]=r;segArr[b+5]=r;segArr[b+6]=opac!==undefined?opac:1;
   segCount++;
-  _expandStrokeBBox(x0,y0,x1,y1,Math.max(d0,d1)/2); // Phase 2′: bbox 追跡
+  _expandStrokeBBox(x,y,x,y,r);
+}
+function queueLine(x0,y0,x1,y1,d0,d1,opac){
+  // v36: 始点=終点の縮退セグメントをスキップ.
+  if(Math.abs(x1-x0)<0.01 && Math.abs(y1-y0)<0.01)return;
+  if(d1===undefined)d1=d0;
+  // v42: 短すぎるセグメント (長さが直径の半分未満) は queueDot に振り替え.
+  // 短いカプセルは方向ベクトルが浮動小数誤差でブレ、 長方形が「ランダム角度の歪な形」で
+  // 描画される現象 (ご観察「角度が毎回ズレる」) を解決.
+  // queueDot は方向情報なしの円スタンプなので形状が安定する.
+  const _segLen=Math.hypot(x1-x0,y1-y0);
+  const _avgD=(d0+d1)*0.5;
+  if(_segLen<_avgD*0.5){
+    // 中点に円スタンプ. 直径は両端の平均.
+    const mx=(x0+x1)*0.5, my=(y0+y1)*0.5;
+    queueDot(mx,my,_avgD,opac);
+    return;
+  }
+  _ensureStrokeBufCovers(x1,y1,Math.max(d0,d1)/2);
+  if(segCount>=MAX_SEG)flushBrushGPU();
+  const b=segCount*7;
+  segArr[b]=x0;segArr[b+1]=y0;segArr[b+2]=x1;segArr[b+3]=y1;
+  segArr[b+4]=d0/2;segArr[b+5]=d1/2;segArr[b+6]=opac!==undefined?opac:1;
+  segCount++;
+  _expandStrokeBBox(x0,y0,x1,y1,Math.max(d0,d1)/2);
 }
 
 let drawScheduled=false;
@@ -1448,6 +1638,11 @@ let _compU=null;
 function initCompUniforms(){
   const p=PROG.comp;
   _compU={layer:gl.getUniformLocation(p,'u_layer'),opacity:gl.getUniformLocation(p,'u_opacity'),blend:gl.getUniformLocation(p,'u_blend'),base:gl.getUniformLocation(p,'u_base'),first:gl.getUniformLocation(p,'u_first'),bg:gl.getUniformLocation(p,'u_bg'),screen:gl.getUniformLocation(p,'u_screen'),canvas:gl.getUniformLocation(p,'u_canvas'),vxy:gl.getUniformLocation(p,'u_vxy'),vscale:gl.getUniformLocation(p,'u_vscale'),flip:gl.getUniformLocation(p,'u_flip'),vrot:gl.getUniformLocation(p,'u_vrot')};
+  // Phase 4b fix: u_chunkOffset/u_chunkSize のデフォルト値を設定.
+  // ゼロ除算 (u_chunkSize=0,0) を防ぐ.
+  gl.useProgram(p);
+  gl.uniform2f(gl.getUniformLocation(p,'u_chunkOffset'),0,0);
+  gl.uniform2f(gl.getUniformLocation(p,'u_chunkSize'),1,1); // 非ゼロで安全
 }
 function setCompUniforms(p,layerTex,color,opacity,blend,baseTex,isFirst,vrot){
   const u=_compU;gl.useProgram(p);
@@ -1497,207 +1692,329 @@ function compositeAndDisplay(){
   }
 
   for(let i=0;i<visible.length;i++){
-    const l=visible[i];const isLast=i===visible.length-1;
-    // Phase 4b: マルチチャンクレイヤー対応.
-    // 各チャンクを個別に描画. チャンク外ピクセルは base をパススルー.
-    // 単一チャンクの場合は 1 回ループ = 従来と同じ.
+    const l=visible[i];
     const allChunks=[];
-    if(l.chunks){for(const row of l.chunks)for(const c of row)allChunks.push(c);}
-    else{allChunks.push({tex:l.tex,fbo:l.fbo,cw:CW,ch:CH,ox:0,oy:0});}
+    if(l.chunks){for(const row of l.chunks)for(const c of row){if(c.tex)allChunks.push(c);}}
+    else if(l.tex){allChunks.push({tex:l.tex,fbo:l.fbo,cw:CW,ch:CH,ox:0,oy:0});}
     for(let ci=0;ci<allChunks.length;ci++){
       const c=allChunks[ci];
-      const isLastDraw=(ci===allChunks.length-1)&&isLast;
-      if(isLastDraw){gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,glW,glH);}
-      else{gl.bindFramebuffer(gl.FRAMEBUFFER,dstFBO);gl.viewport(0,0,glW,glH);}
+      // rev39: 常に FBO に合成 (画面には最後にまとめて出力)
+      gl.bindFramebuffer(gl.FRAMEBUFFER,dstFBO);gl.viewport(0,0,glW,glH);
       setCompUniforms(PROG.comp,c.tex,null,l.opacity,l.blend,first?null:srcTex,first);
-      // Phase 4b: チャンクオフセット/サイズを設定
       gl.uniform2f(ul(PROG.comp,'u_chunkOffset'),c.ox,c.oy);
       gl.uniform2f(ul(PROG.comp,'u_chunkSize'),c.cw,c.ch);
       gl.bindVertexArray(quadVAO);gl.drawArrays(gl.TRIANGLES,0,6);gl.bindVertexArray(null);
-      if(!isLastDraw){[srcTex,dstTex]=[dstTex,srcTex];[srcFBO,dstFBO]=[dstFBO,srcFBO];first=false;}
+      [srcTex,dstTex]=[dstTex,srcTex];[srcFBO,dstFBO]=[dstFBO,srcFBO];first=false;
     }
   }
-  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
-  // strokeBuf ライブプレビュー: ビュー変換付きで合成（位置ずれ防止）
-  // Phase 3 修正 (rev16): 透明色のプレビューはシェーダー側で RGB を白に置換した
-  // ガイド表示にする. src-over でブレンドすれば「白く透けるガイド」になる.
+  // rev39: 最終出力 — srcTex に全レイヤー合成済み
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,glW,glH);
   if(_abActive&&strokeBufTex){
-    gl.enable(gl.BLEND);gl.blendEquation(gl.FUNC_ADD);
-    gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+    // strokeBuf ライブプレビュー: ブレンドモード対応.
+    // STROKE_BLIT_FS が base (合成済みレイヤー) + strokeBuf を受け取り,
+    // アクティブレイヤーのブレンドモードで合成して画面に出力.
+    // ハードウェアブレンド不要 (シェーダー内で完結).
+    gl.disable(gl.BLEND);
     gl.useProgram(PROG.sb);
     gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,strokeBufTex);
     gl.uniform1i(ul(PROG.sb,'u_layer'),0);
+    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,srcTex);
+    gl.uniform1i(ul(PROG.sb,'u_base'),1);
     gl.uniform2f(ul(PROG.sb,'u_screen'),screenW,screenH);
     gl.uniform2f(ul(PROG.sb,'u_canvas'),CW,CH);
     gl.uniform2f(ul(PROG.sb,'u_vxy'),view.x,view.y);
     gl.uniform1f(ul(PROG.sb,'u_vscale'),view.scale);
     gl.uniform1f(ul(PROG.sb,'u_vrot'),view.rot);
     gl.uniform1i(ul(PROG.sb,'u_flip'),flipState?1:0);
-    // Phase 4a: strokeBuf のオフセットとサイズを渡す
     gl.uniform2f(ul(PROG.sb,'u_sbOffset'),_sbOffsetX,_sbOffsetY);
     gl.uniform2f(ul(PROG.sb,'u_sbSize'),_sbW,_sbH);
-    // rev16: 透明色プレビュー時は previewMode=1 で RGB を白に置換
     gl.uniform1i(ul(PROG.sb,'u_previewMode'),inkTransparent?1:0);
+    // rev39: アクティブレイヤーのブレンドモードを渡す
+    const activeBlend=gLayers[gActiveIdx]?gLayers[gActiveIdx].blend:'normal';
+    gl.uniform1i(ul(PROG.sb,'u_blend'),{normal:0,multiply:1,overlay:2}[activeBlend]||0);
     gl.bindVertexArray(quadVAO);gl.drawArrays(gl.TRIANGLES,0,6);gl.bindVertexArray(null);
-    gl.disable(gl.BLEND);
+  } else {
+    // ストロークなし: 合成済みレイヤーをそのまま画面に blit
+    gl.useProgram(PROG.blit);
+    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,srcTex);
+    gl.uniform1i(ul(PROG.blit,'u_tex'),0);
+    gl.bindVertexArray(quadVAO);gl.drawArrays(gl.TRIANGLES,0,6);gl.bindVertexArray(null);
   }
   // rev23: rev21 の遅延ドレインは不要 (GPU snapshot で即時取得)
 }
 
 // ── ストローク（Catmull-Rom） ──────────────────────────────
 let _crBuf=[];
+let _dbgBeginCount=0;
+let _dbgContCount=0;
+let _dbgFlushCount=0;
+let _dbgPMoveCount=0;
+let _strokeBufCommitted=false; // dbg2: per-stroke chunkBlit dedup flag
+let _lastInputTs=0; // dbg3: monotonic timestamp guard for pointermove coalesced events
+let _strokeDistAcc=0; // v27: ストローク開始からの累積距離（始点フェードイン用）
+let _tapFallbackPressure=0; // v43: タップ単発時の筆圧
+let _tapFallbackPt=null; // v43: タップ単発時の位置
+let _strokeStampCount=0; // v48 で導入. v50 で強制フェードを撤回したため現在は未使用 (保留).
 function beginStroke(sx,sy,f,isTap){
-  stabClear();_crBuf=[];
-  _resetStrokeBBox(); // Phase 2′: ストローク開始時に bbox 状態をクリア
-  // rev23: rev21 の保留交差判定は不要 (GPU snapshot で即時取得)
+  // v41: 「描き始めの優先度を上げて割り込みを排他」 — 前ストロークの状態残留が
+  // 始点で異常なスタンプを生むことがあるため、 beginStroke の最初に
+  // 描画キュー・フィルタ状態を完全にクリアする.
+  if(segCount>0){
+    // 前ストロークの flush 漏れ. 通常は finishStroke で flush されるが、
+    // pointercancel やエラー経路で残ることがある. ここで強制 flush して捨てる.
+    try{flushBrushGPU();}catch(e){}
+    segCount=0; // 念のため再リセット
+  }
+  // v44: 前ストロークの GPU 命令 (chunkBlit, snapshot 等) を完全に完了させてから
+  // 新ストロークを開始する. これにより以下の問題を解決:
+  // - 前ストロークの終点が次ストロークの瞬間に滲む (chunkBlit 未完了で strokeBuf clear)
+  // - 始点が確率的に濃くなる (前ストロークの描画残留が新 strokeBuf に混入)
+  // gl.finish() は CPU ブロッキングだが、 ストローク開始時 1 回のみ・数 ms なので許容.
+  try{gl.finish();}catch(e){}
+  _dbgBeginCount++;_dbgContCount=0;_dbgFlushCount=0;_dbgPMoveCount=0;
+  _strokeBufCommitted=false; // dbg2: chunkBlit guard reset
+  _lastInputTs=0; // dbg3: reset timestamp guard
+  _strokeDistAcc=0; // v27: 始点フェードイン用累積距離リセット
+  _strokeStampCount=0; // v48: スタンプカウンタリセット
+  const _pt0=screenToCanvas(sx,sy);
+  _dbgAdd('BEGIN #'+_dbgBeginCount+' f='+((f||0)).toFixed(3)+' xy='+_pt0.x.toFixed(1)+','+_pt0.y.toFixed(1)+' tap='+(isTap?1:0));
+  stabClear();_crBuf=[];lastDrawPt=null;
+  _resetStrokeBBox();
   const isPencil=eraserOn?TOOLS.eraser.pencil:(activeTool==='marker'?TOOLS.marker.pencil:TOOLS.pen.pencil);
-  // Phase 3: 消しゴム以外 (通常色 + 透明色) は strokeBuf 経由にする (間隔痕防止).
-  // 旧コード: 透明色も layer.fbo 直書き → 鉛筆+透明色で間隔痕がひどかった.
   _abActive=(!eraserOn)&&!!strokeBufFBO;
   _pencilMode=isPencil;
-  // Phase 4a Step B: strokeBuf のオフセットをストローク開始位置に基づいて計算.
-  // CW ≤ _sbW かつ CH ≤ _sbH なら全面カバー (offset=0). 大きいキャンバスでは
-  // 開始位置を中心に _sbW×_sbH の窓を配置する.
   {
     const SB_MAX=4096;
     const sbW=strokeBufTex?_sbW:Math.min(CW,SB_MAX);
     const sbH=strokeBufTex?_sbH:Math.min(CH,SB_MAX);
-    _sbW=sbW;_sbH=sbH;
-    if(CW<=sbW){_sbOffsetX=0;}
-    else{
-      const startPt=screenToCanvas(sx,sy);
-      _sbOffsetX=Math.max(0,Math.min(CW-sbW, Math.round(startPt.x-sbW/2)));
+    if(!strokeBufTex||_sbW!==sbW||_sbH!==sbH){
+      if(strokeBufTex){gl.deleteTexture(strokeBufTex);gl.deleteFramebuffer(strokeBufFBO);}
+      _sbW=sbW;_sbH=sbH;
+      strokeBufTex=makeRGBATexture(_sbW,_sbH);strokeBufFBO=makeFBO(strokeBufTex);
+      gl.bindFramebuffer(gl.FRAMEBUFFER,strokeBufFBO);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.bindFramebuffer(gl.FRAMEBUFFER,null);
     }
-    if(CH<=sbH){_sbOffsetY=0;}
-    else{
-      const startPt=screenToCanvas(sx,sy);
+    const startPt=screenToCanvas(sx,sy);
+    if(CW<=SB_MAX&&CH<=SB_MAX){
+      _sbOffsetX=0;_sbOffsetY=0;
+    } else {
+      _sbOffsetX=Math.max(0,Math.min(CW-sbW, Math.round(startPt.x-sbW/2)));
       _sbOffsetY=Math.max(0,Math.min(CH-sbH, Math.round(startPt.y-sbH/2)));
     }
   }
   if(_abActive){
     gl.bindFramebuffer(gl.FRAMEBUFFER,strokeBufFBO);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+    _sbNeedsClear=false;
   } else {
-    // Phase 2′: 消しゴム/透明色は layer.fbo を直接変更するため、開始時に shadow へ GPU コピー
-    // (通常ブラシは strokeBuf 経由なので layer.fbo は finishStroke まで未変更, shadow 不要)
     _captureLayerShadow();
   }
-  _strokeOnset=0; // ランプリセット
-  _lastPressure=0.01; // 描き始めは極小圧力からスタート（溜まり防止）
+  _strokeOnset=0;_strokePointCount=0;
+  // v36: 始点フェードインのため _lastPressure を 0 から開始.
+  // continueStroke の上昇ランプ (旧 0.7/0.3) で徐々に入力筆圧へ追従する.
+  _lastPressure=0;
+  if(_pencilMode&&!isTap){_pencilBegin(sx,sy,f);return;}
   const pt=stabAdd(screenToCanvas(sx,sy));
-  // rev24: 書き始めの線の二重化を解消.
-  // 旧 (rev23 まで): ここで queueDot + flushBrush で初期ドットを描画していた.
-  //   その後 continueStroke の isFirstCRSegment が p0→p1 を CR 補間で描画し,
-  //   結果として「初期ドット」と「CR 補間の最初の数ステップ」が同じ場所に重なり,
-  //   ペンを置いた瞬間に小さい二重の点として見える問題があった.
-  // 新 (rev24): 通常ストローク (isTap=false) では初期ドットを描画せず lastDrawPt も
-  //   null のまま放置. continueStroke の isFirstCRSegment が初回ループで queueDot,
-  //   それ以降で queueLine することで自然に始点を描画する.
-  //   タップ (isTap=true, pointerup から呼ばれる) では従来通り実筆圧でドット描画.
   if(isTap){
-    // タップ: 実筆圧でドット描画 (pointerup から呼ばれた場合)
     const tapF = (f && f > 0) ? f : 0.5;
-    const d = calcD(_remapPressure(tapF), false);
-    _crBuf.push({...pt,d,f:tapF});
+    const d = calcD(tapF, false);
+    _crBuf.push({...pt,d,f:tapF,opac:_calcPointOpac(tapF)});
     expandDirty(pt.x,pt.y,d);
-    if(d>0){
-      queueDot(pt.x,pt.y,d);flushBrush();
-    }
+    if(d>0){ queueDot(pt.x,pt.y,d,_calcPointOpac(tapF));flushBrush(); }
     lastDrawPt={...pt,d:d,f:tapF};
   } else {
-    // 通常ストローク: 始点だけ _crBuf に push して描画は continueStroke に任せる
-    const d = calcD(0.01,true); // 最小径 (CR isFirstCRSegment の補間始点として使う)
-    _crBuf.push({...pt,d,f:0.01});
-    expandDirty(pt.x,pt.y,d);
-    // queueDot/flushBrush 呼ばない. lastDrawPt も null のまま.
-    // continueStroke が n=4 到達時に isFirstCRSegment ロジックで描画開始する.
+    // rev78: pointerdown — 座標記録のみ、描画しない
+    // v40: 人工点の opac を 0、 d を 1 に固定. これにより n===3 のベジェ補間で
+    // 自然に「m0o ≈ p1.opac/2」「m0d ≈ p1.d/2」 から始まり、 始点フェードインが
+    // 連続的になる (n===4 への接続も自然).
+    const initF=0.01;
+    const initD=1;
+    _crBuf.push({...pt,d:initD,f:initF,opac:0});
+    lastDrawPt=null;
+    expandDirty(pt.x,pt.y,initD);
+    // v43: タップ単発 (pointermove なしで pointerup) のためにポインタダウン時の実筆圧を保存.
+    // continueStroke が呼ばれずに finishStroke に到達した場合、 ここでドットとして描画する.
+    _tapFallbackPressure = (f && f > 0) ? f : 0.5;
+    _tapFallbackPt = {x:pt.x, y:pt.y};
   }
 }
 function continueStroke(sx,sy,f){
-  // Phase 3 修正 (rev15): _remapPressure を入り口でなく onset 後に適用する.
-  // 旧版 (rev14) は入り口で適用していたため pressureSensitivity<1 の時に
-  // onset ランプの傾きが急峻になり描き始めにインクだまりが発生していた.
-  // 入り口は生の f を保持し, onset 補間で 0→f を緩やかに上げた後で再マッピング.
-  _lastPressure=f>0?f:_lastPressure;
-  const pt=stabAdd(screenToCanvas(sx,sy));
-  // onset ランプ: 最初のONSET_COUNT点で圧力を0→実圧に線形補間 (生 f で計算)
-  _strokeOnset=Math.min(_strokeOnset+1,ONSET_COUNT);
-  const onsetT=_strokeOnset/ONSET_COUNT; // 0→1
-  const rawF=f>0?f:_lastPressure;
-  const onsetF=rawF*onsetT; // ランプ適用済み (まだ感度未適用)
-  // ここで感度カーブを後乗せ
-  const pf = (onsetF>0) ? _remapPressure(onsetF) : 0;
-  // _lastPressure も再マッピング後の値で更新 (calcD で参照されるため)
-  _lastPressure = pf>0 ? pf : _lastPressure;
-  // rev17: 生の onset 後筆圧も保持 (pressureOpac の閾値計算に使う)
-  // フェザータッチ判定は再マッピング前の値で行わないと, sensitivity<1 の時に
-  // フェザーも 100% になってしまう問題を防ぐ.
-  _lastRawPressure = onsetF>0 ? onsetF : _lastRawPressure;
-  const d=Math.max(1,calcD(pf,false));
-  _crBuf.push({...pt,d,f:pf});
-  const n=_crBuf.length;
-  if(n<4){expandDirty(pt.x,pt.y,d);return;} // 4点溜まるまで待機
-  // rev23: 最初の CR セグメント (n=4 到達直後) は始点ギャップ補完を追加.
-  // 旧: n=4 到達時に p1→p2 だけ CR 補間, lastDrawPt → 補間始点を直線で繋いでいた.
-  //     急速ストロークでは始点 → p1 が離れており目立つ「直線→カーブ」アーティファクトに.
-  // 新: n=4 到達時に p0→p1 も CR 補間で先に描画 (端点処理として p0 を二重利用).
-  //     これで始点 → p1 区間が滑らかに繋がる.
-  const isFirstCRSegment = (n===4);
-  // CR補間: p1→p2を描く（2点先読みで滑らかな曲線）
-  const p0=_crBuf[n-4],p1=_crBuf[n-3],p2=_crBuf[n-2],p3=_crBuf[n-1];
-  // rev23: 始点ギャップ補完 (n=4 到達時のみ)
-  // p_pre, p0, p1, p2 で p0→p1 を CR 補間. p_pre は p0 (端点ミラー).
-  if(isFirstCRSegment){
-    const pPre = p0; // 端点処理: 最初の点を仮想的に複製
-    const dist0=Math.hypot(p1.x-p0.x,p1.y-p0.y);
-    const step0=Math.max(0.5,(p0.d+p1.d)*0.25);
-    const segs0=Math.max(1,Math.ceil(dist0/step0));
-    for(let i=1;i<=segs0;i++){
-      const t=i/segs0,t2=t*t,t3=t2*t;
-      const x=0.5*((2*p0.x)+(-pPre.x+p1.x)*t+(2*pPre.x-5*p0.x+4*p1.x-p2.x)*t2+(-pPre.x+3*p0.x-3*p1.x+p2.x)*t3);
-      const y=0.5*((2*p0.y)+(-pPre.y+p1.y)*t+(2*pPre.y-5*p0.y+4*p1.y-p2.y)*t2+(-pPre.y+3*p0.y-3*p1.y+p2.y)*t3);
-      const di=p0.d+(p1.d-p0.d)*(i/segs0);
-      if(lastDrawPt)queueLine(lastDrawPt.x,lastDrawPt.y,x,y,lastDrawPt.d||di,di);
-      else queueDot(x,y,di);
-      lastDrawPt={x,y,d:di};
-    }
-    expandDirty(p1.x,p1.y,p1.d);
+  if(_pencilMode&&_pencilStarted){_pencilMove(sx,sy,f);return;}
+  // dbg3: raw input log (最初の12回)
+  if(_dbgContCount<12){
+    const _rp=screenToCanvas(sx,sy);
+    _dbgAdd('rawIn ssx='+sx.toFixed(0)+','+sy.toFixed(0)+' cnv='+_rp.x.toFixed(1)+','+_rp.y.toFixed(1));
   }
-  const dist=Math.hypot(p2.x-p1.x,p2.y-p1.y);
-  const step=Math.max(0.5,(p1.d+p2.d)*0.25);
+  // rev78: 同一座標の連続入力をスキップ（coalesced eventsの重複防止）
+  // v37: ただしスキップ時も筆圧ローパスフィルタは進める. これをしないと
+  // 始点付近で同一座標スキップが頻発した場合に _lastPressure の上昇が止まり、
+  // 次に push される _crBuf の点の opac が急に高くなって始点ドット化する.
+  if(_crBuf.length>0){
+    const prev=_crBuf[_crBuf.length-1];
+    const pt0=screenToCanvas(sx,sy);
+    if(Math.abs(pt0.x-prev.x)<0.5 && Math.abs(pt0.y-prev.y)<0.5){
+      // v37: ローパスは進める. v45: 通常モードに合わせて 0.85/0.15.
+      const _ifSkip=f>0?f:_lastPressure;
+      _lastPressure=_ifSkip<=_lastPressure?_ifSkip:_lastPressure*0.85+_ifSkip*0.15;
+      _lastRawPressure=_lastPressure;
+      if(_dbgContCount<12){
+        _dbgAdd('CONT skip xy='+pt0.x.toFixed(1)+','+pt0.y.toFixed(1)+' lP='+_lastPressure.toFixed(3));
+      }
+      return;
+    }
+  }
+  _dbgContCount++;
+  _strokePointCount++;
+  let inputF=f>0?f:_lastPressure;
+  // v36: 非対称ローパスフィルタの方向を反転.
+  // 旧: 筆圧上昇は瞬時、減衰は緩やか → 始点で急に濃くなる、払いで濃いまま残る
+  // 新: 筆圧上昇は緩やか、減衰は瞬時 → 始点で滑らかにフェードイン、払いで素早くフェードアウト
+  // v45: 通常モードは初期衝突 (始点ドット) が出やすいので上昇率をさらに緩める.
+  // 鉛筆モードはスタンプ式で衝突しにくいので 0.7/0.3 のまま.
+  const rawF=inputF<=_lastPressure?inputF:_lastPressure*0.85+inputF*0.15;
+  _lastPressure=rawF;_lastRawPressure=rawF;
+  const pt=stabAdd(screenToCanvas(sx,sy));
+  const d=Math.max(1,calcD(rawF,false));
+  const _ptOpac=_calcPointOpac(rawF);
+  _crBuf.push({...pt,d,f:rawF,opac:_ptOpac});
+  const n=_crBuf.length;
+  if(_dbgContCount<=12){
+    const _ldp=lastDrawPt?(lastDrawPt.x.toFixed(1)+','+lastDrawPt.y.toFixed(1)):'null';
+    _dbgAdd('CONT #'+_dbgContCount+' n='+n+' lDP='+_ldp+' xy='+pt.x.toFixed(1)+','+pt.y.toFixed(1));
+  }
+  if(n<3){expandDirty(pt.x,pt.y,d);return;}
+  // rev78: 中点ベジェ補間 — 各セグメントは1回だけ描画、二重化が構造的に不可能
+  const p0=_crBuf[n-3], p1=_crBuf[n-2], p2=_crBuf[n-1];
+  const m0x=(p0.x+p1.x)*0.5, m0y=(p0.y+p1.y)*0.5;
+  const m1x=(p1.x+p2.x)*0.5, m1y=(p1.y+p2.y)*0.5;
+  let m0d=(p0.d+p1.d)*0.5, m1d=(p1.d+p2.d)*0.5;
+  let m0o=(p0.opac+p1.opac)*0.5, m1o=(p1.opac+p2.opac)*0.5;
+  // v50: 強制フェード/抑制を撤回. 入力筆圧と _calcPointOpac カーブのみで自然な
+  // フェードインを実現する設計に戻した. 不透明度感知 OFF 時は始点から100%描画される.
+  // v33: 最初のセグメント(n==3)
+  // p0 は beginStroke で人工的に push した「タッチ位置・筆圧0.01」の点で、
+  // ここから描画を開始すると始点に余計なスタンプが置かれて二重に見える原因になる.
+  // 代わりに m0 = mid(p0, p1) を始点として lastDrawPt にセットするだけにし、
+  // 描画自体はベジェループの最初の反復から始める.
+  if(n===3 && !lastDrawPt){
+    lastDrawPt={x:m0x,y:m0y,d:m0d,opac:m0o}; // v46: opac 保持
+  }
+  // mid(p0,p1)→mid(p1,p2) を二次ベジェ (制御点=p1)
+  const dist=Math.hypot(m1x-m0x,m1y-m0y);
+  const step=Math.max(0.5,(m0d+m1d)*0.2);
   const segs=Math.max(1,Math.ceil(dist/step));
   for(let i=1;i<=segs;i++){
-    const t=i/segs,t2=t*t,t3=t2*t;
-    const x=0.5*((2*p1.x)+(-p0.x+p2.x)*t+(2*p0.x-5*p1.x+4*p2.x-p3.x)*t2+(-p0.x+3*p1.x-3*p2.x+p3.x)*t3);
-    const y=0.5*((2*p1.y)+(-p0.y+p2.y)*t+(2*p0.y-5*p1.y+4*p2.y-p3.y)*t2+(-p0.y+3*p1.y-3*p2.y+p3.y)*t3);
-    const di=p1.d+(p2.d-p1.d)*(i/segs); // 筆圧サイズ補間
-    if(lastDrawPt)queueLine(lastDrawPt.x,lastDrawPt.y,x,y,lastDrawPt.d||di,di);
-    else queueDot(x,y,di);
-    lastDrawPt={x,y,d:di};
+    const t=i/segs, u=1-t;
+    const x=u*u*m0x+2*u*t*p1.x+t*t*m1x;
+    const y=u*u*m0y+2*u*t*p1.y+t*t*m1y;
+    const di=m0d+(m1d-m0d)*t;
+    let oi=m0o+(m1o-m0o)*t;
+    if(lastDrawPt){
+      const _dxdy=Math.hypot(x-lastDrawPt.x,y-lastDrawPt.y);
+      if(_dxdy>=0.5){
+        // v51: 始点入り抜き — _strokeDistAcc を進めつつ、 始点距離内なら係数適用.
+        // 線分の中央位置 (= 距離が半分加算された地点) で係数評価して、 その値を opac/直径両方に乗算.
+        _strokeDistAcc+=_dxdy*0.5;
+        const _stf=_calcStartTaperFactor();
+        _strokeDistAcc+=_dxdy*0.5;
+        const _diOut=_stf<1.0 ? Math.max(1, di*_stf) : di;
+        const _ldOut=_stf<1.0 && lastDrawPt.d ? Math.max(1, (lastDrawPt.d||di)*_stf) : (lastDrawPt.d||di);
+        queueLine(lastDrawPt.x,lastDrawPt.y,x,y,_ldOut,_diOut,oi*_stf);
+        lastDrawPt={x,y,d:di,opac:oi}; // v46: 元の値を保存 (次の補間の基準にするため)
+      }
+      // _dxdy<0.5 なら何もしない (無視. 次回の入力でまとめて処理).
+    } else {
+      lastDrawPt={x,y,d:di,opac:oi}; // v46: opac 保持
+    }
   }
   expandDirty(p2.x,p2.y,p2.d);
-  // フラッシュ前にp1-p2間の平均筆圧をセット（不透明度に反映）
-  _lastPressure=(p1.f+p2.f)*0.5;
   if(segCount>0)flushBrushGPU();
   scheduleDraw();
 }
-function finishStroke(){
-  // continueStrokeのCRラグで未描画の末尾2-3点を補完
+let _dbgFinishCount=0;
+function finishStroke(_tag){
+  _dbgFinishCount++;
+  _dbgAdd('FINISH #'+_dbgFinishCount+'['+(_tag||'?')+'] crBuf='+_crBuf.length+' lastDrPt='+(lastDrawPt?'Y':'N')+' ab='+(_abActive?1:0)+' aPid='+(activePenId!==null?1:0));
+  if(_pencilMode&&_pencilStarted){_pencilEnd();}
+  // v43: タップ単発の検出と描画.
+  // pointerdown のみで pointermove が来なかった場合、 _crBuf には人工点 (opac=0, d=1) が
+  // 1つだけ入っており、 末尾補完も走らないため何も描画されない. これがタップが
+  // 認識されない・Undo で急に出現する現象の原因.
+  // pointerup で e.pressure>0 だった場合は _crBuf に2点目が入るが、 ベジェループ
+  // (n>=3) には到達しないので末尾補完しか走らない. その末尾補完も人工点との線分なので
+  // 不安定なので、 短ストローク (length<=2) は queueDot でドット描画にフォールバック.
+  if(_crBuf.length<=2 && _tapFallbackPt && _tapFallbackPressure>0){
+    // 最後の入力点 (= _crBuf[length-1]) があれば、その筆圧と位置を優先
+    let tx=_tapFallbackPt.x, ty=_tapFallbackPt.y, tf=_tapFallbackPressure;
+    if(_crBuf.length===2){
+      const last=_crBuf[1];
+      tx=last.x; ty=last.y;
+      if(last.f>0.011)tf=last.f;
+    }
+    const td=Math.max(1, calcD(tf, false));
+    let to=_calcPointOpac(tf);
+    if(td>0 && to>0){
+      queueDot(tx, ty, td, to);
+      // _crBuf を実点1個に置換してタイムラインに残す
+      _crBuf=[{x:tx, y:ty, d:td, f:tf, opac:to}];
+      lastDrawPt=null; // 末尾補完がループしないように
+    }
+  }
+  _tapFallbackPressure=0;_tapFallbackPt=null;
+  // 末尾補完 — 最後の入力点まで描画
+  // v46: 継続中のベジェループと同じステップ密度でサブセグメント分割し、
+  // 「終点プレビューと最終描画の長さ・階調不一致」を解消する.
+  // (旧版は単一 queueLine で粗く繋いでいた)
   const n=_crBuf.length;
   if(n>=2&&lastDrawPt){
-    // lastDrawPtから末尾の未描画点を直線でつなぐ
-    for(let i=Math.max(0,n-3);i<n;i++){
-      const p=_crBuf[i];
-      if(Math.hypot(p.x-lastDrawPt.x,p.y-lastDrawPt.y)>0.3){
-        queueLine(lastDrawPt.x,lastDrawPt.y,p.x,p.y,lastDrawPt.d||p.d,p.d);
-        lastDrawPt={x:p.x,y:p.y,d:p.d};
+    const p=_crBuf[n-1];
+    const _td=Math.hypot(p.x-lastDrawPt.x,p.y-lastDrawPt.y);
+    if(_td>0.5){
+      // 継続中と同じ step ratio で分割
+      const _avgD=((lastDrawPt.d||p.d)+p.d)*0.5;
+      const _step=Math.max(0.5,_avgD*0.2);
+      const _segs=Math.max(1,Math.ceil(_td/_step));
+      const _startD=lastDrawPt.d||p.d;
+      const _startO=lastDrawPt.opac!=null?lastDrawPt.opac:(p.opac!=null?p.opac:1);
+      const _endO=p.opac!=null?p.opac:1;
+      // v51: 終点入り抜き — ツール設定の endTaper を取得.
+      // 末尾補完区間 _td で、 各サブセグメントの「終点からの距離」を _calcEndTaperFactor に渡す.
+      // (注意: 始点入り抜きも同時に動いているので、 末尾補完の _strokeDistAcc も進める)
+      const _toolForET=eraserOn?TOOLS.eraser:(activeTool==='marker'?TOOLS.marker:TOOLS.pen);
+      const _endTp=_toolForET.endTaper||0;
+      let _lx=lastDrawPt.x, _ly=lastDrawPt.y;
+      for(let i=1;i<=_segs;i++){
+        const t=i/_segs;
+        const x=lastDrawPt.x+(p.x-lastDrawPt.x)*t;
+        const y=lastDrawPt.y+(p.y-lastDrawPt.y)*t;
+        const di=_startD+(p.d-_startD)*t;
+        let oi=_startO+(_endO-_startO)*t;
+        // 始点入り抜き (_strokeDistAcc を進める)
+        const _segLen=_td/_segs;
+        _strokeDistAcc+=_segLen*0.5;
+        const _stf=_calcStartTaperFactor();
+        _strokeDistAcc+=_segLen*0.5;
+        // 終点入り抜き — このサブセグメント終点からストローク終点までの距離
+        const _distFromEnd=_td*(1-t)+_segLen*0.5; // セグメント中央から終点まで
+        const _etf=_calcEndTaperFactor(_distFromEnd, _endTp);
+        // 両係数を乗算
+        const _fac=_stf*_etf;
+        const _diOut=_fac<1.0 ? Math.max(1, di*_fac) : di;
+        const _ldOut=_fac<1.0 ? Math.max(1, _startD*_fac) : _startD;
+        const _diPrev=_fac<1.0 ? Math.max(1, (_startD+(p.d-_startD)*((i-1)/_segs))*_fac) : (_startD+(p.d-_startD)*((i-1)/_segs));
+        queueLine(_lx,_ly,x,y,_diPrev,_diOut,oi*_fac);
+        _lx=x;_ly=y;
       }
     }
-  } else if(n>0&&!lastDrawPt){
-    // 4点未満で描画されなかった短いストローク
-    if(n>=1)queueDot(_crBuf[0].x,_crBuf[0].y,_crBuf[0].d);
-    for(let i=1;i<n;i++){const p=_crBuf[i];queueLine(_crBuf[i-1].x,_crBuf[i-1].y,p.x,p.y,_crBuf[i-1].d,p.d);}
+  } else if(n>=2&&!lastDrawPt){
+    // v33: lastDrawPt が null の場合の fallback. _crBuf[0] は beginStroke の人工点なので
+    // i=2 から始めて、_crBuf[1] と _crBuf[2] のペアから描画を開始.
+    // (n==2 なら何もしない. 短すぎるストロークなのでタップ判定で別経路になるべき.)
+    for(let i=2;i<n;i++){
+      const p=_crBuf[i],pp=_crBuf[i-1];
+      queueLine(pp.x,pp.y,p.x,p.y,pp.d,p.d,(p.opac!=null?p.opac:1));
+    }
   }
-  if(segCount>0)flushBrushGPU(); // finishStroke: GPU描画のみ、scheduleDraw不要
+  if(segCount>0)flushBrushGPU();
+
 
   // ===== rev23 案 B: bbox 範囲の BEFORE 状態を GPU snapshot で取得 =====
   // 通常ブラシは strokeBuf 経由で描いており、composite 前なら layer.fbo は BEFORE 状態
@@ -1718,18 +2035,24 @@ function finishStroke(){
 
   if(_abActive&&strokeBufFBO){
     const layer=gLayers[gActiveIdx];
-    if(layer){
+    if(layer && !_strokeBufCommitted){
+      let _dbgBlitCount=0;
       // Phase 4b: strokeBuf を該当チャンクに blit.
       // strokeBuf の canvas 領域 [_sbOffsetX, _sbOffsetY, _sbW, _sbH] が
       // どのチャンクにまたがるか判定し、各チャンクに個別にコミット.
       const chunks=layer.chunks||[[{tex:layer.tex,fbo:layer.fbo,cw:CW,ch:CH,ox:0,oy:0}]];
-      for(const row of chunks)for(const c of row){
+      for(let ry=0;ry<chunks.length;ry++)for(let rx=0;rx<chunks[ry].length;rx++){
+        const c=chunks[ry][rx];
         // strokeBuf と チャンクの交差判定
         const ix0=Math.max(_sbOffsetX, c.ox);
         const iy0=Math.max(_sbOffsetY, c.oy);
         const ix1=Math.min(_sbOffsetX+_sbW, c.ox+c.cw);
         const iy1=Math.min(_sbOffsetY+_sbH, c.oy+c.ch);
         if(ix0>=ix1||iy0>=iy1)continue; // 交差なし
+        // Phase 4b sparse: 交差があれば実体化
+        if(!c.fbo)_ensureChunk(layer,rx,ry);
+        if(!c.fbo)continue; // 確保失敗
+        _dbgBlitCount++;
         // 交差領域: チャンク FBO 上の viewport
         const cLocalX=ix0-c.ox, cLocalY=iy0-c.oy;
         const iw=ix1-ix0, ih=iy1-iy0;
@@ -1741,12 +2064,11 @@ function finishStroke(){
         const srcVH=ih/_sbH;
         gl.bindFramebuffer(gl.FRAMEBUFFER,c.fbo);
         gl.viewport(cLocalX,glY,iw,ih);
-        gl.useProgram(PROG.blit);
+        gl.useProgram(PROG.chunkBlit);
         gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,strokeBufTex);
-        gl.uniform1i(ul(PROG.blit,'u_tex'),0);
-        // Phase 4b: ソース UV をチャンク交差領域に制限
-        gl.uniform2f(ul(PROG.blit,'u_srcOff'),srcU0,srcV0);
-        gl.uniform2f(ul(PROG.blit,'u_srcScl'),srcUW,srcVH);
+        gl.uniform1i(ul(PROG.chunkBlit,'u_tex'),0);
+        gl.uniform2f(ul(PROG.chunkBlit,'u_srcOff'),srcU0,srcV0);
+        gl.uniform2f(ul(PROG.chunkBlit,'u_srcScl'),srcUW,srcVH);
         gl.enable(gl.BLEND);gl.blendEquation(gl.FUNC_ADD);
         if(inkTransparent){
           gl.blendFuncSeparate(gl.ZERO,gl.ONE_MINUS_SRC_ALPHA,gl.ZERO,gl.ONE_MINUS_SRC_ALPHA);
@@ -1756,11 +2078,12 @@ function finishStroke(){
         gl.bindVertexArray(quadVAO);gl.drawArrays(gl.TRIANGLES,0,6);gl.bindVertexArray(null);
         gl.disable(gl.BLEND);
       }
-      // Phase 4b: blit UV をデフォルトに戻す (他の PROG.blit 呼出に影響しないよう)
-      gl.useProgram(PROG.blit);
-      gl.uniform2f(ul(PROG.blit,'u_srcOff'),0,0);
-      gl.uniform2f(ul(PROG.blit,'u_srcScl'),1,1);
+      // Phase 4b: PROG.chunkBlit は独立シェーダーなのでリセット不要
       gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+      _strokeBufCommitted=true; // dbg2: 1ストロークで1回だけ焼く
+      _dbgAdd('BLIT #'+_dbgFinishCount+' chunks='+_dbgBlitCount);
+    } else if(layer && _strokeBufCommitted){
+      _dbgAdd('BLIT #'+_dbgFinishCount+' SKIP(committed)');
     }
     _abActive=false;_pencilMode=false;
   }
@@ -1939,20 +2262,31 @@ function _midCommitStrokeBuf(){
   if(segCount>0)flushBrushGPU();
   const layer=gLayers[gActiveIdx];
   if(!layer)return;
-  const glY=CH-_sbOffsetY-_sbH;
-  gl.bindFramebuffer(gl.FRAMEBUFFER,layer.fbo);
-  gl.viewport(_sbOffsetX,glY,_sbW,_sbH);
-  gl.useProgram(PROG.blit);
-  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,strokeBufTex);
-  gl.uniform1i(ul(PROG.blit,'u_tex'),0);
-  gl.enable(gl.BLEND);gl.blendEquation(gl.FUNC_ADD);
-  if(inkTransparent){
-    gl.blendFuncSeparate(gl.ZERO,gl.ONE_MINUS_SRC_ALPHA,gl.ZERO,gl.ONE_MINUS_SRC_ALPHA);
-  } else {
-    gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+  // Phase 4b: finishStroke と同じマルチチャンク blit ロジック
+  const chunks=layer.chunks||[[{tex:layer.tex,fbo:layer.fbo,cw:CW,ch:CH,ox:0,oy:0}]];
+  for(let ry=0;ry<chunks.length;ry++)for(let rx=0;rx<chunks[ry].length;rx++){
+    const c=chunks[ry][rx];
+    const ix0=Math.max(_sbOffsetX,c.ox),iy0=Math.max(_sbOffsetY,c.oy);
+    const ix1=Math.min(_sbOffsetX+_sbW,c.ox+c.cw),iy1=Math.min(_sbOffsetY+_sbH,c.oy+c.ch);
+    if(ix0>=ix1||iy0>=iy1)continue;
+    if(!c.fbo)_ensureChunk(layer,rx,ry);
+    if(!c.fbo)continue;
+    const cLocalX=ix0-c.ox,cLocalY=iy0-c.oy,iw=ix1-ix0,ih=iy1-iy0;
+    const glY=c.ch-cLocalY-ih;
+    const srcU0=(ix0-_sbOffsetX)/_sbW,srcV0=1.0-(iy1-_sbOffsetY)/_sbH;
+    const srcUW=iw/_sbW,srcVH=ih/_sbH;
+    gl.bindFramebuffer(gl.FRAMEBUFFER,c.fbo);gl.viewport(cLocalX,glY,iw,ih);
+    gl.useProgram(PROG.chunkBlit);
+    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,strokeBufTex);
+    gl.uniform1i(ul(PROG.chunkBlit,'u_tex'),0);
+    gl.uniform2f(ul(PROG.chunkBlit,'u_srcOff'),srcU0,srcV0);
+    gl.uniform2f(ul(PROG.chunkBlit,'u_srcScl'),srcUW,srcVH);
+    gl.enable(gl.BLEND);gl.blendEquation(gl.FUNC_ADD);
+    if(inkTransparent){gl.blendFuncSeparate(gl.ZERO,gl.ONE_MINUS_SRC_ALPHA,gl.ZERO,gl.ONE_MINUS_SRC_ALPHA);}
+    else{gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);}
+    gl.bindVertexArray(quadVAO);gl.drawArrays(gl.TRIANGLES,0,6);gl.bindVertexArray(null);
+    gl.disable(gl.BLEND);
   }
-  gl.bindVertexArray(quadVAO);gl.drawArrays(gl.TRIANGLES,0,6);gl.bindVertexArray(null);
-  gl.disable(gl.BLEND);
   gl.bindFramebuffer(gl.FRAMEBUFFER,null);
   // クリア
   gl.bindFramebuffer(gl.FRAMEBUFFER,strokeBufFBO);
@@ -2264,14 +2598,22 @@ function snapshotBeforeStroke(){
 function _commitRecStroke(crBuf){
   if(!_recStroke||crBuf.length===0){_recStroke=null;return;}
   const sc=Math.max(CW,CH);
+  // v34: 先頭の人工点 (筆圧 0.01 で beginStroke で push されたタッチ位置の点) を除外.
+  // この人工点を保存するとリプレイ時に始点に余計なスタンプが置かれる.
+  // 判定: f<=0.011 でかつ点が2個以上ある場合、先頭をスキップ.
+  let startIdx=0;
+  if(crBuf.length>=2 && crBuf[0].f!=null && crBuf[0].f<=0.011){
+    startIdx=1;
+  }
   // v21 rev6: 4番目に筆圧 f を追加. replay 時の濃度再現に必要.
   // 旧データ (3要素配列) は再生時に f=1.0 扱いでフォールバック.
-  _recStroke.points=crBuf.map(p=>([
+  _recStroke.points=crBuf.slice(startIdx).map(p=>([
     Math.round(p.x/CW*10000)/10000,
     Math.round(p.y/CH*10000)/10000,
     Math.round(p.d/sc*10000)/10000,
     Math.round((p.f||1.0)*10000)/10000
   ]));
+  if(_recStroke.points.length===0){_recStroke=null;return;}
   _recStroke.pointCount=_recStroke.points.length;
   // bbox diff を取り出し (finishStroke でスタッシュされた)
   const diff=_recStroke._bboxDiff||null;
@@ -2317,6 +2659,7 @@ function captureNow(label){
 
 // ── イベント再生 ──────────────────────────────────────────
 function _replayStroke(s,scW,scH){
+  _dbgAdd('REPLAY_STROKE called! pts='+((s.points&&s.points.length)||0));
   const li=gLayers.findIndex(l=>l.id===s.layerId);if(li<0)return;
   gActiveIdx=li;eraserOn=s.eraserOn;inkTransparent=s.inkTransparent;
   // activeTool を記録時のツールに復元（flushBrushGPU がこれを読むため必須）
@@ -2349,8 +2692,10 @@ function _replayStroke(s,scW,scH){
     return;
   }
   _lastPressure=dp[0].f;
-  if(dp[0].d>0)queueDot(dp[0].x,dp[0].y,dp[0].d);
-  let last={x:dp[0].x,y:dp[0].y};
+  // v34: queueDot/queueLine に opac を渡す. 旧コードは引数省略で常に opac=1.0 だった.
+  // これによりリプレイで全ストロークが最大濃度に塗り変わるバグを修正.
+  if(dp[0].d>0)queueDot(dp[0].x,dp[0].y,dp[0].d,_calcPointOpac(dp[0].f));
+  let last={x:dp[0].x,y:dp[0].y,f:dp[0].f};
   for(let n=4;n<=dp.length;n++){
     const p0=dp[n-4],p1=dp[n-3],p2=dp[n-2],p3=dp[n-1];
     const dist=Math.hypot(p2.x-p1.x,p2.y-p1.y);
@@ -2362,7 +2707,10 @@ function _replayStroke(s,scW,scH){
       const x=0.5*((2*p1.x)+(-p0.x+p2.x)*t+(2*p0.x-5*p1.x+4*p2.x-p3.x)*t2+(-p0.x+3*p1.x-3*p2.x+p3.x)*t3);
       const y=0.5*((2*p1.y)+(-p0.y+p2.y)*t+(2*p0.y-5*p1.y+4*p2.y-p3.y)*t2+(-p0.y+3*p1.y-3*p2.y+p3.y)*t3);
       const d=p1.d+(p2.d-p1.d)*(i/segs); // 筆圧サイズ補間
-      queueLine(last.x,last.y,x,y,d);last={x,y};
+      const fi=p1.f+(p2.f-p1.f)*(i/segs); // 筆圧 f も補間
+      const oi=_calcPointOpac(fi);        // 各ポイントの不透明度
+      queueLine(last.x,last.y,x,y,d,d,oi);
+      last={x,y,f:fi};
     }
     if(segCount>=(MAX_SEG>>1)){
       flushBrushGPU();
@@ -2375,29 +2723,41 @@ function _replayStroke(s,scW,scH){
       const p=dp[i];
       // 末尾補完も筆圧を引き継ぐ
       _lastPressure = p.f;
-      queueLine(last.x,last.y,p.x,p.y,p.d);
-      last={x:p.x,y:p.y};
+      const oi=_calcPointOpac(p.f);
+      queueLine(last.x,last.y,p.x,p.y,p.d,p.d,oi);
+      last={x:p.x,y:p.y,f:p.f};
     }
   }
   if(segCount>0)flushBrushGPU();
-  // strokeBuf → layer コミット (Phase 3: 透明色は dst-out, それ以外は src-over)
+  // strokeBuf → layer コミット (Phase 4b: multi-chunk)
   if(_abActive&&strokeBufFBO&&!s.eraserOn){
     const rl=gLayers[gActiveIdx];
     if(rl){
-      // Phase 4a: viewport を strokeBuf のオフセット/サイズに合わせる
-      const glY=CH-_sbOffsetY-_sbH;
-      gl.bindFramebuffer(gl.FRAMEBUFFER,rl.fbo);gl.viewport(_sbOffsetX,glY,_sbW,_sbH);
-      gl.useProgram(PROG.blit);
-      gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,strokeBufTex);
-      gl.uniform1i(ul(PROG.blit,'u_tex'),0);
-      gl.enable(gl.BLEND);gl.blendEquation(gl.FUNC_ADD);
-      if(s.inkTransparent){
-        gl.blendFuncSeparate(gl.ZERO,gl.ONE_MINUS_SRC_ALPHA,gl.ZERO,gl.ONE_MINUS_SRC_ALPHA);
-      } else {
-        gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+      const chunks=rl.chunks||[[{tex:rl.tex,fbo:rl.fbo,cw:CW,ch:CH,ox:0,oy:0}]];
+      for(let ry=0;ry<chunks.length;ry++)for(let rx=0;rx<chunks[ry].length;rx++){
+        const c=chunks[ry][rx];
+        const ix0=Math.max(_sbOffsetX,c.ox),iy0=Math.max(_sbOffsetY,c.oy);
+        const ix1=Math.min(_sbOffsetX+_sbW,c.ox+c.cw),iy1=Math.min(_sbOffsetY+_sbH,c.oy+c.ch);
+        if(ix0>=ix1||iy0>=iy1)continue;
+        if(!c.fbo)_ensureChunk(rl,rx,ry);
+        if(!c.fbo)continue;
+        const cLocalX=ix0-c.ox,iw=ix1-ix0,ih=iy1-iy0;
+        const glY=c.ch-(iy0-c.oy)-ih;
+        const srcU0=(ix0-_sbOffsetX)/_sbW,srcV0=1.0-(iy1-_sbOffsetY)/_sbH;
+        gl.bindFramebuffer(gl.FRAMEBUFFER,c.fbo);gl.viewport(cLocalX,glY,iw,ih);
+        gl.useProgram(PROG.chunkBlit);
+        gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,strokeBufTex);
+        gl.uniform1i(ul(PROG.chunkBlit,'u_tex'),0);
+        gl.uniform2f(ul(PROG.chunkBlit,'u_srcOff'),srcU0,srcV0);
+        gl.uniform2f(ul(PROG.chunkBlit,'u_srcScl'),iw/_sbW,ih/_sbH);
+        gl.enable(gl.BLEND);gl.blendEquation(gl.FUNC_ADD);
+        if(s.inkTransparent){gl.blendFuncSeparate(gl.ZERO,gl.ONE_MINUS_SRC_ALPHA,gl.ZERO,gl.ONE_MINUS_SRC_ALPHA);}
+        else{gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);}
+        gl.bindVertexArray(quadVAO);gl.drawArrays(gl.TRIANGLES,0,6);gl.bindVertexArray(null);
+        gl.disable(gl.BLEND);
       }
-      gl.bindVertexArray(quadVAO);gl.drawArrays(gl.TRIANGLES,0,6);gl.bindVertexArray(null);
-      gl.disable(gl.BLEND);gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+      // Phase 4b: PROG.chunkBlit は独立なのでリセット不要
+      gl.bindFramebuffer(gl.FRAMEBUFFER,null);
     }
   }
   // 全状態を元に戻す (TOOLS は触っていないので復元不要)
@@ -2451,7 +2811,7 @@ function _replayEvent(ev){
       break;}
     case 'layer_delete':{
       const li=gLayers.findIndex(l=>l.id===ev.layerId);
-      if(li>=0){_disposeStrokeDiffSnapshotsForLayer(gLayers[li].id);gl.deleteTexture(gLayers[li].tex);gl.deleteFramebuffer(gLayers[li].fbo);gLayers.splice(li,1);gActiveIdx=Math.min(gActiveIdx,gLayers.length-1);}
+      if(li>=0){_disposeStrokeDiffSnapshotsForLayer(gLayers[li].id);_deleteLayerGPU(gLayers[li]);gLayers.splice(li,1);gActiveIdx=Math.min(gActiveIdx,gLayers.length-1);}
       break;}
     case 'layer_move':  moveLayer(ev.fromIdx,ev.toIdx);break;
     case 'layer_prop':  _replayLayerProp(ev);break;
@@ -2473,7 +2833,7 @@ function _restoreKeyframeSnap(snap){
   const n=CW*CH*4; // RGBA = 4 bytes per pixel
   if(snap.structure){
     const ids=new Set(snap.structure.map(s=>s.id));
-    gLayers=gLayers.filter(l=>{if(!ids.has(l.id)){_disposeStrokeDiffSnapshotsForLayer(l.id);gl.deleteTexture(l.tex);gl.deleteFramebuffer(l.fbo);return false;}return true;});
+    gLayers=gLayers.filter(l=>{if(!ids.has(l.id)){_disposeStrokeDiffSnapshotsForLayer(l.id);_deleteLayerGPU(l);return false;}return true;});
     for(const s of snap.structure){
       if(!gLayers.find(l=>l.id===s.id)){
         const tex=makeR8Texture(CW,CH),fbo=makeFBO(tex);
@@ -2778,9 +3138,10 @@ function hexToRGBint(hex){return[parseInt(hex.slice(1,3),16),parseInt(hex.slice(
 function rgb01ToHex(c){return'#'+c.map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('');}
 function addGLLayer(name,hexColor){
   const col=hexToRGB01(hexColor||'#000000');
-  // Phase 4b: CW/CH が GPU_MAX_TEX_SIZE 以下なら従来通り 1 テクスチャ.
-  // 超える場合はチャンクグリッドに分割.
-  const CS=GPU_MAX_TEX_SIZE; // レイヤーチャンクサイズ = GPU テクスチャ上限
+  // Phase 4b sparse: CHUNK_SIZE (4096) ベースでチャンクグリッドを作成.
+  // 初期確保は chunk[0][0] のみ. 他は描画時にオンデマンド実体化 (sparse).
+  // これで 9440×6560 でも初期 GPU メモリは 4096×4096×4 = 64MB / レイヤーで済む.
+  const CS=CHUNK_SIZE;
   const ncx=Math.ceil(CW/CS), ncy=Math.ceil(CH/CS);
   const chunks=[];
   for(let cy=0;cy<ncy;cy++){
@@ -2788,13 +3149,18 @@ function addGLLayer(name,hexColor){
     for(let cx=0;cx<ncx;cx++){
       const cw=Math.min(CS, CW-cx*CS);
       const ch=Math.min(CS, CH-cy*CS);
-      const tex=makeR8Texture(cw,ch), fbo=makeFBO(tex);
-      gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.bindFramebuffer(gl.FRAMEBUFFER,null);
-      row.push({tex,fbo,cw,ch,ox:cx*CS,oy:cy*CS});
+      if(cx===0&&cy===0){
+        // 最初のチャンクだけ実体化 (互換性 + 即座に描画開始可能)
+        const tex=makeR8Texture(cw,ch), fbo=makeFBO(tex);
+        gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+        row.push({tex,fbo,cw,ch,ox:cx*CS,oy:cy*CS});
+      } else {
+        // 未実体化 (lazy)
+        row.push({tex:null,fbo:null,cw,ch,ox:cx*CS,oy:cy*CS});
+      }
     }
     chunks.push(row);
   }
-  // 互換性: layer.tex/fbo は chunks[0][0] と同一 (1 チャンクの場合は完全互換)
   const l={
     id:(Date.now()*1000+Math.random()*999)|0,name,color:col,
     opacity:1,visible:true,blend:'normal',
@@ -2802,6 +3168,24 @@ function addGLLayer(name,hexColor){
     chunks, chunkCols:ncx, chunkRows:ncy
   };
   gLayers.push(l);gActiveIdx=gLayers.length-1;return l;
+}
+// Phase 4b sparse: 指定チャンクをオンデマンド実体化.
+// 描画・blit が必要になった時に呼ぶ. 既に実体化済みなら何もしない.
+function _ensureChunk(layer,cx,cy){
+  if(!layer||!layer.chunks)return null;
+  if(cy>=layer.chunks.length||cx>=layer.chunks[cy].length)return null;
+  const c=layer.chunks[cy][cx];
+  if(c.tex)return c; // 既に実体化済み
+  try{
+    c.tex=makeR8Texture(c.cw,c.ch);
+    c.fbo=makeFBO(c.tex);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,c.fbo);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+    // layer.tex/fbo エイリアスは chunk[0][0] のまま (変えない)
+  }catch(e){
+    console.warn('_ensureChunk failed',cx,cy,e);
+    c.tex=null;c.fbo=null;
+  }
+  return c;
 }
 // Phase 4b: レイヤーの全チャンク GPU リソースを解放するヘルパー.
 // 既存の gl.deleteTexture(l.tex);gl.deleteFramebuffer(l.fbo) の代替.
@@ -2850,6 +3234,15 @@ function loadState(){
   try{
     const raw=localStorage.getItem(LS_KEY);if(!raw)return false;const s=JSON.parse(raw);
     if(s.tools){
+      // v28/v32: 旧 opacPts (先頭 y >= 0.5 の底上げ型) を新デフォルトに戻すマイグレーション.
+      // 「払いの自然なグラデーション」のため入力0は出力0に戻す必要がある.
+      const _migrateOpac=(t)=>{
+        if(t && t.opacPts && Array.isArray(t.opacPts) && t.opacPts.length>0 && t.opacPts[0].y >= 0.5){
+          delete t.opacPts; // デフォルトに戻す (Object.assign で新値が残る)
+        }
+      };
+      _migrateOpac(s.tools.pen);
+      _migrateOpac(s.tools.marker);
       if(s.tools.pen)Object.assign(TOOLS.pen,s.tools.pen);
       if(s.tools.marker)Object.assign(TOOLS.marker,s.tools.marker);
       if(s.tools.eraser)Object.assign(TOOLS.eraser,s.tools.eraser);
@@ -2859,7 +3252,7 @@ function loadState(){
     if(s.erbMode)erbMode=s.erbMode;if(s.eSize)eSize=s.eSize;
     // Phase 3: 全体筆圧感度の復元 (範囲外の値はクランプ)
     if(typeof s.pressureSensitivity==='number' && isFinite(s.pressureSensitivity)){
-      pressureSensitivity = Math.max(0.3, Math.min(3.0, s.pressureSensitivity));
+      pressureSensitivity = Math.max(0.05, Math.min(3.0, s.pressureSensitivity));
     }
     // v21 rev10: ホールドモードは廃止. erbMode は読み込むが動作は常に toggle.
     erbMode='toggle';
@@ -2902,6 +3295,9 @@ function debouncedUpdateThumbs(){
       gl.uniform2f(ul(PROG.comp,'u_screen'),TSIZE,TSIZE);gl.uniform2f(ul(PROG.comp,'u_canvas'),CW,CH);
       gl.uniform2f(ul(PROG.comp,'u_vxy'),ox,oy);gl.uniform1f(ul(PROG.comp,'u_vscale'),ts);
       gl.uniform1i(ul(PROG.comp,'u_flip'),0);gl.uniform1f(ul(PROG.comp,'u_vrot'),0);
+      // Phase 4b: チャンクオフセット/サイズを正しく設定 (chunk[0][0] = 全面)
+      gl.uniform2f(ul(PROG.comp,'u_chunkOffset'),0,0);
+      gl.uniform2f(ul(PROG.comp,'u_chunkSize'),l.chunks?l.chunks[0][0].cw:CW,l.chunks?l.chunks[0][0].ch:CH);
       gl.bindVertexArray(quadVAO);gl.drawArrays(gl.TRIANGLES,0,6);gl.bindVertexArray(null);
       gl.bindFramebuffer(gl.FRAMEBUFFER,null);
       const small=new Uint8Array(TSIZE*TSIZE*4);
@@ -2916,6 +3312,12 @@ function debouncedUpdateThumbs(){
 
 // ── セレクション ────────────────────────────────────────────
 let selState=null,lassoPath=[],origLassoPath=[];
+// v52: 変形サブモード — 'grid' = 矩形ハンドルでスケール/回転 (旧来), 'warp' = 8 ハンドル自由変形.
+// ワープ変形は 4 頂点 + 4 辺中点を個別操作してパース補正等に使う (Photoshop の「ゆがみ」相当).
+let transformMode='grid';
+// ワープ変形ハンドル. キャンバス座標で保持. 各 {x,y}.
+// TL/TR/BR/BL = 4 角. TM/RM/BM/LM = 4 辺中点 (T=top, R=right, B=bottom, L=left, M=middle).
+let warpHandles=null;
 let selBBox=null,selImg=null,selOrig=null,selTx=null,selHandle=null,selPrevPt=null,meshPts=null;
 const selOv=document.getElementById('sel-ov'),sovCtx=selOv.getContext('2d');
 function resizeSelOv(){selOv.width=window.innerWidth;selOv.height=window.innerHeight;}resizeSelOv();
@@ -2924,6 +3326,84 @@ function setSelHint(m){if(m){selHintEl.textContent=m;selHintEl.classList.add('sh
 function initMesh(){meshPts=[];for(let r=0;r<=4;r++){meshPts.push([]);for(let c=0;c<=4;c++)meshPts[r].push({dx:0,dy:0});}}
 function meshPtW(r,c){if(!selBBox||!selTx||!meshPts)return{x:0,y:0};const{cx,cy,rot,sx,sy}=selTx,lx=(c/4-.5)*selBBox.w*sx,ly=(r/4-.5)*selBBox.h*sy;const cos=Math.cos(rot),sin=Math.sin(rot);return{x:cos*lx-sin*ly+cx+meshPts[r][c].dx,y:sin*lx+cos*ly+cy+meshPts[r][c].dy};}
 function meshPtS(r,c){const p=meshPtW(r,c);return canvasToScreen(p.x,p.y);}
+
+// v52: ワープ変形用 — 8 ハンドル (4 角 + 4 辺中点) から 5x5 メッシュ点を導出.
+// 写真パース補正など、 任意の四角形 + 辺カーブに変形できる.
+function initWarpHandles(){
+  if(!selBBox||!selTx)return;
+  const{cx,cy,rot,sx,sy}=selTx;
+  const hw=selBBox.w*sx/2, hh=selBBox.h*sy/2;
+  const cos=Math.cos(rot),sin=Math.sin(rot);
+  const rp=(lx,ly)=>({x:cos*lx-sin*ly+cx, y:sin*lx+cos*ly+cy});
+  warpHandles={
+    TL:rp(-hw,-hh), TR:rp(hw,-hh), BR:rp(hw,hh), BL:rp(-hw,hh),
+    TM:rp(0,-hh),   RM:rp(hw,0),   BM:rp(0,hh),  LM:rp(-hw,0)
+  };
+  _warpHomographyCache=null;
+}
+// v53: ワープ変形の 4 頂点から透視変換 (ホモグラフィ) で UV→出力点を計算.
+// 辺は常に直線、 写真のパース補正に最適. 4 頂点の単位四角形 [0,0]-[1,0]-[1,1]-[0,1] を
+// 任意の四角形にマッピングする 3x3 行列を求めて適用.
+let _warpHomographyCache=null;
+function _computeHomography(){
+  if(!warpHandles){_warpHomographyCache=null;return;}
+  const W=warpHandles;
+  // 標準四角形 (0,0)→(1,0)→(1,1)→(0,1) を任意四角形にマップする射影変換.
+  // Heckbert (1989) の "Fundamentals of Texture Mapping" の方式.
+  const x0=W.TL.x, y0=W.TL.y;
+  const x1=W.TR.x, y1=W.TR.y;
+  const x2=W.BR.x, y2=W.BR.y;
+  const x3=W.BL.x, y3=W.BL.y;
+  const sx=x0-x1+x2-x3;
+  const sy=y0-y1+y2-y3;
+  let g, h;
+  if(Math.abs(sx)<1e-9 && Math.abs(sy)<1e-9){
+    // 平行四辺形の特殊ケース → アフィン
+    g=0; h=0;
+  } else {
+    const dx1=x1-x2, dx2=x3-x2;
+    const dy1=y1-y2, dy2=y3-y2;
+    const denom=dx1*dy2-dx2*dy1;
+    if(Math.abs(denom)<1e-9){g=0;h=0;}
+    else {
+      g=(sx*dy2-sy*dx2)/denom;
+      h=(dx1*sy-dy1*sx)/denom;
+    }
+  }
+  const a=x1-x0+g*x1;
+  const b=x3-x0+h*x3;
+  const c=x0;
+  const d=y1-y0+g*y1;
+  const e=y3-y0+h*y3;
+  const f=y0;
+  // [a b c; d e f; g h 1] が変換行列.
+  // (u,v) → ((a*u+b*v+c)/(g*u+h*v+1), (d*u+e*v+f)/(g*u+h*v+1))
+  _warpHomographyCache={a,b,c,d,e,f,g,h};
+}
+function _warpPtAtUV(u,v){
+  if(!_warpHomographyCache)_computeHomography();
+  const H=_warpHomographyCache;
+  if(!H){
+    if(!warpHandles)return{x:0,y:0};
+    // フォールバック: 双線形
+    const W=warpHandles, uu=1-u, vv=1-v;
+    return {
+      x:W.TL.x*uu*vv+W.TR.x*u*vv+W.BR.x*u*v+W.BL.x*uu*v,
+      y:W.TL.y*uu*vv+W.TR.y*u*vv+W.BR.y*u*v+W.BL.y*uu*v
+    };
+  }
+  const w=H.g*u+H.h*v+1;
+  if(Math.abs(w)<1e-9)return{x:H.c,y:H.f};
+  return {
+    x:(H.a*u+H.b*v+H.c)/w,
+    y:(H.d*u+H.e*v+H.f)/w
+  };
+}
+// ワープモード時の 5x5 メッシュ点 (キャンバス座標)
+function warpMeshPtW(r,c){
+  return _warpPtAtUV(c/4, r/4);
+}
+function warpMeshPtS(r,c){const p=warpMeshPtW(r,c);return canvasToScreen(p.x,p.y);}
 function getHandles(){
   if(!selTx||!selBBox)return{};
   const{cx,cy,rot,sx,sy}=selTx,hw=selBBox.w*sx/2,hh=selBBox.h*sy/2;
@@ -2945,7 +3425,20 @@ function getHandles(){
 }
 function hitHandle(sx,sy){
   if(selState!=='transform')return null;
-  const H=getHandles(),R=24;
+  const R=24;
+  if(transformMode==='warp' && warpHandles){
+    // ワープモード: 8 ハンドル + キャンバス領域 MOVE のみ
+    const W=warpHandles;
+    const tests=[['TL',W.TL],['TR',W.TR],['BR',W.BR],['BL',W.BL],
+                 ['TM',W.TM],['RM',W.RM],['BM',W.BM],['LM',W.LM]];
+    for(const[n,p]of tests){
+      const sp=canvasToScreen(p.x,p.y);
+      const dx=sx-sp.x, dy=sy-sp.y;
+      if(dx*dx+dy*dy<R*R)return'w:'+n;
+    }
+    return'h:MOVE';
+  }
+  const H=getHandles();
   // 1. まずスケール・回転ハンドルを判定（最優先）
   for(const[n,p]of Object.entries(H)){const dx=sx-p.x,dy=sy-p.y;if(dx*dx+dy*dy<R*R)return'h:'+n;}
   // 2. メッシュグリッド点
@@ -2958,12 +3451,49 @@ function hitHandle(sx,sy){
 }
 function applyHandle(h,psx,psy,csx,csy){
   const pC=screenToCanvas(psx,psy),cC=screenToCanvas(csx,csy),dx=cC.x-pC.x,dy=cC.y-pC.y;
-  if(h==='h:MOVE'){selTx.cx+=dx;selTx.cy+=dy;}
+  if(h==='h:MOVE'){
+    if(transformMode==='warp' && warpHandles){
+      // ワープモードでは全 8 ハンドルを平行移動
+      for(const k of ['TL','TR','BR','BL','TM','RM','BM','LM']){
+        warpHandles[k].x+=dx; warpHandles[k].y+=dy;
+      }
+    } else {
+      selTx.cx+=dx;selTx.cy+=dy;
+    }
+  }
   else if(h==='h:ROT')selTx.rot+=Math.atan2(cC.y-selTx.cy,cC.x-selTx.cx)-Math.atan2(pC.y-selTx.cy,pC.x-selTx.cx);
   else if(/^h:(TL|TR|BL|BR)$/.test(h)){const pd=Math.hypot(pC.x-selTx.cx,pC.y-selTx.cy),cd=Math.hypot(cC.x-selTx.cx,cC.y-selTx.cy);if(pd>1){const sc=cd/pd;selTx.sx*=sc;selTx.sy*=sc;}}
   else if(h==='h:TC'||h==='h:BC'){const cos=Math.cos(selTx.rot),sin=Math.sin(selTx.rot),dot=dx*(-sin)+dy*cos;selTx.sy=Math.max(.05,(selBBox.h*selTx.sy/2+dot*(h==='h:TC'?-1:1))*2/selBBox.h);}
   else if(h==='h:ML'||h==='h:MR'){const cos=Math.cos(selTx.rot),sin=Math.sin(selTx.rot),dot=dx*cos+dy*sin;selTx.sx=Math.max(.05,(selBBox.w*selTx.sx/2+dot*(h==='h:ML'?-1:1))*2/selBBox.w);}
   else if(h.startsWith('m:')){const[,r,c]=h.split(':');meshPts[+r][+c].dx+=dx;meshPts[+r][+c].dy+=dy;}
+  else if(h.startsWith('w:')){
+    // ワープハンドルの操作
+    const k=h.substring(2);
+    if(!warpHandles)return;
+    if(k==='TL'||k==='TR'||k==='BR'||k==='BL'){
+      // 頂点ハンドル: その頂点だけ移動
+      warpHandles[k].x+=dx; warpHandles[k].y+=dy;
+    } else if(k==='TM'){
+      // 上辺ハンドル: 上辺 (TL, TR) を平行移動 — 辺は常に直線
+      warpHandles.TL.x+=dx; warpHandles.TL.y+=dy;
+      warpHandles.TR.x+=dx; warpHandles.TR.y+=dy;
+    } else if(k==='RM'){
+      warpHandles.TR.x+=dx; warpHandles.TR.y+=dy;
+      warpHandles.BR.x+=dx; warpHandles.BR.y+=dy;
+    } else if(k==='BM'){
+      warpHandles.BR.x+=dx; warpHandles.BR.y+=dy;
+      warpHandles.BL.x+=dx; warpHandles.BL.y+=dy;
+    } else if(k==='LM'){
+      warpHandles.BL.x+=dx; warpHandles.BL.y+=dy;
+      warpHandles.TL.x+=dx; warpHandles.TL.y+=dy;
+    }
+    // 辺中点 TM/RM/BM/LM の位置は常に頂点間の中点として再計算
+    warpHandles.TM={x:(warpHandles.TL.x+warpHandles.TR.x)/2, y:(warpHandles.TL.y+warpHandles.TR.y)/2};
+    warpHandles.RM={x:(warpHandles.TR.x+warpHandles.BR.x)/2, y:(warpHandles.TR.y+warpHandles.BR.y)/2};
+    warpHandles.BM={x:(warpHandles.BR.x+warpHandles.BL.x)/2, y:(warpHandles.BR.y+warpHandles.BL.y)/2};
+    warpHandles.LM={x:(warpHandles.BL.x+warpHandles.TL.x)/2, y:(warpHandles.BL.y+warpHandles.TL.y)/2};
+    _warpHomographyCache=null; // ホモグラフィ再計算
+  }
   drawSelOv();
 }
 function r8ToRGBACanvas(r8,w,h,color){
@@ -2975,6 +3505,8 @@ function r8ToRGBACanvas(r8,w,h,color){
 function canvasToR8(canvasEl,w,h){const ctx=canvasEl.getContext('2d');const id=ctx.getImageData(0,0,w,h);const r8=new Uint8Array(w*h);for(let row=0;row<h;row++){const dstRow=h-1-row;for(let col=0;col<w;col++){r8[dstRow*w+col]=id.data[(row*w+col)*4+3]>127?255:0;}}return r8;}
 const SEAM=0.8;
 function drawTriTex(ctx,src,srcW,srcH,x0,y0,x1,y1,x2,y2,u0,v0,u1,v1,u2,v2){
+  // v54: 三角形の UV bounding box を計算し、 src のその領域だけを drawImage する.
+  // 旧版は src 全体を毎回描画していたため重かった.
   const gcx=(x0+x1+x2)/3,gcy=(y0+y1+y2)/3;
   function exp(x,y){const dx=x-gcx,dy=y-gcy,d=Math.hypot(dx,dy)||1;return[x+dx/d*SEAM,y+dy/d*SEAM];}
   const[ex0,ey0]=exp(x0,y0),[ex1,ey1]=exp(x1,y1),[ex2,ey2]=exp(x2,y2);
@@ -2982,10 +3514,148 @@ function drawTriTex(ctx,src,srcW,srcH,x0,y0,x1,y1,x2,y2,u0,v0,u1,v1,u2,v2){
   const dx1=ex1-ex0,dx2=ex2-ex0,dy1=ey1-ey0,dy2=ey2-ey0;
   const a=(dx1*dv2-dx2*dv1)/det,b=(dy1*dv2-dy2*dv1)/det,cc=(du1*dx2-du2*dx1)/det,d=(du1*dy2-du2*dy1)/det;
   const e=ex0-a*u0-cc*v0,ff=ey0-b*u0-d*v0;
-  ctx.save();ctx.beginPath();ctx.moveTo(ex0,ey0);ctx.lineTo(ex1,ey1);ctx.lineTo(ex2,ey2);ctx.closePath();ctx.clip();ctx.transform(a,b,cc,d,e,ff);ctx.drawImage(src,0,0,srcW,srcH);ctx.restore();
+  ctx.save();ctx.beginPath();ctx.moveTo(ex0,ey0);ctx.lineTo(ex1,ey1);ctx.lineTo(ex2,ey2);ctx.closePath();ctx.clip();ctx.transform(a,b,cc,d,e,ff);
+  // UV bounding box (整数で 1px 余裕)
+  const umin=Math.max(0, Math.floor(Math.min(u0,u1,u2))-1);
+  const vmin=Math.max(0, Math.floor(Math.min(v0,v1,v2))-1);
+  const umax=Math.min(srcW, Math.ceil(Math.max(u0,u1,u2))+1);
+  const vmax=Math.min(srcH, Math.ceil(Math.max(v0,v1,v2))+1);
+  const sw=umax-umin, sh=vmax-vmin;
+  if(sw>0&&sh>0)ctx.drawImage(src, umin,vmin,sw,sh, umin,vmin,sw,sh);
+  ctx.restore();
 }
-function drawMeshWarp(ctx,src,srcW,srcH,coordFn){const cw=srcW/4,ch=srcH/4;for(let row=0;row<4;row++)for(let col=0;col<4;col++){const p00=coordFn(row,col),p10=coordFn(row,col+1),p01=coordFn(row+1,col),p11=coordFn(row+1,col+1);const u0=col*cw,u1=(col+1)*cw,v0=row*ch,v1=(row+1)*ch;drawTriTex(ctx,src,srcW,srcH,p00.x,p00.y,p10.x,p10.y,p01.x,p01.y,u0,v0,u1,v0,u0,v1);drawTriTex(ctx,src,srcW,srcH,p10.x,p10.y,p11.x,p11.y,p01.x,p01.y,u1,v0,u1,v1,u0,v1);}}
-function setSelState(s){selState=s;const btn=document.getElementById('sel-btn');if(btn)btn.className='bottomleftbtn';if(s==='lasso'){btn.classList.add('lasso');setSelHint('なげなわで範囲を描いてください');}else if(s==='transform'){btn.classList.add('transform');setSelHint('ハンドル/メッシュ点で変形 → 再タップで確定');}else setSelHint(null);drawSelOv();}
+// v52: 滑らかなメッシュワープ.
+// 旧 drawMeshWarp は 4x4 セルを各 2 三角形 (アフィン) で描画していたため、
+// セル境界で角ばる・線形的に変形・段差が出る現象があった.
+// 新版は 5x5 制御点を Catmull-Rom スプラインで C1 連続に補間し、
+// 32x32 のサブグリッドへ細分化して描画する. Procreate / クリスタ並みの滑らかさ.
+
+// Catmull-Rom 1次元補間 (4 点から t∈[0,1] の値を返す)
+function _crInterp1D(p0,p1,p2,p3,t){
+  const t2=t*t,t3=t2*t;
+  return 0.5*((2*p1)+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+(-p0+3*p1-3*p2+p3)*t3);
+}
+// 5x5 制御点 (gridFn(r,c)→{x,y}) から任意の u,v∈[0,1] の点を求める.
+function _bicubicMeshPt(gridFn, u, v){
+  const fu=u*4, fv=v*4;
+  let ci=Math.floor(fu), cj=Math.floor(fv);
+  if(ci>=4)ci=3; if(ci<0)ci=0;
+  if(cj>=4)cj=3; if(cj<0)cj=0;
+  const tu=fu-ci, tv=fv-cj;
+  function gp(r,c){
+    const rc=Math.max(0,Math.min(4,r)), cc=Math.max(0,Math.min(4,c));
+    return gridFn(rc,cc);
+  }
+  // u 方向に 4 行を補間
+  const rows=[];
+  for(let dr=-1; dr<=2; dr++){
+    const r=cj+dr;
+    const p0=gp(r,ci-1), p1=gp(r,ci), p2=gp(r,ci+1), p3=gp(r,ci+2);
+    rows.push({
+      x:_crInterp1D(p0.x,p1.x,p2.x,p3.x,tu),
+      y:_crInterp1D(p0.y,p1.y,p2.y,p3.y,tu)
+    });
+  }
+  return {
+    x:_crInterp1D(rows[0].x,rows[1].x,rows[2].x,rows[3].x,tv),
+    y:_crInterp1D(rows[0].y,rows[1].y,rows[2].y,rows[3].y,tv)
+  };
+}
+function drawMeshWarp(ctx,src,srcW,srcH,coordFn,subdivOverride){
+  // v53: パフォーマンス対策で可変解像度.
+  // - プレビュー (selOv 上): 8x8 で十分滑らか. 1コマ/5秒の重さを解消.
+  // - 確定描画 (commitTransform): 32x32 で高品質に焼き込み.
+  const N = (subdivOverride!=null) ? subdivOverride : (_smoothSubPreview||8);
+  const cornerPts=new Array((N+1)*(N+1));
+  const cornerUV=new Array((N+1)*(N+1));
+  for(let sj=0; sj<=N; sj++){
+    for(let si=0; si<=N; si++){
+      const u=si/N, v=sj/N;
+      cornerPts[sj*(N+1)+si]=_bicubicMeshPt(coordFn,u,v);
+      cornerUV[sj*(N+1)+si]={u:u*srcW, v:v*srcH};
+    }
+  }
+  for(let sj=0; sj<N; sj++){
+    for(let si=0; si<N; si++){
+      const i00=sj*(N+1)+si, i10=sj*(N+1)+(si+1);
+      const i01=(sj+1)*(N+1)+si, i11=(sj+1)*(N+1)+(si+1);
+      const p00=cornerPts[i00], p10=cornerPts[i10], p01=cornerPts[i01], p11=cornerPts[i11];
+      const t00=cornerUV[i00], t10=cornerUV[i10], t01=cornerUV[i01], t11=cornerUV[i11];
+      drawTriTex(ctx,src,srcW,srcH,
+        p00.x,p00.y, p10.x,p10.y, p01.x,p01.y,
+        t00.u,t00.v, t10.u,t10.v, t01.u,t01.v);
+      drawTriTex(ctx,src,srcW,srcH,
+        p10.x,p10.y, p11.x,p11.y, p01.x,p01.y,
+        t10.u,t10.v, t11.u,t11.v, t01.u,t01.v);
+    }
+  }
+}
+// v53: ワープ専用描画 — 直接ホモグラフィで点を求めるので Catmull-Rom 経由なしで高速かつ正確.
+// screenSpace=true ならスクリーン座標系、 false ならキャンバス座標系で描画.
+function drawWarpHomographic(ctx,src,srcW,srcH,subdivN,screenSpace){
+  if(!warpHandles)return;
+  if(!_warpHomographyCache)_computeHomography();
+  const N=subdivN||8;
+  const cornerPts=new Array((N+1)*(N+1));
+  const cornerUV=new Array((N+1)*(N+1));
+  for(let sj=0;sj<=N;sj++){
+    for(let si=0;si<=N;si++){
+      const u=si/N, v=sj/N;
+      const cp=_warpPtAtUV(u,v);
+      const p = screenSpace ? canvasToScreen(cp.x,cp.y) : cp;
+      cornerPts[sj*(N+1)+si]=p;
+      cornerUV[sj*(N+1)+si]={u:u*srcW, v:v*srcH};
+    }
+  }
+  for(let sj=0;sj<N;sj++){
+    for(let si=0;si<N;si++){
+      const i00=sj*(N+1)+si, i10=sj*(N+1)+(si+1);
+      const i01=(sj+1)*(N+1)+si, i11=(sj+1)*(N+1)+(si+1);
+      const p00=cornerPts[i00], p10=cornerPts[i10], p01=cornerPts[i01], p11=cornerPts[i11];
+      const t00=cornerUV[i00], t10=cornerUV[i10], t01=cornerUV[i01], t11=cornerUV[i11];
+      drawTriTex(ctx,src,srcW,srcH,
+        p00.x,p00.y, p10.x,p10.y, p01.x,p01.y,
+        t00.u,t00.v, t10.u,t10.v, t01.u,t01.v);
+      drawTriTex(ctx,src,srcW,srcH,
+        p10.x,p10.y, p11.x,p11.y, p01.x,p01.y,
+        t10.u,t10.v, t11.u,t11.v, t01.u,t01.v);
+    }
+  }
+}
+let _smoothSubPreview=8; // プレビュー描画解像度 (drawSelOv で使用)
+const _smoothSubFinal=32; // 確定時の高品質解像度
+function setSelState(s){
+  selState=s;
+  const btn=document.getElementById('sel-btn');if(btn)btn.className='bottomleftbtn';
+  // v52: 変形モード時のみトグルバーを表示
+  const tgl=document.getElementById('xform-toggle');
+  if(tgl)tgl.style.display=(s==='transform')?'flex':'none';
+  if(s==='lasso'){btn.classList.add('lasso');setSelHint('なげなわで範囲を描いてください');}
+  else if(s==='transform'){btn.classList.add('transform');setSelHint(transformMode==='warp'?'4 角 + 4 辺で自由変形':'ハンドルでスケール/回転');}
+  else setSelHint(null);
+  drawSelOv();
+}
+// v52: トグルボタン処理. クリックでモード切替し UI 再描画.
+function _setTransformMode(m){
+  transformMode=m;
+  const gb=document.getElementById('xform-grid-btn');
+  const wb=document.getElementById('xform-warp-btn');
+  if(gb && wb){
+    if(m==='grid'){gb.classList.add('act');wb.classList.remove('act');}
+    else {wb.classList.add('act');gb.classList.remove('act');}
+  }
+  if(m==='warp' && selState==='transform' && (!warpHandles)){
+    initWarpHandles();
+  }
+  if(selState==='transform')setSelHint(m==='warp'?'4 角 + 4 辺で自由変形':'ハンドルでスケール/回転');
+  drawSelOv();
+}
+(function(){
+  const gb=document.getElementById('xform-grid-btn');
+  const wb=document.getElementById('xform-warp-btn');
+  if(gb)gb.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();_setTransformMode('grid');});
+  if(wb)wb.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();_setTransformMode('warp');});
+})();
 function readR8Full(l){const buf=new Uint8Array(CW*CH*4);gl.bindFramebuffer(gl.READ_FRAMEBUFFER,l.fbo);gl.readPixels(0,0,CW,CH,gl.RGBA,gl.UNSIGNED_BYTE,buf);gl.bindFramebuffer(gl.READ_FRAMEBUFFER,null);return buf;}
 function writeR8Full(l,rgba){gl.bindTexture(gl.TEXTURE_2D,l.tex);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,CW,CH,gl.RGBA,gl.UNSIGNED_BYTE,rgba);gl.bindTexture(gl.TEXTURE_2D,null);scheduleDraw();}
 async function execLasso(){
@@ -3043,12 +3713,12 @@ async function execLasso(){
     }
   }
   writeR8Full(l,clr);
-  selTx={cx:bx+bw/2,cy:by+bh/2,rot:0,sx:1,sy:1};lassoPath=[];initMesh();setSelState('transform');
+  selTx={cx:bx+bw/2,cy:by+bh/2,rot:0,sx:1,sy:1};lassoPath=[];initMesh();initWarpHandles();transformMode='grid';setSelState('transform');
 }
 async function commitTransform(){
   if(!selImg||!selBBox||!selTx){
     // 状態が不正でも確実にリセット
-    selState=null;selBBox=null;selImg=null;selTx=null;meshPts=null;selHandle=null;selPrevPt=null;origLassoPath=[];
+    selState=null;selBBox=null;selImg=null;selTx=null;meshPts=null;warpHandles=null;transformMode="grid";selHandle=null;selPrevPt=null;origLassoPath=[];
     const _sb=document.getElementById('sel-btn');if(_sb){_sb.className='bottomleftbtn';};setSelHint(null);drawSelOv();
     return;
   }
@@ -3059,8 +3729,11 @@ async function commitTransform(){
   const tc=document.createElement('canvas');tc.width=CW;tc.height=CH;const tctx=tc.getContext('2d');
   await new Promise(r=>setTimeout(r,0));
 
-  if(meshPts){
-    drawMeshWarp(tctx,selImg,selBBox.w,selBBox.h,(r,c)=>meshPtW(r,c));
+  if(transformMode==='warp' && warpHandles){
+    // v53: 確定時はホモグラフィ直接計算 + 16x16 で高品質.
+    drawWarpHomographic(tctx,selImg,selBBox.w,selBBox.h,16,false);
+  } else if(meshPts){
+    drawMeshWarp(tctx,selImg,selBBox.w,selBBox.h,(r,c)=>meshPtW(r,c),_smoothSubFinal);
   }else{
     tctx.save();tctx.translate(cx,cy);tctx.rotate(rot);tctx.scale(sx,sy);tctx.drawImage(selImg,-selBBox.w/2,-selBBox.h/2,selBBox.w,selBBox.h);tctx.restore();
   }
@@ -3093,11 +3766,11 @@ async function commitTransform(){
     }
   }
   writeR8Full(l,curRGBA);
-  selState=null;selBBox=null;selImg=null;selTx=null;meshPts=null;selHandle=null;selPrevPt=null;origLassoPath=[];
+  selState=null;selBBox=null;selImg=null;selTx=null;meshPts=null;warpHandles=null;transformMode="grid";selHandle=null;selPrevPt=null;origLassoPath=[];
   const _sb=document.getElementById('sel-btn');if(_sb){_sb.className='bottomleftbtn';};setSelHint(null);drawSelOv();scheduleDraw();renderLayers();
   setTimeout(captureNow,0);showToast('変形確定');
 }
-function cancelSel(){selState=null;selBBox=null;selImg=null;selTx=null;meshPts=null;selHandle=null;selPrevPt=null;origLassoPath=[];lassoPath=[];const _sb=document.getElementById('sel-btn');if(_sb){_sb.className='bottomleftbtn';};setSelHint(null);drawSelOv();}
+function cancelSel(){selState=null;selBBox=null;selImg=null;selTx=null;meshPts=null;warpHandles=null;transformMode="grid";selHandle=null;selPrevPt=null;origLassoPath=[];lassoPath=[];const _sb=document.getElementById('sel-btn');if(_sb){_sb.className='bottomleftbtn';};setSelHint(null);drawSelOv();}
 function drawSelOv(){
   sovCtx.clearRect(0,0,selOv.width,selOv.height);
   if(selState==='lasso'&&lassoPath.length>1){sovCtx.save();sovCtx.strokeStyle='#5b9cf6';sovCtx.lineWidth=2;sovCtx.setLineDash([5,4]);sovCtx.beginPath();lassoPath.forEach((p,i)=>{const sp=canvasToScreen(p.x,p.y);i?sovCtx.lineTo(sp.x,sp.y):sovCtx.moveTo(sp.x,sp.y);});sovCtx.stroke();sovCtx.restore();}
@@ -3108,11 +3781,43 @@ function drawSelOv(){
   drawRefHandles(sovCtx);
   if(selState==='transform'&&selImg&&selBBox&&selTx){
     if(origLassoPath.length>2){sovCtx.save();sovCtx.fillStyle='rgba(0,0,0,0)';sovCtx.beginPath();origLassoPath.forEach((p,i)=>{const sp=canvasToScreen(p.x,p.y);i?sovCtx.lineTo(sp.x,sp.y):sovCtx.moveTo(sp.x,sp.y);});sovCtx.closePath();sovCtx.fill();sovCtx.restore();}
-    drawMeshWarp(sovCtx,selImg,selBBox.w,selBBox.h,(r,c)=>meshPtS(r,c));
-    const H=getHandles(),corners=[H.TL,H.TR,H.BR,H.BL];sovCtx.save();sovCtx.strokeStyle='#f97316';sovCtx.lineWidth=1.5;sovCtx.setLineDash([6,3]);sovCtx.beginPath();corners.forEach((p,i)=>i?sovCtx.lineTo(p.x,p.y):sovCtx.moveTo(p.x,p.y));sovCtx.closePath();sovCtx.stroke();sovCtx.setLineDash([2,3]);sovCtx.strokeStyle='#f97316';sovCtx.beginPath();sovCtx.moveTo(H.TC.x,H.TC.y);sovCtx.lineTo(H.ROT.x,H.ROT.y);sovCtx.stroke();sovCtx.restore();
-    ['TL','TC','TR','ML','MR','BL','BC','BR'].forEach(n=>{const p=H[n];if(!p)return;sovCtx.save();sovCtx.fillStyle='#fff';sovCtx.strokeStyle='#f97316';sovCtx.lineWidth=1.5;sovCtx.beginPath();sovCtx.rect(p.x-7,p.y-7,14,14);sovCtx.fill();sovCtx.stroke();sovCtx.restore();});
-    const rp=H.ROT;sovCtx.save();sovCtx.fillStyle='#fff';sovCtx.strokeStyle='#f97316';sovCtx.lineWidth=2;sovCtx.beginPath();sovCtx.arc(rp.x,rp.y,9,0,Math.PI*2);sovCtx.fill();sovCtx.stroke();sovCtx.restore();
-    if(meshPts){sovCtx.save();sovCtx.strokeStyle='#80401a';sovCtx.lineWidth=1;sovCtx.setLineDash([]);for(let r=0;r<=4;r++){sovCtx.beginPath();for(let c=0;c<=4;c++){const sp=meshPtS(r,c);c?sovCtx.lineTo(sp.x,sp.y):sovCtx.moveTo(sp.x,sp.y);}sovCtx.stroke();}for(let c=0;c<=4;c++){sovCtx.beginPath();for(let r=0;r<=4;r++){const sp=meshPtS(r,c);r?sovCtx.lineTo(sp.x,sp.y):sovCtx.moveTo(sp.x,sp.y);}sovCtx.stroke();}for(let r=0;r<=4;r++)for(let c=0;c<=4;c++){const sp=meshPtS(r,c);sovCtx.beginPath();sovCtx.arc(sp.x,sp.y,5,0,Math.PI*2);sovCtx.fillStyle='#f97316';sovCtx.fill();}sovCtx.restore();}
+    if(transformMode==='warp' && warpHandles){
+      // ワープ変形: 4 角 + 4 辺中点ハンドル. 4 辺は常に直線.
+      // ホモグラフィなので 4x4 サブディビジョン (= 32 三角形) で十分滑らか.
+      drawWarpHomographic(sovCtx,selImg,selBBox.w,selBBox.h,4,true);
+      const W=warpHandles;
+      const sTL=canvasToScreen(W.TL.x,W.TL.y),sTR=canvasToScreen(W.TR.x,W.TR.y);
+      const sBR=canvasToScreen(W.BR.x,W.BR.y),sBL=canvasToScreen(W.BL.x,W.BL.y);
+      const sTM=canvasToScreen(W.TM.x,W.TM.y),sRM=canvasToScreen(W.RM.x,W.RM.y);
+      const sBM=canvasToScreen(W.BM.x,W.BM.y),sLM=canvasToScreen(W.LM.x,W.LM.y);
+      // 4 辺を直線で描画
+      sovCtx.save();sovCtx.strokeStyle='#3b82f6';sovCtx.lineWidth=1.5;sovCtx.setLineDash([6,3]);
+      sovCtx.beginPath();
+      sovCtx.moveTo(sTL.x,sTL.y);sovCtx.lineTo(sTR.x,sTR.y);
+      sovCtx.lineTo(sBR.x,sBR.y);sovCtx.lineTo(sBL.x,sBL.y);
+      sovCtx.closePath();
+      sovCtx.stroke();
+      sovCtx.restore();
+      // 8 ハンドル描画
+      const drawHandle=(p,isCorner)=>{
+        sovCtx.save();
+        sovCtx.fillStyle='#fff';sovCtx.strokeStyle='#3b82f6';sovCtx.lineWidth=2;
+        sovCtx.beginPath();
+        if(isCorner){sovCtx.rect(p.x-8,p.y-8,16,16);}
+        else{sovCtx.arc(p.x,p.y,8,0,Math.PI*2);}
+        sovCtx.fill();sovCtx.stroke();
+        sovCtx.restore();
+      };
+      drawHandle(sTL,true); drawHandle(sTR,true); drawHandle(sBR,true); drawHandle(sBL,true);
+      drawHandle(sTM,false); drawHandle(sRM,false); drawHandle(sBM,false); drawHandle(sLM,false);
+    } else {
+      // グリッド変形 (旧来): 矩形枠 + 8 ハンドル + 回転ハンドル + 5x5 メッシュ
+      drawMeshWarp(sovCtx,selImg,selBBox.w,selBBox.h,(r,c)=>meshPtS(r,c),4);
+      const H=getHandles(),corners=[H.TL,H.TR,H.BR,H.BL];sovCtx.save();sovCtx.strokeStyle='#f97316';sovCtx.lineWidth=1.5;sovCtx.setLineDash([6,3]);sovCtx.beginPath();corners.forEach((p,i)=>i?sovCtx.lineTo(p.x,p.y):sovCtx.moveTo(p.x,p.y));sovCtx.closePath();sovCtx.stroke();sovCtx.setLineDash([2,3]);sovCtx.strokeStyle='#f97316';sovCtx.beginPath();sovCtx.moveTo(H.TC.x,H.TC.y);sovCtx.lineTo(H.ROT.x,H.ROT.y);sovCtx.stroke();sovCtx.restore();
+      ['TL','TC','TR','ML','MR','BL','BC','BR'].forEach(n=>{const p=H[n];if(!p)return;sovCtx.save();sovCtx.fillStyle='#fff';sovCtx.strokeStyle='#f97316';sovCtx.lineWidth=1.5;sovCtx.beginPath();sovCtx.rect(p.x-7,p.y-7,14,14);sovCtx.fill();sovCtx.stroke();sovCtx.restore();});
+      const rp=H.ROT;sovCtx.save();sovCtx.fillStyle='#fff';sovCtx.strokeStyle='#f97316';sovCtx.lineWidth=2;sovCtx.beginPath();sovCtx.arc(rp.x,rp.y,9,0,Math.PI*2);sovCtx.fill();sovCtx.stroke();sovCtx.restore();
+      if(meshPts){sovCtx.save();sovCtx.strokeStyle='#80401a';sovCtx.lineWidth=1;sovCtx.setLineDash([]);for(let r=0;r<=4;r++){sovCtx.beginPath();for(let c=0;c<=4;c++){const sp=meshPtS(r,c);c?sovCtx.lineTo(sp.x,sp.y):sovCtx.moveTo(sp.x,sp.y);}sovCtx.stroke();}for(let c=0;c<=4;c++){sovCtx.beginPath();for(let r=0;r<=4;r++){const sp=meshPtS(r,c);r?sovCtx.lineTo(sp.x,sp.y):sovCtx.moveTo(sp.x,sp.y);}sovCtx.stroke();}for(let r=0;r<=4;r++)for(let c=0;c<=4;c++){const sp=meshPtS(r,c);sovCtx.beginPath();sovCtx.arc(sp.x,sp.y,5,0,Math.PI*2);sovCtx.fillStyle='#f97316';sovCtx.fill();}sovCtx.restore();}
+    }
   }
 }
 
@@ -3142,9 +3847,19 @@ function isStylusP(p){return p.pointerType==='pen';}
 function isTouchP(p){return p.pointerType==='touch';}
 
 const TAB_MAP={'tab-br':'brush','tab-mk':'marker','tab-er':'eraser','tab-ly':'layers','tab-dot':null};
-function classifyPenTarget(x,y){const el=document.elementFromPoint(x,y);if(!el)return'canvas';if(el.closest('.rpanel.open')||el.closest('.toppanel.open'))return'panel';if(el.closest('#sub-palette,#flip-btn,#color-btn,#alpha-btn,#erb,#sz-btn,#export-btn,#bpf-save-btn,#open-btn,#new-btn,#ref-btn,#sel-btn,#ruler-btn,#fill-btn,#fill-dialog,#topbar,#gallery-overlay,#new-dialog,#new-dialog-box,#bpf-preview-dialog,#cpicker-modal,#tl-overlay,#tl-btn,#gallery-btn,.toppanel'))return'ui';return'canvas';}
+function classifyPenTarget(x,y){const el=document.elementFromPoint(x,y);if(!el)return'canvas';if(el.closest('.rpanel.open')||el.closest('.toppanel.open'))return'panel';if(el.closest('#sub-palette,#flip-btn,#color-btn,#alpha-btn,#erb,#sz-btn,#export-btn,#bpf-save-btn,#open-btn,#new-btn,#ref-btn,#sel-btn,#ruler-btn,#fill-btn,#fill-dialog,#topbar,#gallery-overlay,#new-dialog,#new-dialog-box,#bpf-preview-dialog,#cpicker-modal,#tl-overlay,#tl-btn,#gallery-btn,#xform-toggle,.toppanel'))return'ui';return'canvas';}
 
 let rulerPreviewPt=null;
+
+// v44: Apple Pencil 第2世代のダブルタップによる意図しないスクロール/ジェスチャ発火を抑制.
+// iOS Safari は gesture* イベント (Apple独自) でダブルタップを発火することがある.
+// また Pencil hover やダブルタップで pointerover/pointerleave が来ることも.
+// ペン入力時は全てのジェスチャを完全に無効化する.
+document.addEventListener('gesturestart',function(e){e.preventDefault();},{passive:false});
+document.addEventListener('gesturechange',function(e){e.preventDefault();},{passive:false});
+document.addEventListener('gestureend',function(e){e.preventDefault();},{passive:false});
+// 念のため dblclick も抑制 (Pencil ダブルタップ → dblclick 化されるケース対策)
+document.addEventListener('dblclick',function(e){e.preventDefault();e.stopPropagation();},{passive:false,capture:true});
 
 // ── Pen 経路 (pointerType === 'pen') ──────────────────────────
 document.addEventListener('pointerdown',function(e){
@@ -3174,8 +3889,9 @@ document.addEventListener('pointerdown',function(e){
   //  取りこぼしが完全に解消された. 真の主因は Scribble だった. ただし保険として
   //  activePenId ベースのロバストネス対策は維持する.)
   if(activePenId!==null){
+    _dbgAdd('DOWN:prevStroke');
     _stopPenWatchdog();
-    finishStroke();
+    finishStroke('pdownGuard');
     captureStroke();
   }
   activePenId=e.pointerId;
@@ -3280,27 +3996,56 @@ document.addEventListener('pointermove',function(e){
   // 遅延ストローク機構 (_penStrokePending) も撤去済み.
   // beginStroke は pointerdown で即座に呼ばれているので, ここでは continueStroke に直行.
   updPRC(e.clientX,e.clientY,e.pressure);
-  // rev8: Pointer Events 標準 getCoalescedEvents で中間サンプルを拾う
+  _startPenWatchdog(); // rev41 fix: pointermove でタイマーリセット (2秒超ストローク対策)
+  // dbg3: pointermove timestamp & coalesced events logging (最初の8回まで)
+  const evs=e.getCoalescedEvents?e.getCoalescedEvents():[];
+  if(_dbgPMoveCount<10){
+    _dbgPMoveCount++;
+    const _ts=Math.round(e.timeStamp);
+    let _cstr='';
+    if(evs.length>0){
+      const _first=evs[0],_last=evs[evs.length-1];
+      _cstr=' coa='+evs.length+' fT='+Math.round(_first.timeStamp)+' lT='+Math.round(_last.timeStamp)
+            +' f('+Math.round(_first.clientX)+','+Math.round(_first.clientY)+')'
+            +' l('+Math.round(_last.clientX)+','+Math.round(_last.clientY)+')';
+    } else {
+      _cstr=' (no coa) e('+Math.round(e.clientX)+','+Math.round(e.clientY)+')';
+    }
+    _dbgAdd('PMV#'+_dbgPMoveCount+' eT='+_ts+_cstr);
+  }
   // rev17 修正: iPad Safari は時に大量 (50+) の coalesced event を返し,
   // 全部処理すると CR 補間 + GPU フラッシュで主スレッドが長時間ブロックされ,
   // 次の pointerdown を取りこぼす. 上限 8 サンプルにクランプして応答性を確保.
-  const evs=e.getCoalescedEvents?e.getCoalescedEvents():[];
+  // dbg3: timestamp guard - 過去の timeStamp を持つ coalesced event をスキップ
   if(evs.length>0){
+    // フィルタ: timestamp が _lastInputTs より大きいものだけ採用
+    const filtered=[];let _skipped=0;
+    for(const c of evs){
+      if(c.timeStamp>_lastInputTs){filtered.push(c);}else{_skipped++;}
+    }
+    if(_skipped>0 && _dbgPMoveCount<=10){
+      _dbgAdd('TSGuard skipped='+_skipped+' kept='+filtered.length);
+    }
+    if(filtered.length===0)return; // 全部過去なら何もしない
+    // フィルタ後の最後の timeStamp を更新
+    _lastInputTs=filtered[filtered.length-1].timeStamp;
     // 多すぎる場合は等間隔にダウンサンプル (8 個まで)
-    if(evs.length<=8){
-      for(const c of evs)continueStroke(c.clientX,c.clientY,c.pressure);
+    if(filtered.length<=8){
+      for(const c of filtered)continueStroke(c.clientX,c.clientY,c.pressure);
     } else {
-      const stride=evs.length/8;
+      const stride=filtered.length/8;
       for(let i=0;i<8;i++){
-        const idx=Math.min(evs.length-1,Math.floor(i*stride));
-        const c=evs[idx];
+        const idx=Math.min(filtered.length-1,Math.floor(i*stride));
+        const c=filtered[idx];
         continueStroke(c.clientX,c.clientY,c.pressure);
       }
-      // 必ず最終サンプルを含める
-      const last=evs[evs.length-1];
-      continueStroke(last.clientX,last.clientY,last.pressure);
     }
-  } else continueStroke(e.clientX,e.clientY,e.pressure);
+  } else {
+    if(e.timeStamp>_lastInputTs){
+      _lastInputTs=e.timeStamp;
+      continueStroke(e.clientX,e.clientY,e.pressure);
+    }
+  }
 },{passive:false,capture:true});
 
 document.addEventListener('pointerup',function(e){
@@ -3342,7 +4087,13 @@ document.addEventListener('pointerup',function(e){
   if(selState==='lasso'){drawSelOv();activePenId=null;penId=null;return;}
   // rev25: ペンホールドスポイト機構の撤去に伴い, _eyedropTimer/_penStrokePending
   // 関連の処理を全削除. 通常時は finishStroke を即座に呼ぶだけ.
-  _stopPenWatchdog();finishStroke();captureStroke();
+  // v30: 払いの筆圧を反映させるため、pointerup の最終サンプルを continueStroke に流す.
+  // pointerup は pointermove より新しいタイムスタンプ・最終筆圧を持つことが多い.
+  if(e.pressure>0 && e.timeStamp>_lastInputTs){
+    _lastInputTs=e.timeStamp;
+    continueStroke(e.clientX,e.clientY,e.pressure);
+  }
+  _stopPenWatchdog();finishStroke('pup');captureStroke();
   // rev26: activePenId/penId は finishStroke 後にクリア (再呼出から保護)
   activePenId=null;penId=null;
 },{passive:false,capture:true});
@@ -3355,7 +4106,7 @@ document.addEventListener('pointercancel',function(e){
   // rev28: スポイトドラッグ中のキャンセル (オーバーレイ非表示のみ)
   if(_eyedropDragActive){_eyedropDragCancel();}
   prc.style.display='none';selHandle=null;selPrevPt=null;rulerStart=null;rulerPreviewPt=null;
-  try{finishStroke();}catch(e2){}
+  try{finishStroke('pcancel');}catch(e2){}
   captureStroke();
   activePenId=null;penId=null;
 },{passive:false,capture:true});
@@ -3655,7 +4406,7 @@ document.getElementById('reset-view-btn').addEventListener('pointerdown',e=>{e.p
 // ── 新規作成 ──────────────────────────────────────────────
 function doNewCanvas(){
   _disposeAllStrokeDiffSnapshots();
-  gLayers.forEach(l=>{gl.deleteTexture(l.tex);gl.deleteFramebuffer(l.fbo);});gLayers=[];
+  gLayers.forEach(l=>_deleteLayerGPU(l));gLayers=[];
   timeline=[];timelinePos=-1;_recStroke=null;_strokeCount=0;
   _resizeStrokeBuf(); // v21 rev5: 安全のため一時状態をリセット
   addGLLayer('レイヤー 1','#000000');fitView();setTimeout(captureNow,0);renderLayers();
@@ -3713,7 +4464,7 @@ document.addEventListener('pointerdown',e=>{if(e.pointerType==='pen')return;cons
   dragSources.forEach(({tabId,getType})=>{
     const tab=document.getElementById(tabId);if(!tab)return;let _sx=0,_sy=0,_id=-1;
     tab.addEventListener('touchstart',e=>{const t=e.changedTouches[0];_dragging=false;_dragType=null;_sx=t.clientX;_sy=t.clientY;_id=t.identifier;},{passive:true});
-    tab.addEventListener('touchmove',e=>{const t=[...e.changedTouches].find(c=>c.identifier===_id);if(!t)return;if(!_dragging){if(Math.abs(t.clientX-_sx)>8||Math.abs(t.clientY-_sy)>8){_dragging=true;_dragType=getType();if(openPanel)closePanel();if(penId!==null){finishStroke();penId=null;}}}if(_dragging){e.stopPropagation();clearDragOver();const idx=slotAtPoint(t.clientX,t.clientY);if(idx!==null){const slot=document.querySelector(`.sp-slot[data-slot="${idx}"]`);if(slot)slot.classList.add('drag-over');}}},{passive:true});
+    tab.addEventListener('touchmove',e=>{const t=[...e.changedTouches].find(c=>c.identifier===_id);if(!t)return;if(!_dragging){if(Math.abs(t.clientX-_sx)>8||Math.abs(t.clientY-_sy)>8){_dragging=true;_dragType=getType();if(openPanel)closePanel();if(penId!==null){finishStroke('tabDrag');penId=null;}}}if(_dragging){e.stopPropagation();clearDragOver();const idx=slotAtPoint(t.clientX,t.clientY);if(idx!==null){const slot=document.querySelector(`.sp-slot[data-slot="${idx}"]`);if(slot)slot.classList.add('drag-over');}}},{passive:true});
     tab.addEventListener('touchend',e=>{if(_dragging&&_dragType){clearDragOver();const t=e.changedTouches[0];const idx=slotAtPoint(t.clientX,t.clientY);if(idx!==null){const prevTool=activeTool,prevEraser=eraserOn;if(_dragType==='eraser'){eraserOn=true;}else{eraserOn=false;if(activeTool!==_dragType)switchTool(_dragType);}spSaveCurrentTool(idx);eraserOn=prevEraser;if(activeTool!==prevTool)switchTool(prevTool);}_dragging=false;_dragType=null;}},{passive:true});
   });
 })();
@@ -3773,19 +4524,32 @@ function renderLayers(){
       e.stopPropagation();
       if(i===0){showToast('最下層のため結合できません');return;}
       const upper=gLayers[i],lower=gLayers[i-1];
-      // WebGLでupper→lower に合成（upper上にblend）
-      const r8upper=new Uint8Array(CW*CH*4),r8lower=new Uint8Array(CW*CH);
+      // WebGLでupper→lower に合成
+      const r8upper=new Uint8Array(CW*CH*4),r8lower=new Uint8Array(CW*CH*4);
       gl.bindFramebuffer(gl.READ_FRAMEBUFFER,upper.fbo);gl.readPixels(0,0,CW,CH,gl.RGBA,gl.UNSIGNED_BYTE,r8upper);
       gl.bindFramebuffer(gl.READ_FRAMEBUFFER,lower.fbo);gl.readPixels(0,0,CW,CH,gl.RGBA,gl.UNSIGNED_BYTE,r8lower);
       gl.bindFramebuffer(gl.READ_FRAMEBUFFER,null);
-      // 単純合成: upper!=0 ならその値を使用、なければlower
-      // RGBA合成: upper のアルファを使って lower に上書き
-      for(let p=0;p<CW*CH;p++){const o=p*4;if(r8upper[o+3]>0){r8lower[o]=r8upper[o];r8lower[o+1]=r8upper[o+1];r8lower[o+2]=r8upper[o+2];r8lower[o+3]=r8upper[o+3];}}
+      // Pre-multiplied alpha src-over 合成: dst = src + dst * (1 - srcA)
+      for(let p=0;p<CW*CH;p++){
+        const o=p*4;
+        const sa=r8upper[o+3];
+        if(sa===0)continue;
+        if(sa===255){
+          r8lower[o]=r8upper[o];r8lower[o+1]=r8upper[o+1];
+          r8lower[o+2]=r8upper[o+2];r8lower[o+3]=255;
+        } else {
+          const inv=1-sa/255;
+          r8lower[o  ]=Math.min(255,r8upper[o  ]+Math.round(r8lower[o  ]*inv));
+          r8lower[o+1]=Math.min(255,r8upper[o+1]+Math.round(r8lower[o+1]*inv));
+          r8lower[o+2]=Math.min(255,r8upper[o+2]+Math.round(r8lower[o+2]*inv));
+          r8lower[o+3]=Math.min(255,sa+Math.round(r8lower[o+3]*inv));
+        }
+      }
       gl.bindTexture(gl.TEXTURE_2D,lower.tex);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,CW,CH,gl.RGBA,gl.UNSIGNED_BYTE,r8lower);gl.bindTexture(gl.TEXTURE_2D,null);
       // upperレイヤーを削除
       const uid=upper.id;
       _disposeStrokeDiffSnapshotsForLayer(uid);
-      gl.deleteTexture(upper.tex);gl.deleteFramebuffer(upper.fbo);gLayers.splice(i,1);
+      _deleteLayerGPU(upper);gLayers.splice(i,1);
       gActiveIdx=Math.min(gActiveIdx,gLayers.length-1);
       _rec({type:'layer_delete',layerId:uid,merged:true});
       captureNow('merge_layer');
@@ -3796,7 +4560,7 @@ function renderLayers(){
       setTimeout(async()=>{
         const _did=gLayers[i].id;
         _disposeStrokeDiffSnapshotsForLayer(_did);
-        gl.deleteTexture(gLayers[i].tex);gl.deleteFramebuffer(gLayers[i].fbo);gLayers.splice(i,1);
+        _deleteLayerGPU(gLayers[i]);gLayers.splice(i,1);
         gActiveIdx=Math.min(gActiveIdx,gLayers.length-1);
         _rec({type:'layer_delete',layerId:_did});
         scheduleDraw();renderLayers();showToast('レイヤーを削除');
@@ -3863,8 +4627,50 @@ szConfirm.addEventListener('pointerdown',async e=>{
   // v21 rev5: 一括ヘルパー経由に統一 (旧コードは strokeBuf のみ再作成していたが
   // shadow FBO も破棄が必要で, _resizeStrokeBuf が両方を面倒見る)
   _resizeStrokeBuf();
-  // テクスチャ確保（メモリ不足時は安全に処理）
-  for(const{ref,r8new}of scaledLayers){const nt=makeR8Texture(CW,CH),nf=makeFBO(nt);if(!nf){showToast("⚠ GPU不足: サイズ変更をキャンセルしました");CW=oldCW;CH=oldCH;return;}gl.bindFramebuffer(gl.FRAMEBUFFER,nf);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.bindTexture(gl.TEXTURE_2D,nt);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,CW,CH,gl.RGBA,gl.UNSIGNED_BYTE,r8new);gl.bindTexture(gl.TEXTURE_2D,null);gl.deleteTexture(ref.tex);gl.deleteFramebuffer(ref.fbo);ref.tex=nt;ref.fbo=nf;}
+  // テクスチャ確保（Phase 4b: チャンク対応 + sparse allocation）
+  const CS=CHUNK_SIZE;
+  for(const{ref,r8new}of scaledLayers){
+    // 旧チャンクを全て解放
+    _deleteLayerGPU(ref);
+    // 新チャンクグリッドを構築
+    const ncx=Math.ceil(CW/CS),ncy=Math.ceil(CH/CS);
+    const chunks=[];
+    for(let cy=0;cy<ncy;cy++){
+      const row=[];
+      for(let cx=0;cx<ncx;cx++){
+        const cw=Math.min(CS,CW-cx*CS),ch=Math.min(CS,CH-cy*CS);
+        const ox=cx*CS,oy=cy*CS;
+        // チャンクに非透明ピクセルがあるか簡易チェック (4行おきにサンプル)
+        let hasData=false;
+        for(let y=0;y<ch&&!hasData;y+=4){
+          const srcRow=oy+y;
+          for(let x=0;x<cw&&!hasData;x+=4){
+            if(r8new[((srcRow)*CW+(ox+x))*4+3]>0)hasData=true;
+          }
+        }
+        if(hasData||(cx===0&&cy===0)){
+          try{
+            const tex=makeR8Texture(cw,ch),fbo=makeFBO(tex);
+            gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+            const chunk_r8=new Uint8Array(cw*ch*4);
+            for(let y=0;y<ch;y++){
+              const srcOff=(((oy+y))*CW+ox)*4;
+              chunk_r8.set(r8new.subarray(srcOff,srcOff+cw*4),y*cw*4);
+            }
+            gl.bindTexture(gl.TEXTURE_2D,tex);
+            gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,cw,ch,gl.RGBA,gl.UNSIGNED_BYTE,chunk_r8);
+            gl.bindTexture(gl.TEXTURE_2D,null);
+            row.push({tex,fbo,cw,ch,ox,oy});
+          }catch(e){row.push({tex:null,fbo:null,cw,ch,ox,oy});}
+        } else {
+          row.push({tex:null,fbo:null,cw,ch,ox,oy});
+        }
+      }
+      chunks.push(row);
+    }
+    ref.chunks=chunks;ref.chunkCols=ncx;ref.chunkRows=ncy;
+    ref.tex=chunks[0][0].tex;ref.fbo=chunks[0][0].fbo;
+  }
   resetView();renderLayers();
   document.getElementById('sz-cur').textContent=CW+'×'+CH;szPanel.classList.remove('open');
   setTimeout(()=>{lastCaptureTime=0;captureNow('canvas_resize');showToast(`${CW}×${CH} に変換完了`);},0);
@@ -3970,10 +4776,10 @@ function loadBPFFile(file){
       // キャンバスサイズ変更
       if(meta.CW&&meta.CH&&(meta.CW!==CW||meta.CH!==CH)){
         _disposeAllStrokeDiffSnapshots();
-        gLayers.forEach(l=>{gl.deleteTexture(l.tex);gl.deleteFramebuffer(l.fbo);});gLayers=[];timeline=[];timelinePos=-1;_recStroke=null;_strokeCount=0;
+        gLayers.forEach(l=>_deleteLayerGPU(l));gLayers=[];timeline=[];timelinePos=-1;_recStroke=null;_strokeCount=0;
         CW=meta.CW;CH=meta.CH;document.getElementById('sz-cur').textContent=CW+'×'+CH;document.querySelectorAll('.sz-opt').forEach(o=>o.classList.toggle('cur',+o.dataset.w===CW&&+o.dataset.h===CH));
         _resizeStrokeBuf(); // v21 rev5: サイズ変更時に strokeBuf/shadow を再作成
-      }else{_disposeAllStrokeDiffSnapshots();gLayers.forEach(l=>{gl.deleteTexture(l.tex);gl.deleteFramebuffer(l.fbo);});gLayers=[];timeline=[];timelinePos=-1;_recStroke=null;_strokeCount=0;}
+      }else{_disposeAllStrokeDiffSnapshots();gLayers.forEach(l=>_deleteLayerGPU(l));gLayers=[];timeline=[];timelinePos=-1;_recStroke=null;_strokeCount=0;}
       if(meta.bgColor)applyBg(meta.bgColor);
       for(let i=0;i<meta.layers.length;i++){
         const lm=meta.layers[i];const pngB64=pngs[lm.pngIdx];
@@ -4033,8 +4839,8 @@ function loadPSDFile(file){
       for(let li=0;li<layerCount;li++){r32();r32();r32();r32();const nc=r16();const chanInfo=[];for(let c=0;c<nc;c++){const id=r16s();const len=r32();chanInfo.push({id,len});}rStr(4);const blendKey=rStr(4);const opacity=r8()/255;r8();const flags=r8();r8();const visible=!(flags&2);const extraLen=r32();const extraEnd=p+extraLen;skip(4);skip(4);const nameLen=r8();let name='';for(let i=0;i<nameLen;i++)name+=String.fromCharCode(r8());skip((4-(1+nameLen)%4)%4);p=extraEnd;records.push({nc,chanInfo,opacity,visible,name:name||('Layer '+(li+1)),blendMode:blendKey.trim()==='mul'?'multiply':'normal'});}
       const layerPixels=records.map(rec=>{const chans={};for(const ci of rec.chanInfo){const comp=r16();const nPix=W*H;let data;if(comp===0){data=new Uint8Array(buf,p,nPix);p+=nPix;}else if(comp===1){const rowLens=[];for(let r2=0;r2<H;r2++)rowLens.push(r16());data=new Uint8Array(nPix);let di=0;for(let r2=0;r2<H;r2++){const end=p+rowLens[r2];while(p<end){const hdr=v.getInt8(p++);if(hdr>=0){const nn=hdr+1;for(let i=0;i<nn;i++)data[di++]=r8();}else{const nn=1-hdr;const val2=r8();for(let i=0;i<nn;i++)data[di++]=val2;}}}}else throw new Error('非対応圧縮');chans[ci.id]=data;}return chans;});
       p=lmiEnd;
-      if(W!==CW||H!==CH){_disposeAllStrokeDiffSnapshots();gLayers.forEach(l=>{gl.deleteTexture(l.tex);gl.deleteFramebuffer(l.fbo);});gLayers=[];timeline=[];timelinePos=-1;_recStroke=null;_strokeCount=0;CW=W;CH=H;document.getElementById('sz-cur').textContent=CW+'×'+CH;document.querySelectorAll('.sz-opt').forEach(o=>o.classList.toggle('cur',+o.dataset.w===CW&&+o.dataset.h===CH));_resizeStrokeBuf();}
-      else{_disposeAllStrokeDiffSnapshots();gLayers.forEach(l=>{gl.deleteTexture(l.tex);gl.deleteFramebuffer(l.fbo);});gLayers=[];timeline=[];timelinePos=-1;_recStroke=null;_strokeCount=0;}
+      if(W!==CW||H!==CH){_disposeAllStrokeDiffSnapshots();gLayers.forEach(l=>_deleteLayerGPU(l));gLayers=[];timeline=[];timelinePos=-1;_recStroke=null;_strokeCount=0;CW=W;CH=H;document.getElementById('sz-cur').textContent=CW+'×'+CH;document.querySelectorAll('.sz-opt').forEach(o=>o.classList.toggle('cur',+o.dataset.w===CW&&+o.dataset.h===CH));_resizeStrokeBuf();}
+      else{_disposeAllStrokeDiffSnapshots();gLayers.forEach(l=>_deleteLayerGPU(l));gLayers=[];timeline=[];timelinePos=-1;_recStroke=null;_strokeCount=0;}
       records.forEach((rec,li)=>{
         const chans=layerPixels[li];const alpha=chans[-1],R=chans[0],G=chans[1],B=chans[2];
         // v21 fix: 旧BinaryPaint コードは alpha だけを使い RGB=(0,0,0) 固定で保存していたため
@@ -4326,12 +5132,13 @@ document.getElementById('cpicker-box').addEventListener('touchmove',e=>{e.preven
 
 
 // ── カーブポイントエディタ（#6） ──────────────────────────
-function initCurveEditor(canvasId,getToolFn,setToolFn){
+function initCurveEditor(canvasId,getToolFn,setToolFn,ptsKey){
   const cv=document.getElementById(canvasId);if(!cv)return;
   const W=cv.width,H=cv.height;
+  const key=ptsKey||'pts';
   let activePt=-1;
-  function getPts(){return(getToolFn().pts||DEFAULT_PTS).map(p=>({...p}));}
-  function setPts(pts){const t=getToolFn();t.pts=pts.slice().sort((a,b)=>a.x-b.x);setToolFn(t);}
+  function getPts(){return(getToolFn()[key]||DEFAULT_PTS).map(p=>({...p}));}
+  function setPts(pts){const t=getToolFn();t[key]=pts.slice().sort((a,b)=>a.x-b.x);setToolFn(t);}
   function ptSX(pt){return pt.x*W;}
   function ptSY(pt){return(1-pt.y)*H;}
   function hitTest(sx,sy,pts){for(let i=0;i<pts.length;i++){const dx=sx-ptSX(pts[i]),dy=sy-ptSY(pts[i]);if(dx*dx+dy*dy<18*18)return i;}return-1;}
@@ -4352,12 +5159,13 @@ function initCurveEditor(canvasId,getToolFn,setToolFn){
     ctx.strokeStyle='#2a2a3a';ctx.lineWidth=1;
     for(let i=1;i<4;i++){ctx.beginPath();ctx.moveTo(W*i/4,0);ctx.lineTo(W*i/4,H);ctx.stroke();ctx.beginPath();ctx.moveTo(0,H*i/4);ctx.lineTo(W,H*i/4);ctx.stroke();}
     const tool=getToolFn();const pts=getPts();
-    // 1px閾値ライン（赤）
-    if(tool.thresh>0){const tx=tool.thresh*W;ctx.strokeStyle='#f87171';ctx.setLineDash([3,3]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(tx,0);ctx.lineTo(tx,H);ctx.stroke();ctx.setLineDash([]);}
-    // 最小サイズライン（緑）
-    if(tool.min>0&&tool.sz>0){const yF=(1-tool.min/tool.sz)*H;ctx.strokeStyle='#4ade80';ctx.setLineDash([2,4]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,yF);ctx.lineTo(W,yF);ctx.stroke();ctx.setLineDash([]);}
+    if(key==='pts'){
+      // サイズカーブのみ: 1px閾値ライン（赤）+ 最小サイズライン（緑）
+      if(tool.thresh>0){const tx=tool.thresh*W;ctx.strokeStyle='#f87171';ctx.setLineDash([3,3]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(tx,0);ctx.lineTo(tx,H);ctx.stroke();ctx.setLineDash([]);}
+      if(tool.min>0&&tool.sz>0){const yF=(1-tool.min/tool.sz)*H;ctx.strokeStyle='#4ade80';ctx.setLineDash([2,4]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,yF);ctx.lineTo(W,yF);ctx.stroke();ctx.setLineDash([]);}
+    }
     // カーブ
-    ctx.strokeStyle=tool.pressure?'#5b9cf6':'#666677';ctx.lineWidth=2;ctx.beginPath();
+    ctx.strokeStyle=(key==='opacPts')?(tool.pressureOpac?'#c084fc':'#666677'):(tool.pressure?'#5b9cf6':'#666677');ctx.lineWidth=2;ctx.beginPath();
     for(let i=0;i<pts.length;i++){const sx=ptSX(pts[i]),sy=ptSY(pts[i]);i?ctx.lineTo(sx,sy):ctx.moveTo(sx,sy);}ctx.stroke();
     // 制御点
     for(let i=0;i<pts.length;i++){
@@ -4366,7 +5174,7 @@ function initCurveEditor(canvasId,getToolFn,setToolFn){
       ctx.fillStyle=i===activePt?'#f97316':(i===0||i===pts.length-1)?'#888888':'#5b9cf6';
       ctx.fill();ctx.strokeStyle='#ffffff';ctx.lineWidth=1.5;ctx.stroke();
     }
-    ctx.fillStyle='#7a7a8a';ctx.font='9px "DM Mono",monospace';ctx.fillText('筆圧 →',3,H-3);ctx.fillText('↑ px',2,9);
+    ctx.fillStyle='#7a7a8a';ctx.font='9px "DM Mono",monospace';ctx.fillText('筆圧 →',3,H-3);ctx.fillText(key==='opacPts'?'↑ %':'↑ px',2,9);
   }
   function getCvXY(clientX,clientY){const rect=cv.getBoundingClientRect();return{x:(clientX-rect.left)*W/rect.width,y:(clientY-rect.top)*H/rect.height};}
   function applyDrag(clientX,clientY){
@@ -4478,6 +5286,9 @@ function spActivateTool(slotIdx){
       _setCslValue('csl-msz',bMin);document.getElementById('v-msz').textContent=bMin+'px';
       _setCslValue('csl-stab',stabLen);document.getElementById('v-stab').textContent=stabLen===0?'OFF':stabLen;
       _setCslValue('csl-thr',Math.round(bThresh*100));document.getElementById('v-thr').textContent=Math.round(bThresh*100)+'%';
+      _setCslValue('csl-deadzone',TOOLS.pen.deadZone||0);document.getElementById('v-deadzone').textContent=(TOOLS.pen.deadZone||0);
+      _setCslValue('csl-stap',TOOLS.pen.startTaper||0);document.getElementById('v-stap').textContent=(TOOLS.pen.startTaper||0);
+      _setCslValue('csl-etap',TOOLS.pen.endTaper||0);document.getElementById('v-etap').textContent=(TOOLS.pen.endTaper||0);
       const cbPr=document.getElementById('cb-pr');if(cbPr)cbPr.checked=bPressure;
       const prSec=document.getElementById('pr-sec');if(prSec)prSec.style.opacity=bPressure?'1':'0.4';
       drawStabOn('stab-cv',stabLen);
@@ -4487,6 +5298,9 @@ function spActivateTool(slotIdx){
       _setCslValue('csl-mk-msz',bMin);document.getElementById('v-mk-msz').textContent=bMin+'px';
       _setCslValue('csl-mk-stab',stabLen);document.getElementById('v-mk-stab').textContent=stabLen===0?'OFF':stabLen;
       _setCslValue('csl-mk-thr',Math.round(bThresh*100));document.getElementById('v-mk-thr').textContent=Math.round(bThresh*100)+'%';
+      _setCslValue('csl-mk-deadzone',TOOLS.marker.deadZone||0);document.getElementById('v-mk-deadzone').textContent=(TOOLS.marker.deadZone||0);
+      _setCslValue('csl-mk-stap',TOOLS.marker.startTaper||0);document.getElementById('v-mk-stap').textContent=(TOOLS.marker.startTaper||0);
+      _setCslValue('csl-mk-etap',TOOLS.marker.endTaper||0);document.getElementById('v-mk-etap').textContent=(TOOLS.marker.endTaper||0);
       const cbMk=document.getElementById('cb-mk-pr');if(cbMk)cbMk.checked=bPressure;
       const mkPrSec=document.getElementById('mk-pr-sec');if(mkPrSec)mkPrSec.style.opacity=bPressure?'1':'0.4';
       drawStabOn('mk-stab-cv',stabLen);
@@ -4539,7 +5353,7 @@ async function rotateCanvas90CW(){
     const nt=makeR8Texture(CW,CH),nf=makeFBO(nt);
     gl.bindFramebuffer(gl.FRAMEBUFFER,nf);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.bindFramebuffer(gl.FRAMEBUFFER,null);
     gl.bindTexture(gl.TEXTURE_2D,nt);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,CW,CH,gl.RGBA,gl.UNSIGNED_BYTE,r8new);gl.bindTexture(gl.TEXTURE_2D,null);
-    gl.deleteTexture(l.tex);gl.deleteFramebuffer(l.fbo);l.tex=nt;l.fbo=nf;
+    _deleteLayerGPU(l);l.tex=nt;l.fbo=nf;l.chunks=null;l.chunkCols=1;l.chunkRows=1;
   }
   document.getElementById('sz-cur').textContent=CW+'×'+CH;
   document.querySelectorAll('.sz-opt').forEach(o=>o.classList.toggle('cur',+o.dataset.w===CW&&+o.dataset.h===CH));
@@ -4813,7 +5627,7 @@ async function applyBPFPayload(payloadStr){
     if(!meta.version || meta.version<1) throw new Error('バージョン不明');
     // キャンバスサイズ変更
     _disposeAllStrokeDiffSnapshots();
-    gLayers.forEach(l=>{gl.deleteTexture(l.tex);gl.deleteFramebuffer(l.fbo);});
+    gLayers.forEach(l=>_deleteLayerGPU(l));
     gLayers=[];timeline=[];timelinePos=-1;_recStroke=null;_strokeCount=0;
     CW=meta.CW;CH=meta.CH;
     document.getElementById('sz-cur').textContent=CW+'×'+CH;
@@ -4996,7 +5810,7 @@ document.addEventListener('visibilitychange',async()=>{
 
 // 全入力状態の強制リセット（長時間使用や割り込みで状態が固着した場合）
 function _resetAllInputState(){
-  if(activePenId!==null||penId!==null){try{finishStroke();}catch(e){}activePenId=null;penId=null;}
+  if(activePenId!==null||penId!==null){try{finishStroke('reset');}catch(e){}activePenId=null;penId=null;}
   // rev23: GPU snapshot で即時取得のため保留キュー処理は不要
   ftouches.clear();maxFC=0;fMoved=false;gStart=0;panBase=null;pinchBase=null;
   prc.style.display='none';
@@ -5013,15 +5827,13 @@ let _penWatchdog=null;
 function _startPenWatchdog(){
   clearTimeout(_penWatchdog);
   _penWatchdog=setTimeout(()=>{
-    // rev26: activePenId で判定 + タイムアウトを 8000ms → 2000ms に短縮 (Grok 提案).
-    // 旧 8000ms は長時間ストロークの誤リセット防止が目的だったが,
-    // 2 秒以上 pointerup が来ないケースは実用上は ID 取りこぼし or システム異常で,
-    // 短縮することで取りこぼし状態からの復帰が早くなる.
+    // rev41 fix: タイムアウト 2000ms → 4000ms. pointermove でリセットされるので
+    // 正常なストロークでは発火しない. 4秒は「最後の pointermove から 4 秒間無反応」を意味.
     if(activePenId!==null){
       console.warn('Inkstride: pen watchdog reset (stuck pen)');
       _resetAllInputState();
     }
-  },2000);
+  },4000);
 }
 function _stopPenWatchdog(){clearTimeout(_penWatchdog);}
 
@@ -5222,7 +6034,12 @@ function _sampleCanvasColor(screenX,screenY){
     ()=>({pts:TOOLS.pen.pts,min:TOOLS.pen.min,sz:TOOLS.pen.sz,pressure:TOOLS.pen.pressure,thresh:TOOLS.pen.thresh||0}),
     (t)=>{TOOLS.pen.pts=t.pts;if(activeTool==='pen')bPts=TOOLS.pen.pts;}
   );
-  function drawPen(){if(drawPenCurve)drawPenCurve();}
+  const drawPenOpacCurve=initCurveEditor('opac-curve-cv',
+    ()=>({opacPts:TOOLS.pen.opacPts,pressureOpac:TOOLS.pen.pressureOpac}),
+    (t)=>{TOOLS.pen.opacPts=t.opacPts;},
+    'opacPts'
+  );
+  function drawPen(){if(drawPenCurve)drawPenCurve();if(drawPenOpacCurve)drawPenOpacCurve();}
 
   initCsl('csl-sz',TOOLS.pen.sz,v=>{TOOLS.pen.sz=v;if(activeTool==='pen')bSize=v;document.getElementById('v-sz').textContent=v+'px';drawPen();});
   initCsl('csl-msz',TOOLS.pen.min,v=>{TOOLS.pen.min=v;if(activeTool==='pen')bMin=v;document.getElementById('v-msz').textContent=v+'px';drawPen();});
@@ -5245,6 +6062,11 @@ function _sampleCanvasColor(screenX,screenY){
   });
   initCsl('csl-spacing',Math.round((TOOLS.pen.spacing||1.0)*100),v=>{TOOLS.pen.spacing=v/100;document.getElementById('v-spacing').textContent=v+'%';});
   initCsl('csl-thr',Math.round((TOOLS.pen.thresh||0)*100),v=>{TOOLS.pen.thresh=v/100;if(activeTool==='pen')bThresh=TOOLS.pen.thresh;document.getElementById('v-thr').textContent=v+'%';drawPen();});
+  // v47: 始点無視 (デッドゾーン) スライダー. 1〜100 で先頭 0.2〜20% を切り捨て.
+  initCsl('csl-deadzone',TOOLS.pen.deadZone||0,v=>{TOOLS.pen.deadZone=v;document.getElementById('v-deadzone').textContent=v;});
+  // v51: 入り/抜き距離スライダー (0〜200 px). 0 = OFF.
+  initCsl('csl-stap',TOOLS.pen.startTaper||0,v=>{TOOLS.pen.startTaper=v;document.getElementById('v-stap').textContent=v;});
+  initCsl('csl-etap',TOOLS.pen.endTaper||0,v=>{TOOLS.pen.endTaper=v;document.getElementById('v-etap').textContent=v;});
   document.getElementById('cb-pr').checked=TOOLS.pen.pressure;
   document.getElementById('cb-pr').addEventListener('change',e=>{TOOLS.pen.pressure=e.target.checked;if(activeTool==='pen')bPressure=e.target.checked;document.getElementById('pr-sec').style.opacity=e.target.checked?'1':'0.4';drawPen();});
   document.getElementById('pr-sec').style.opacity=TOOLS.pen.pressure?'1':'0.4';
@@ -5255,31 +6077,39 @@ function _sampleCanvasColor(screenX,screenY){
   (document.getElementById('cb-pencil')||{}).checked=TOOLS.pen.pencil||false;
   document.getElementById('cb-pencil')?.addEventListener('change',e=>{TOOLS.pen.pencil=e.target.checked;});
   (document.getElementById('cb-pr-opac')||{}).checked=TOOLS.pen.pressureOpac||false;
-  document.getElementById('cb-pr-opac')?.addEventListener('change',e=>{TOOLS.pen.pressureOpac=e.target.checked;});
+  document.getElementById('cb-pr-opac')?.addEventListener('change',e=>{TOOLS.pen.pressureOpac=e.target.checked;document.getElementById('pr-opac-sec').style.opacity=e.target.checked?'1':'0.4';drawPen();});
+  document.getElementById('pr-opac-sec').style.opacity=TOOLS.pen.pressureOpac?'1':'0.4';
 
   // ── マーカー設定スライダー
   const drawMkCurve=initCurveEditor('mk-curve-cv',
     ()=>({pts:TOOLS.marker.pts,min:TOOLS.marker.min,sz:TOOLS.marker.sz,pressure:TOOLS.marker.pressure,thresh:TOOLS.marker.thresh||0}),
     (t)=>{TOOLS.marker.pts=t.pts;if(activeTool==='marker')bPts=TOOLS.marker.pts;}
   );
-  function drawMk(){if(drawMkCurve)drawMkCurve();}
+  const drawMkOpacCurve=initCurveEditor('mk-opac-curve-cv',
+    ()=>({opacPts:TOOLS.marker.opacPts,pressureOpac:TOOLS.marker.pressureOpac}),
+    (t)=>{TOOLS.marker.opacPts=t.opacPts;},
+    'opacPts'
+  );
+  function drawMk(){if(drawMkCurve)drawMkCurve();if(drawMkOpacCurve)drawMkOpacCurve();}
   initCsl('csl-mk-sz',TOOLS.marker.sz,v=>{TOOLS.marker.sz=v;if(activeTool==='marker')bSize=v;document.getElementById('v-mk-sz').textContent=v+'px';drawMk();});
   initCsl('csl-mk-msz',TOOLS.marker.min,v=>{TOOLS.marker.min=v;if(activeTool==='marker')bMin=v;document.getElementById('v-mk-msz').textContent=v+'px';drawMk();});
   initCsl('csl-mk-stab',TOOLS.marker.stab,v=>{TOOLS.marker.stab=v;if(activeTool==='marker')stabLen=v;document.getElementById('v-mk-stab').textContent=v;drawStabOn('mk-stab-cv',v);});
   initCsl('csl-mk-opac',Math.round((TOOLS.marker.opacity||0.8)*100),v=>{TOOLS.marker.opacity=v/100;document.getElementById('v-mk-opac').textContent=v+'%';});
   initCsl('csl-mk-spacing',Math.round((TOOLS.marker.spacing||0.5)*100),v=>{TOOLS.marker.spacing=v/100;document.getElementById('v-mk-spacing').textContent=v+'%';});
   initCsl('csl-mk-thr',Math.round((TOOLS.marker.thresh||0)*100),v=>{TOOLS.marker.thresh=v/100;if(activeTool==='marker')bThresh=TOOLS.marker.thresh;document.getElementById('v-mk-thr').textContent=v+'%';drawMk();});
+  // v47: マーカー始点無視 (デッドゾーン) スライダー
+  initCsl('csl-mk-deadzone',TOOLS.marker.deadZone||0,v=>{TOOLS.marker.deadZone=v;document.getElementById('v-mk-deadzone').textContent=v;});
+  // v51: マーカー 入り/抜きスライダー
+  initCsl('csl-mk-stap',TOOLS.marker.startTaper||0,v=>{TOOLS.marker.startTaper=v;document.getElementById('v-mk-stap').textContent=v;});
+  initCsl('csl-mk-etap',TOOLS.marker.endTaper||0,v=>{TOOLS.marker.endTaper=v;document.getElementById('v-mk-etap').textContent=v;});
   document.getElementById('cb-mk-pr').checked=TOOLS.marker.pressure;
   document.getElementById('cb-mk-pr').addEventListener('change',e=>{TOOLS.marker.pressure=e.target.checked;if(activeTool==='marker')bPressure=e.target.checked;document.getElementById('mk-pr-sec').style.opacity=e.target.checked?'1':'0.4';drawMk();});
   document.getElementById('mk-pr-sec').style.opacity=TOOLS.marker.pressure?'1':'0.4';
   (document.getElementById('cb-mk-pencil')||{}).checked=TOOLS.marker.pencil||false;
   document.getElementById('cb-mk-pencil')?.addEventListener('change',e=>{TOOLS.marker.pencil=e.target.checked;});
   (document.getElementById('cb-mk-pr-opac')||{}).checked=TOOLS.marker.pressureOpac||false;
-  document.getElementById('cb-mk-pr-opac')?.addEventListener('change',e=>{TOOLS.marker.pressureOpac=e.target.checked;});
-  (document.getElementById('cb-mk-pencil')||{}).checked=TOOLS.marker.pencil||false;
-  document.getElementById('cb-mk-pencil')?.addEventListener('change',e=>{TOOLS.marker.pencil=e.target.checked;});
-  (document.getElementById('cb-mk-pr-opac')||{}).checked=TOOLS.marker.pressureOpac||false;
-  document.getElementById('cb-mk-pr-opac')?.addEventListener('change',e=>{TOOLS.marker.pressureOpac=e.target.checked;});
+  document.getElementById('cb-mk-pr-opac')?.addEventListener('change',e=>{TOOLS.marker.pressureOpac=e.target.checked;document.getElementById('mk-pr-opac-sec').style.opacity=e.target.checked?'1':'0.4';drawMk();});
+  document.getElementById('mk-pr-opac-sec').style.opacity=TOOLS.marker.pressureOpac?'1':'0.4';
 
   erb.classList.toggle('on',eraserOn);badge.classList.toggle('show',eraserOn);
 
@@ -5317,14 +6147,14 @@ function _sampleCanvasColor(screenX,screenY){
       psSlider.value = String(pressureSensitivity);
       psVal.textContent = pressureSensitivity.toFixed(2);
       // ネイティブスライダーの色付け (--pct CSS var)
-      const pct = ((pressureSensitivity - 0.3) / (3.0 - 0.3)) * 100;
+      const pct = ((pressureSensitivity - 0.05) / (3.0 - 0.05)) * 100;
       psSlider.style.setProperty('--pct', pct.toFixed(1) + '%');
     }
     syncUI();
     psSlider.addEventListener('input', e=>{
       const v = parseFloat(e.target.value);
       if(isFinite(v)){
-        pressureSensitivity = Math.max(0.3, Math.min(3.0, v));
+        pressureSensitivity = Math.max(0.05, Math.min(3.0, v));
         syncUI();
         try{saveState();}catch(_){}
       }
