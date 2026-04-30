@@ -82,16 +82,12 @@ button:disabled{opacity:.4;cursor:default}
     <button class="primary" onclick="connectDropbox()" id="btn-connect">接続</button>
     <button class="danger" id="btn-disconnect" onclick="disconnect()" style="display:none">切断</button>
   </div>
-  <div class="row" id="secret-row">
-    <label style="color:#f97316">App Secret</label>
-    <input type="text" id="app-secret" placeholder="任意 — 通常不要" style="flex:1;border-color:#3a3a44">
-  </div>
-  <!-- iOS PWA での location.href 問題を回避するための隠しフォーム -->
+  <!-- iOS PWA での location.href 問題を回避するための隠しフォーム（PKCE固定） -->
   <form id="auth-form" method="GET" action="https://www.dropbox.com/oauth2/authorize" style="display:none">
     <input type="hidden" name="client_id" id="f-client-id">
     <input type="hidden" name="response_type" value="code">
     <input type="hidden" name="code_challenge" id="f-challenge">
-    <input type="hidden" name="code_challenge_method" id="f-method">
+    <input type="hidden" name="code_challenge_method" value="plain">
     <input type="hidden" name="redirect_uri" id="f-redirect">
     <input type="hidden" name="state" id="f-state">
     <input type="hidden" name="token_access_type" value="offline">
@@ -171,38 +167,21 @@ function makeRandStr(len) {
 }
 
 // ─── OAuth2 ────────────────────────────────────────────────────
+// v85e: 新規Dropboxアプリはcode_verifier必須。App Secretは不要・無効。
 async function connectDropbox() {
-  const appKey    = document.getElementById('app-key').value.trim();
-  const appSecret = document.getElementById('app-secret').value.trim();
+  const appKey = document.getElementById('app-key').value.trim();
   if (!appKey) { syncBar('err', 'App Key を入力してください'); return; }
   localStorage.setItem('dbx_app_key', appKey);
-  localStorage.setItem('dbx_app_secret', appSecret); // 空文字でも上書き
 
-  const state = makeRandStr(16);
+  const verifier = makeRandStr(64);
+  const state    = makeRandStr(16);
+  localStorage.setItem('dbx_v', verifier);
   localStorage.setItem('dbx_s', state);
 
-  const challengeEl = document.getElementById('f-challenge');
-  const methodEl    = document.getElementById('f-method');
-
-  if (appSecret) {
-    // ── App Secret フロー: PKCE不要 ──
-    // code_challenge/method フィールドをフォームから除外
-    challengeEl.removeAttribute('name');
-    methodEl.removeAttribute('name');
-    localStorage.removeItem('dbx_v');
-  } else {
-    // ── PKCE フロー: App Secret なし ──
-    const verifier = makeRandStr(64);
-    localStorage.setItem('dbx_v', verifier);
-    challengeEl.setAttribute('name', 'code_challenge');
-    methodEl.setAttribute('name', 'code_challenge_method');
-    challengeEl.value = verifier;
-    methodEl.value    = 'plain';
-  }
-
   document.getElementById('f-client-id').value = appKey;
-  document.getElementById('f-redirect').value  = REDIRECT_URI;
-  document.getElementById('f-state').value      = state;
+  document.getElementById('f-challenge').value  = verifier;
+  document.getElementById('f-redirect').value   = REDIRECT_URI;
+  document.getElementById('f-state').value       = state;
   syncBar('info', 'Dropbox 認証ページへ移動中…');
   document.getElementById('auth-form').submit();
 }
@@ -227,31 +206,17 @@ async function handleCallback() {
 
   syncBar('info', 'Dropbox トークン取得中…', true);
   try {
-    const storedKey    = localStorage.getItem('dbx_app_key')    || '';
-    const storedSecret = localStorage.getItem('dbx_app_secret') || '';
-    const storedVer    = localStorage.getItem('dbx_v')          || '';
+    const storedKey = localStorage.getItem('dbx_app_key') || '';
+    const storedVer = localStorage.getItem('dbx_v')       || '';
 
-    // ── デバッグ: 送信内容を画面に表示 ──
-    showFileStatus('info',
-      '送信内容確認:\n' +
-      'client_id:    [' + storedKey.slice(0,4) + '…' + storedKey.slice(-2) + '] (len=' + storedKey.length + ')\n' +
-      'client_secret:[' + (storedSecret ? storedSecret.slice(0,4) + '…len=' + storedSecret.length : 'なし') + ']\n' +
-      'code_verifier:[' + (storedVer   ? 'あり len=' + storedVer.length   : 'なし') + ']\n' +
-      'redirect_uri: ' + REDIRECT_URI
-    );
-    document.getElementById('sec-files').style.display = '';
+    if (!storedVer) throw new Error('code_verifier が見つかりません。再度「接続」してください。');
 
-    // POSTボディ方式（標準OAuth2）
     const body = new URLSearchParams();
     body.set('grant_type',   'authorization_code');
     body.set('code',         code);
     body.set('client_id',    storedKey);
+    body.set('code_verifier', storedVer);
     body.set('redirect_uri', REDIRECT_URI);
-    if (storedSecret) {
-      body.set('client_secret', storedSecret);
-    } else if (storedVer) {
-      body.set('code_verifier', storedVer);
-    }
 
     const r = await fetch('https://api.dropboxapi.com/oauth2/token', {
       method: 'POST',
@@ -261,9 +226,7 @@ async function handleCallback() {
     const text = await r.text();
     let d;
     try { d = JSON.parse(text); } catch(_) { throw new Error('レスポンス解析失敗: ' + text.slice(0, 400)); }
-    if (!d.access_token) throw new Error(
-      '詳細: ' + JSON.stringify(d) + '\n送信redirect_uri: ' + REDIRECT_URI
-    );
+    if (!d.access_token) throw new Error(JSON.stringify(d));
     localStorage.setItem('dbx_token', d.access_token);
     if (d.refresh_token) localStorage.setItem('dbx_refresh', d.refresh_token);
     localStorage.removeItem('dbx_v');
