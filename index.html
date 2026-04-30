@@ -777,14 +777,11 @@ function _remapPressure(p){
   return Math.pow(scaled,pressureSensitivity);
 }
 function _calcPointOpac(rawF){
-  const usePO=!eraserOn&&(activeTool==='marker'?TOOLS.marker.pressureOpac:TOOLS.pen.pressureOpac);
+  // v82: 消しゴムも pressureOpac を尊重するよう統一
+  const usePO=eraserOn?TOOLS.eraser.pressureOpac:(activeTool==='marker'?TOOLS.marker.pressureOpac:TOOLS.pen.pressureOpac);
   if(!usePO)return 1.0;
-  // v32: PRESSURE_CEIL リマップ + 急峻なカーブ.
-  // 「軽筆圧で濃い」は PRESSURE_CEIL=0.33 のリマップで実現.
-  // 「払いで自然にフェードアウト」のため、入力 0 → 出力 0 を維持.
-  // OPAC_FLOOR の人工的底上げは「払いのグラデーション」を破壊するため削除.
   const p=_remapPressure(rawF);
-  const tool=activeTool==='marker'?TOOLS.marker:TOOLS.pen;
+  const tool=eraserOn?TOOLS.eraser:(activeTool==='marker'?TOOLS.marker:TOOLS.pen);
   const pts=tool.opacPts||tool.pts;
   return Math.max(0,Math.min(1,evalCurvePts(pts,p)));
 }
@@ -832,13 +829,14 @@ const DEFAULT_PTS=CURVE_X.map((x,i)=>({x,y:DEFAULT_Y[i]}));
 // v32: opacPts カーブを「急峻に立ち上がるが入力0は出力0」に再設計.
 // PRESSURE_CEIL=0.33 で入力筆圧の有効域が拡大されているので、軽筆圧でも素早く高濃度に.
 // 入力 0 → 出力 0 を維持することで「始点フェードイン」と「払い」を物理的筆圧で自然表現.
+// v82: 全ブラシ規定値: stab=3, thresh=0, deadZone=0。消しゴムは pressure/pressureOpac=true に統一
 const TOOLS={
-  pen:   {sz:12,min:1,pressure:true, curve:2.0,stab:1,thresh:0.05,soft:0.0, opacity:1.0,spacing:1.0,shape:2,airbrush:false,pencil:false,pressureOpac:true,deadZone:50,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]},
-  marker:{sz:12,min:1,pressure:false,curve:2.0,stab:1,thresh:0.05,soft:0.15,opacity:0.8,spacing:0.5, shape:1,airbrush:false,pencil:false,pressureOpac:false,deadZone:50,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]},
-  eraser:{sz:20,min:1,pressure:false,curve:2.0,stab:1,thresh:0,  soft:0.0, opacity:1.0,spacing:0.8, shape:0,pencil:false,pressureOpac:false,deadZone:0,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p}))}
+  pen:   {sz:12,min:1,pressure:true, curve:2.0,stab:3,thresh:0,soft:0.0, opacity:1.0,spacing:1.0,shape:2,airbrush:false,pencil:false,pressureOpac:true, deadZone:0,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]},
+  marker:{sz:12,min:1,pressure:false,curve:2.0,stab:3,thresh:0,soft:0.15,opacity:0.8,spacing:0.5, shape:1,airbrush:false,pencil:false,pressureOpac:false,deadZone:0,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]},
+  eraser:{sz:20,min:1,pressure:true, curve:2.0,stab:3,thresh:0,soft:0.0, opacity:1.0,spacing:0.8, shape:0,pencil:false,pressureOpac:true, deadZone:0,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]}
 };
 let activeTool='pen';
-let bSize=12,bMin=1,bPressure=true,bCurve=2.0,stabLen=1,eSize=20,eMin=1,eStab=1,ePressure=false,eThresh=0,bThresh=0.05;
+let bSize=12,bMin=1,bPressure=true,bCurve=2.0,stabLen=3,eSize=20,eMin=1,eStab=3,ePressure=true,eThresh=0,bThresh=0;
 let bPts=TOOLS.pen.pts;
 function saveToolState(){const t=TOOLS[activeTool];t.sz=bSize;t.min=bMin;t.pressure=bPressure;t.curve=bCurve;t.stab=stabLen;t.thresh=bThresh;t.pts=bPts.map(p=>({...p}));}
 function loadToolState(n){const t=TOOLS[n];bSize=t.sz;bMin=t.min;bPressure=t.pressure;bCurve=t.curve;stabLen=t.stab;bThresh=t.thresh||0;bPts=t.pts;}
