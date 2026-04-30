@@ -53,6 +53,8 @@
   --tx:#e8e8ec;--tx2:#7a7a8a;
   --acc:#5b9cf6;--red:#f87171;--grn:#4ade80;--aqua:#38d9d9;--ora:#f97316;
   --pw:278px;--tw:34px;
+  /* v85: PWAスタンドアロン時のステータスバー分のオフセット */
+  --safe-top: env(safe-area-inset-top, 0px);
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 html,body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;background:var(--bg);font-family:'Noto Sans JP',sans-serif}
@@ -63,7 +65,7 @@ html,body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;b
 #paper{position:absolute;width:0;height:0;overflow:visible}
 #sel-ov{position:fixed;top:0;left:0;pointer-events:none;z-index:150}
 /* Top bar */
-.topbtn{position:fixed;top:6px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:26px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
+.topbtn{position:fixed;top:calc(6px + var(--safe-top));z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:26px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
 #sz-btn{left:6px}
 .topbtn.on{border-color:var(--acc);color:var(--acc)}/* Top button positions: 書き出し / 保存 / 開く / PSD */
 #export-btn{right:6px}
@@ -71,7 +73,7 @@ html,body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;b
 #bpf-save-btn{right:72px}
 #open-btn{right:138px}
 #new-btn{right:204px}
-#reset-view-btn{position:fixed;top:6px;left:72px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:26px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
+#reset-view-btn{position:fixed;top:calc(6px + var(--safe-top));left:72px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:26px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
 /* rotate-canvas-btn repositioned below */
 /* New dialog */
 #new-dialog{position:fixed;inset:0;z-index:500;background:#000000cc;display:none;align-items:center;justify-content:center}
@@ -84,7 +86,7 @@ html,body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;b
 #nd-discard{border-color:var(--red);color:var(--red)}
 #nd-cancel{border-color:var(--bd2);color:var(--tx2)}
 /* Top panels */
-.toppanel{contain:layout style;position:fixed;top:44px;z-index:219;background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:10px;display:none;touch-action:manipulation}
+.toppanel{contain:layout style;position:fixed;top:calc(44px + var(--safe-top));z-index:219;background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:10px;display:none;touch-action:manipulation}
 .toppanel.open{display:block}
 #sz-panel{left:10px;min-width:228px}
 #sv-panel{right:10px;min-width:260px}
@@ -116,7 +118,7 @@ html,body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;b
 .rtab.xtog{border-right:1px solid var(--bd);border-radius:8px}
 /* v54: 上部ツールボタン (rtab と統一スタイル). 横並び、 高さ 52px. */
 .topbar-tool{
-  position:fixed;top:6px;height:52px;
+  position:fixed;top:calc(6px + var(--safe-top));height:52px;
   width:60px;
   border:1px solid var(--bd);border-radius:8px;
   background:var(--sf);color:var(--tx);
@@ -275,8 +277,8 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
 
 /* Fill button */
 /* v54: rotate / ref / tl ボタンを 60×52 で統一 */
-#rotate-canvas-btn{position:fixed;top:6px;left:138px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:26px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
-#ref-btn{position:fixed;top:6px;right:270px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:26px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
+#rotate-canvas-btn{position:fixed;top:calc(6px + var(--safe-top));left:138px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:26px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
+#ref-btn{position:fixed;top:calc(6px + var(--safe-top));right:270px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:26px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
 #ref-btn.on{border-color:var(--acc);color:var(--acc)}
 /* ref-panel */
 #ref-panel{left:10px;min-width:240px}
@@ -285,8 +287,8 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
 .ref-preview.show{display:block}
 
 /* タイムラプスプレーヤー */
-#tl-btn{position:fixed;top:6px;left:270px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:26px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
-#grid-btn{position:fixed;top:6px;left:336px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:26px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
+#tl-btn{position:fixed;top:calc(6px + var(--safe-top));left:270px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:26px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
+#grid-btn{position:fixed;top:calc(6px + var(--safe-top));left:336px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:26px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
 #tl-overlay{position:fixed;inset:0;z-index:600;background:#000c;display:none;flex-direction:column;align-items:center;justify-content:center;touch-action:none}
 #tl-overlay.show{display:flex}
 #tl-canvas{border-radius:8px;max-width:92vw;max-height:72vh;background:#fff;image-rendering:pixelated}
@@ -319,7 +321,7 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
 50%{opacity:0.3}}
 
 /* ギャラリー */
-#gallery-btn{position:fixed;top:6px;left:204px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:26px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
+#gallery-btn{position:fixed;top:calc(6px + var(--safe-top));left:204px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:26px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
 #gallery-overlay{position:fixed;inset:0;z-index:550;background:#0a0a14;display:none;flex-direction:column}
 #gallery-overlay.show{display:flex}
 #gallery-header{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--bd);flex-shrink:0}
@@ -439,6 +441,7 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
   <div id="gallery-footer">
     <button class="gal-action-btn" id="gal-open-external">外部ファイルを開く</button>
     <button class="gal-action-btn" id="gal-save-now">現在の作品を保存</button>
+    <button class="gal-action-btn" id="gal-dbx-sync" style="border-color:var(--acc);color:var(--acc)">☁ Dropbox 同期</button>
   </div>
 </div>
 <div id="bpf-preview-dialog">
@@ -6293,6 +6296,7 @@ function _sampleCanvasColor(screenX,screenY){
   document.getElementById('gallery-close').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();closeGallery();});
   document.getElementById('gal-open-external').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();document.getElementById('file-input').click();closeGallery();});
   document.getElementById('gal-save-now').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();saveBPF(false);});
+  document.getElementById('gal-dbx-sync').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();location.href='./sync.html';});
   // BPFプレビューダイアログ
   document.getElementById('bpf-prev-cancel').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();closeBPFPreview();});
   document.getElementById('bpf-prev-open').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();openFromPreview();});
