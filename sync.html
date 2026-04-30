@@ -149,56 +149,95 @@ function syncBar(type, msg, spin=false) {
 }
 function syncBarHide() { document.getElementById('sync-bar').classList.remove('show'); }
 
-// ─── PKCE ──────────────────────────────────────────────────────
-function b64url(bytes) {
-  return btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-}
-async function generatePKCE() {
-  const verifier  = b64url(crypto.getRandomValues(new Uint8Array(32)));
-  const hash      = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
-  return { verifier, challenge: b64url(new Uint8Array(hash)) };
+// ─── PKCE (plain方式: crypto.subtle不使用) ─────────────────────
+// v85b: S256ハッシュをやめplain方式に変更。crypto.subtleがSafari PWAで
+// 失敗するケースを回避。セキュリティ上の差異はiPad個人用途では許容範囲。
+function makeRandStr(len) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  return Array.from(crypto.getRandomValues(new Uint8Array(len)))
+    .map(n => chars[n % chars.length]).join('');
 }
 
 // ─── OAuth2 ────────────────────────────────────────────────────
 async function connectDropbox() {
   const appKey = document.getElementById('app-key').value.trim();
-  if (!appKey) { alert('App Key を入力してください'); return; }
+  if (!appKey) { syncBar('err', 'App Key を入力してください'); return; }
   localStorage.setItem('dbx_app_key', appKey);
-  const { verifier, challenge } = await generatePKCE();
-  const state = b64url(crypto.getRandomValues(new Uint8Array(8)));
-  // v85: sessionStorage は PWA→外部Safari 遷移で消えるため localStorage を使用
-  localStorage.setItem('dbx_v', verifier);
-  localStorage.setItem('dbx_s', state);
-  location.href = 'https://www.dropbox.com/oauth2/authorize?' + new URLSearchParams({
-    client_id: appKey, response_type: 'code',
-    code_challenge: challenge, code_challenge_method: 'S256',
-    redirect_uri: REDIRECT_URI, state, token_access_type: 'offline'
-  });
+
+  try {
+    const verifier = makeRandStr(64); // plain方式: challenge = verifier
+    const state    = makeRandStr(16);
+    localStorage.setItem('dbx_v', verifier);
+    localStorage.setItem('dbx_s', state);
+
+    const params = new URLSearchParams();
+    params.set('client_id',             appKey);
+    params.set('response_type',         'code');
+    params.set('code_challenge',        verifier);
+    params.set('code_challenge_method', 'plain');
+    params.set('redirect_uri',          REDIRECT_URI);
+    params.set('state',                 state);
+    params.set('token_access_type',     'offline');
+    const authUrl = 'https://www.dropbox.com/oauth2/authorize?' + params.toString();
+
+    syncBar('info', 'Dropbox 認証ページへ移動中…');
+    // v85b: location.href が PWA で失敗する場合に備えて try/catch
+    try {
+      location.href = authUrl;
+    } catch(navErr) {
+      syncBar('err', 'ページ移動失敗: ' + navErr.message + '\n\nURL: ' + authUrl);
+    }
+  } catch(e) {
+    syncBar('err', '接続エラー: ' + e.message);
+  }
 }
 
 async function handleCallback() {
   const p = new URLSearchParams(location.search);
-  const code = p.get('code'), state = p.get('state');
-  if (!code) return;
-  // v85: history.replaceState は Safari PWA で失敗するため try で囲む
+  const code = p.get('code'), state = p.get('state'), errParam = p.get('error');
+  if (!code && !errParam) return;
+
+  // Dropbox がエラーを返した場合
+  if (errParam) {
+    syncBar('err', 'Dropbox 認証拒否: ' + (p.get('error_description') || errParam));
+    return;
+  }
+
   try { history.replaceState({}, '', location.origin + location.pathname); } catch(_) {}
-  if (state !== localStorage.getItem('dbx_s')) { syncBar('err','State 不一致 — やり直してください'); return; }
-  syncBar('info', 'Dropbox 認証中…', true);
+
+  const savedState = localStorage.getItem('dbx_s');
+  if (!savedState || state !== savedState) {
+    syncBar('err', 'State 不一致 — 再度「接続」してください\n(期待値: ' + savedState + ')');
+    return;
+  }
+
+  syncBar('info', 'Dropbox トークン取得中…', true);
   try {
-    const r = await fetch('https://api.dropboxapi.com/oauth2/token', {
-      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ code, grant_type: 'authorization_code',
-        code_verifier: localStorage.getItem('dbx_v'),
-        client_id: localStorage.getItem('dbx_app_key'), redirect_uri: REDIRECT_URI })
+    const body = new URLSearchParams({
+      code,
+      grant_type:    'authorization_code',
+      code_verifier: localStorage.getItem('dbx_v'),
+      client_id:     localStorage.getItem('dbx_app_key'),
+      redirect_uri:  REDIRECT_URI
     });
-    const d = await r.json();
-    if (!d.access_token) throw new Error(d.error_description || JSON.stringify(d));
+    const r = await fetch('https://api.dropboxapi.com/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString()
+    });
+    const text = await r.text();
+    let d;
+    try { d = JSON.parse(text); } catch(_) { throw new Error('レスポンス解析失敗: ' + text.slice(0,200)); }
+    if (!d.access_token) throw new Error(d.error_description || d.error || JSON.stringify(d).slice(0,200));
     localStorage.setItem('dbx_token', d.access_token);
     if (d.refresh_token) localStorage.setItem('dbx_refresh', d.refresh_token);
-    // 使用済み PKCE キーを削除
-    localStorage.removeItem('dbx_v'); localStorage.removeItem('dbx_s');
+    localStorage.removeItem('dbx_v');
+    localStorage.removeItem('dbx_s');
     setConnected(true);
-  } catch(e) { syncBar('err', '認証失敗: ' + e.message); }
+    syncBar('ok', '✓ Dropbox 接続完了');
+  } catch(e) {
+    syncBar('err', '認証失敗: ' + e.message);
+  }
 }
 
 async function refreshToken() {
