@@ -7,9 +7,10 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#111113;color:#d4d4e0;font:13px/1.5 'DM Mono',monospace;padding:16px;min-height:100vh}
-h1{font-size:14px;letter-spacing:.08em;color:#5b9cf6;margin-bottom:16px}
+h1{font-size:14px;letter-spacing:.08em;color:#5b9cf6;margin-bottom:4px}
+.sub{font-size:10px;color:#555;margin-bottom:16px}
 section{background:#1c1c22;border:1px solid #2f2f38;border-radius:8px;padding:14px;margin-bottom:14px}
-section h2{font-size:11px;letter-spacing:.06em;color:#888;margin-bottom:10px;text-transform:uppercase}
+section h2{font-size:11px;letter-spacing:.06em;color:#888;margin-bottom:10px;text-transform:uppercase;display:flex;align-items:center;gap:8px}
 input[type=text]{width:100%;background:#111113;border:1px solid #3a3a44;border-radius:5px;color:#d4d4e0;padding:7px 10px;font:12px monospace;outline:none}
 input[type=text]:focus{border-color:#5b9cf6}
 button{background:#2a2a32;border:1px solid #3a3a44;border-radius:5px;color:#d4d4e0;padding:6px 14px;font:12px monospace;cursor:pointer;transition:background .15s}
@@ -18,99 +19,147 @@ button.primary{background:#1a3a6a;border-color:#5b9cf6;color:#93c5fd}
 button.primary:hover{background:#1e4a8a}
 button.danger{background:#3a1a1a;border-color:#f87171;color:#fca5a5}
 button.green{background:#1a3a1a;border-color:#4ade80;color:#86efac}
+button.green:hover{background:#1e4a1e}
 button:disabled{opacity:.4;cursor:default}
-.row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
 .row label{color:#888;font-size:11px;min-width:70px}
 .hint{font-size:10px;color:#555;margin-top:4px;line-height:1.6}
 .hint a{color:#5b9cf6}
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media(max-width:600px){.cols{grid-template-columns:1fr}}
-.file-list{max-height:260px;overflow-y:auto}
-.file-item{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:4px;border-bottom:1px solid #1c1c22;gap:6px}
+.file-list{max-height:260px;overflow-y:auto;margin-top:8px}
+.file-item{display:flex;align-items:center;padding:6px 8px;border-radius:4px;border-bottom:1px solid #1a1a22;gap:6px}
 .file-item:hover{background:#1c1c28}
-.file-name{font-size:11px;color:#d4d4e0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
-.file-meta{font-size:10px;color:#555;white-space:nowrap}
+.file-item.new-local{border-left:2px solid #4ade80}
+.file-item.new-cloud{border-left:2px solid #5b9cf6}
+.file-item.conflict{border-left:2px solid #f97316}
+.file-name{font-size:11px;color:#d4d4e0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.file-meta{font-size:10px;color:#555;white-space:nowrap;flex-shrink:0}
 .file-btn{padding:3px 8px;font-size:10px;flex-shrink:0}
-.status{font-size:11px;padding:6px 10px;border-radius:4px;margin-top:8px;display:none}
+.status{font-size:11px;padding:7px 10px;border-radius:5px;margin-top:8px;display:none;line-height:1.5}
 .status.ok{display:block;background:#1a3a1a;border:1px solid #4ade80;color:#86efac}
 .status.err{display:block;background:#3a1a1a;border:1px solid #f87171;color:#fca5a5}
 .status.info{display:block;background:#1a2a3a;border:1px solid #5b9cf6;color:#93c5fd}
-.badge{display:inline-block;font-size:9px;padding:2px 6px;border-radius:3px;margin-left:6px;vertical-align:middle}
+.badge{display:inline-block;font-size:9px;padding:2px 6px;border-radius:3px;margin-left:4px;vertical-align:middle}
 .badge.conn{background:#1a3a1a;color:#4ade80;border:1px solid #4ade80}
 .badge.disc{background:#2a2a32;color:#555;border:1px solid #3a3a44}
-#setup-guide{font-size:11px;color:#888;line-height:1.8}
+.badge.offline{background:#2a1a1a;color:#f87171;border:1px solid #f87171}
+/* 同期ステータスバー（最上部） */
+#sync-bar{background:#1a2a1a;border:1px solid #2a3a2a;border-radius:6px;padding:8px 12px;margin-bottom:14px;font-size:11px;color:#4ade80;display:none;align-items:center;gap:8px}
+#sync-bar.err{background:#2a1a1a;border-color:#3a2a2a;color:#f87171}
+#sync-bar.info{background:#1a2030;border-color:#2a3050;color:#93c5fd}
+#sync-bar.show{display:flex}
+#sync-spinner{width:12px;height:12px;border:2px solid #4ade8040;border-top-color:#4ade80;border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+#setup-guide{font-size:11px;color:#888;line-height:1.8;margin-top:8px}
 #setup-guide ol{padding-left:18px}
 #setup-guide code{background:#2a2a32;padding:1px 5px;border-radius:3px;color:#93c5fd;font-size:10px}
+.legend{display:flex;gap:14px;font-size:10px;color:#555;margin-bottom:6px;flex-wrap:wrap}
+.legend span::before{display:inline-block;width:8px;height:8px;border-radius:1px;margin-right:4px;vertical-align:middle;content:''}
+.legend .l-local::before{background:#4ade80}
+.legend .l-cloud::before{background:#5b9cf6}
+.legend .l-conflict::before{background:#f97316}
 </style>
 </head>
 <body>
 
 <h1>✦ INKSTRIDE — DROPBOX SYNC</h1>
+<div class="sub">起動時・オンライン復帰時に自動同期します</div>
 
-<!-- Step 1: Dropbox App Key -->
+<!-- 同期ステータスバー -->
+<div id="sync-bar">
+  <div id="sync-spinner"></div>
+  <span id="sync-bar-msg"></span>
+</div>
+
+<!-- Step 1: Dropbox 設定 -->
 <section id="sec-setup">
-  <h2>Step 1 — Dropbox アプリ設定</h2>
+  <h2>Dropbox 接続
+    <span class="badge disc" id="badge-conn">OFFLINE</span>
+    <span class="badge offline" id="badge-net" style="margin-left:auto">ネット不明</span>
+  </h2>
   <div class="row">
     <label>App Key</label>
-    <input type="text" id="app-key" placeholder="xxxxxxxxxxxxxxxxxxxx">
-    <button class="primary" onclick="connectDropbox()">接続</button>
+    <input type="text" id="app-key" placeholder="xxxxxxxxxxxxxxxxxxxx" style="flex:1">
+    <button class="primary" onclick="connectDropbox()" id="btn-connect">接続</button>
     <button class="danger" id="btn-disconnect" onclick="disconnect()" style="display:none">切断</button>
   </div>
-  <div id="conn-status" class="hint">
-    未接続 <span class="badge disc" id="badge-conn">OFFLINE</span>
+  <div class="row" id="manual-sync-row" style="display:none">
+    <button class="green" onclick="autoSync()" id="btn-sync">↺ 今すぐ同期</button>
+    <span id="last-sync-label" style="font-size:10px;color:#555"></span>
   </div>
-  <div class="hint" id="setup-guide">
+  <div id="setup-guide">
     <strong style="color:#d4d4e0">初回セットアップ（3分）：</strong>
     <ol>
       <li><a href="https://www.dropbox.com/developers/apps" target="_blank">Dropbox Developers</a> → "Create app"</li>
-      <li>Scoped Access → <strong>App folder</strong>（または Full Dropbox）</li>
-      <li>アプリ名を入力（例: <code>InkStride</code>）→ Create app</li>
-      <li>Settings タブ → <strong>OAuth 2 Redirect URIs</strong> に以下を追加：<br>
+      <li>Scoped Access → <strong>App folder</strong>（InkStride 専用フォルダが自動作成）</li>
+      <li>アプリ名を入力 → Create app</li>
+      <li>Settings タブ → <strong>OAuth 2 Redirect URIs</strong> に追加：<br>
         <code id="redirect-uri-display"></code>
       </li>
-      <li>App key をコピーして上の欄に入力 → 接続</li>
+      <li>App key をコピーして上の欄へ → 接続</li>
     </ol>
   </div>
 </section>
 
-<!-- Step 2: Gallery Files (OPFS) -->
-<section>
-  <h2>Step 2 — ギャラリー（端末 OPFS）
-    <button style="float:right;font-size:10px;padding:3px 8px" onclick="refreshOPFS()">更新</button>
-  </h2>
-  <button class="green" onclick="uploadAll()" id="btn-upload-all" disabled>▲ すべて Dropbox へアップロード</button>
-  <div class="file-list" id="opfs-list"><div style="color:#555;font-size:11px;padding:8px">読み込み中…</div></div>
-  <div id="opfs-status" class="status"></div>
-</section>
-
-<!-- Step 3: Dropbox Files -->
-<section>
-  <h2>Step 3 — Dropbox ファイル
-    <button style="float:right;font-size:10px;padding:3px 8px" onclick="refreshDropbox()">更新</button>
-  </h2>
-  <div class="file-list" id="dbx-list"><div style="color:#555;font-size:11px;padding:8px">未接続</div></div>
-  <div id="dbx-status" class="status"></div>
+<!-- ファイル一覧（2カラム） -->
+<section id="sec-files" style="display:none">
+  <h2>ファイル一覧</h2>
+  <div class="legend">
+    <span class="l-local">端末のみ（Dropbox になし）</span>
+    <span class="l-cloud">Dropbox のみ（端末になし）</span>
+    <span class="l-conflict">両方に存在（Dropbox が新しい）</span>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div>
+      <div style="font-size:10px;color:#888;margin-bottom:4px">端末 OPFS <button style="float:right;font-size:9px;padding:2px 6px" onclick="refreshOPFS()">更新</button></div>
+      <button class="green" style="width:100%;margin-bottom:6px;font-size:11px" onclick="uploadAll()" id="btn-upload-all">▲ 全件アップロード</button>
+      <div class="file-list" id="opfs-list"></div>
+    </div>
+    <div>
+      <div style="font-size:10px;color:#888;margin-bottom:4px">Dropbox <button style="float:right;font-size:9px;padding:2px 6px" onclick="refreshDropbox()">更新</button></div>
+      <button class="primary" style="width:100%;margin-bottom:6px;font-size:11px" onclick="downloadAll()" id="btn-download-all">▼ 全件ダウンロード</button>
+      <div class="file-list" id="dbx-list"></div>
+    </div>
+  </div>
+  <div id="file-status" class="status"></div>
 </section>
 
 <script>
 'use strict';
 
-// ─── Redirect URI (このページの URL、クエリなし) ──────────────
 const REDIRECT_URI = location.origin + location.pathname;
 document.getElementById('redirect-uri-display').textContent = REDIRECT_URI;
 
-// ─── PKCE ────────────────────────────────────────────────────
+// ─── ネット状態 ────────────────────────────────────────────────
+function updateNetBadge() {
+  const b = document.getElementById('badge-net');
+  if (navigator.onLine) { b.textContent = 'オンライン'; b.className='badge conn'; }
+  else                  { b.textContent = 'オフライン'; b.className='badge offline'; }
+}
+window.addEventListener('online',  () => { updateNetBadge(); autoSync(); });
+window.addEventListener('offline', () => { updateNetBadge(); });
+updateNetBadge();
+
+// ─── 同期バー ──────────────────────────────────────────────────
+function syncBar(type, msg, spin=false) {
+  const bar = document.getElementById('sync-bar');
+  const sp  = document.getElementById('sync-spinner');
+  bar.className = 'show ' + type;
+  document.getElementById('sync-bar-msg').textContent = msg;
+  sp.style.display = spin ? '' : 'none';
+}
+function syncBarHide() { document.getElementById('sync-bar').classList.remove('show'); }
+
+// ─── PKCE ──────────────────────────────────────────────────────
 function b64url(bytes) {
-  return btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
 }
 async function generatePKCE() {
-  const verifier = b64url(crypto.getRandomValues(new Uint8Array(32)));
-  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+  const verifier  = b64url(crypto.getRandomValues(new Uint8Array(32)));
+  const hash      = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
   return { verifier, challenge: b64url(new Uint8Array(hash)) };
 }
 
-// ─── OAuth2 フロー ────────────────────────────────────────────
+// ─── OAuth2 ────────────────────────────────────────────────────
 async function connectDropbox() {
   const appKey = document.getElementById('app-key').value.trim();
   if (!appKey) { alert('App Key を入力してください'); return; }
@@ -131,23 +180,21 @@ async function handleCallback() {
   const code = p.get('code'), state = p.get('state');
   if (!code) return;
   history.replaceState({}, '', location.pathname);
-  if (state !== sessionStorage.getItem('dbx_s')) { showStatus('dbx','err','State 不一致 — やり直してください'); return; }
-  const appKey = localStorage.getItem('dbx_app_key');
-  const verifier = sessionStorage.getItem('dbx_v');
-  showStatus('dbx','info','トークン取得中…');
+  if (state !== sessionStorage.getItem('dbx_s')) { syncBar('err','State 不一致 — やり直してください'); return; }
+  syncBar('info', 'Dropbox 認証中…', true);
   try {
     const r = await fetch('https://api.dropboxapi.com/oauth2/token', {
-      method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body: new URLSearchParams({ code, grant_type:'authorization_code',
-        code_verifier: verifier, client_id: appKey, redirect_uri: REDIRECT_URI })
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ code, grant_type: 'authorization_code',
+        code_verifier: sessionStorage.getItem('dbx_v'),
+        client_id: localStorage.getItem('dbx_app_key'), redirect_uri: REDIRECT_URI })
     });
     const d = await r.json();
     if (!d.access_token) throw new Error(d.error_description || JSON.stringify(d));
     localStorage.setItem('dbx_token', d.access_token);
     if (d.refresh_token) localStorage.setItem('dbx_refresh', d.refresh_token);
     setConnected(true);
-    await loadAll();
-  } catch(e) { showStatus('dbx','err','認証失敗: ' + e.message); }
+  } catch(e) { syncBar('err', '認証失敗: ' + e.message); }
 }
 
 async function refreshToken() {
@@ -156,39 +203,36 @@ async function refreshToken() {
   if (!appKey || !refresh) return false;
   try {
     const r = await fetch('https://api.dropboxapi.com/oauth2/token', {
-      method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body: new URLSearchParams({ grant_type:'refresh_token', refresh_token:refresh, client_id:appKey })
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: refresh, client_id: appKey })
     });
     const d = await r.json();
     if (!d.access_token) return false;
     localStorage.setItem('dbx_token', d.access_token);
     return true;
-  } catch(e) { return false; }
+  } catch { return false; }
 }
 
 function disconnect() {
   localStorage.removeItem('dbx_token'); localStorage.removeItem('dbx_refresh');
   setConnected(false);
-  document.getElementById('dbx-list').innerHTML = '<div style="color:#555;font-size:11px;padding:8px">未接続</div>';
 }
 
 function setConnected(on) {
-  const badge = document.getElementById('badge-conn');
-  const connDiv = document.getElementById('conn-status');
-  const discBtn = document.getElementById('btn-disconnect');
-  const uploadBtn = document.getElementById('btn-upload-all');
-  badge.textContent = on ? 'ONLINE' : 'OFFLINE';
-  badge.className = 'badge ' + (on ? 'conn' : 'disc');
-  connDiv.style.color = on ? '#4ade80' : '';
-  discBtn.style.display = on ? '' : 'none';
-  uploadBtn.disabled = !on;
-  if (on) document.getElementById('setup-guide').style.display = 'none';
+  document.getElementById('badge-conn').textContent  = on ? 'CONNECTED' : 'OFFLINE';
+  document.getElementById('badge-conn').className    = 'badge ' + (on ? 'conn' : 'disc');
+  document.getElementById('btn-disconnect').style.display = on ? '' : 'none';
+  document.getElementById('btn-connect').style.display    = on ? 'none' : '';
+  document.getElementById('manual-sync-row').style.display = on ? '' : 'none';
+  document.getElementById('sec-files').style.display = on ? '' : 'none';
+  document.getElementById('setup-guide').style.display = on ? 'none' : '';
+  if (!on) { document.getElementById('opfs-list').innerHTML = ''; document.getElementById('dbx-list').innerHTML = ''; }
 }
 
-// ─── Dropbox API ─────────────────────────────────────────────
+// ─── Dropbox API ────────────────────────────────────────────────
 async function dbxFetch(url, opts, retry=true) {
   const token = localStorage.getItem('dbx_token');
-  const r = await fetch(url, { ...opts, headers: { 'Authorization':'Bearer '+token, ...(opts.headers||{}) } });
+  const r = await fetch(url, { ...opts, headers: { 'Authorization': 'Bearer '+token, ...(opts.headers||{}) } });
   if (r.status === 401 && retry) {
     if (await refreshToken()) return dbxFetch(url, opts, false);
     setConnected(false); throw new Error('セッション期限切れ — 再接続してください');
@@ -198,44 +242,44 @@ async function dbxFetch(url, opts, retry=true) {
 
 async function dbxList() {
   const r = await dbxFetch('https://api.dropboxapi.com/2/files/list_folder', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ path:'' })
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path: '' })
   });
   const d = await r.json();
   if (d.error_summary) throw new Error(d.error_summary);
-  return (d.entries || []).filter(e => e.name.endsWith('.bpf') || e.name.endsWith('.bpf'));
+  return (d.entries || []).filter(e => e.name.endsWith('.bpf'));
 }
 
 async function dbxUpload(name, text) {
   const r = await dbxFetch('https://content.dropboxapi.com/2/files/upload', {
-    method:'POST',
-    headers:{
-      'Dropbox-API-Arg': JSON.stringify({ path:'/'+name, mode:'overwrite', autorename:false }),
-      'Content-Type':'application/octet-stream'
+    method: 'POST',
+    headers: {
+      'Dropbox-API-Arg': JSON.stringify({ path: '/'+name, mode: 'overwrite', autorename: false }),
+      'Content-Type': 'application/octet-stream'
     },
     body: new TextEncoder().encode(text)
   });
+  if (!r.ok) throw new Error('upload failed ' + r.status);
   return r.json();
 }
 
 async function dbxDownload(path) {
   const r = await dbxFetch('https://content.dropboxapi.com/2/files/download', {
-    method:'POST',
-    headers:{ 'Dropbox-API-Arg': JSON.stringify({ path }) }
+    method: 'POST', headers: { 'Dropbox-API-Arg': JSON.stringify({ path }) }
   });
-  if (!r.ok) throw new Error('ダウンロード失敗 ' + r.status);
+  if (!r.ok) throw new Error('download failed ' + r.status);
   return r.text();
 }
 
-// ─── OPFS アクセス ────────────────────────────────────────────
-async function opfsDir() {
+// ─── OPFS ──────────────────────────────────────────────────────
+async function opfsDir(rw=false) {
   const root = await navigator.storage.getDirectory();
-  return root.getDirectoryHandle('binarypaint', { create: false });
+  return root.getDirectoryHandle('binarypaint', { create: rw });
 }
 
 async function listOPFS() {
   try {
-    const dir = await opfsDir();
+    const dir = await opfsDir(false);
     const files = [];
     for await (const [name, handle] of dir.entries()) {
       if (!name.endsWith('.bpf')) continue;
@@ -243,109 +287,203 @@ async function listOPFS() {
       files.push({ name, size: file.size, ts: file.lastModified, handle });
     }
     return files.sort((a,b) => b.ts - a.ts);
-  } catch(e) {
-    return null; // 別オリジンまたは OPFS 未対応
-  }
+  } catch { return null; }
 }
 
 async function saveToOPFS(name, text) {
-  const dir = await opfsDir();
+  const dir = await opfsDir(true); // create: true
   const fh = await dir.getFileHandle(name, { create: true });
-  const w = await fh.createWritable();
+  const w  = await fh.createWritable();
   await w.write(text); await w.close();
 }
 
-// ─── UI ──────────────────────────────────────────────────────
-function fmtSize(b){ return b>1e6?(b/1e6).toFixed(1)+'MB':b>1e3?(b/1e3).toFixed(0)+'KB':b+'B'; }
-function fmtDate(ts){ const d=new Date(ts);return (d.getMonth()+1)+'/'+(d.getDate())+' '+d.getHours()+':'+(String(d.getMinutes()).padStart(2,'0')); }
-function showStatus(id, type, msg){ const el=document.getElementById(id+'-status');el.className='status '+type;el.textContent=msg; }
+// ─── 双方向自動同期 ─────────────────────────────────────────────
+// ルール: どちらかにしか存在しない → そちらへコピー
+//         両方に存在 → より新しい方を正とする（5秒マージン）
+let _syncing = false;
+async function autoSync() {
+  if (_syncing) return;
+  if (!navigator.onLine) { syncBar('err','オフラインのため同期をスキップ'); return; }
+  const token = localStorage.getItem('dbx_token');
+  if (!token) return;
 
-async function refreshOPFS() {
-  const list = document.getElementById('opfs-list');
-  list.innerHTML = '<div style="color:#555;font-size:11px;padding:8px">読み込み中…</div>';
-  const files = await listOPFS();
-  if (files === null) {
-    list.innerHTML = '<div style="color:#f87171;font-size:11px;padding:8px">OPFS アクセス不可 — このページを GitHub Pages の同じ URL（sync.html）で開いてください</div>';
-    return;
-  }
-  if (!files.length) { list.innerHTML = '<div style="color:#555;font-size:11px;padding:8px">ギャラリーが空です</div>'; return; }
-  list.innerHTML = files.map(f => `
-    <div class="file-item">
-      <span class="file-name">${f.name}</span>
-      <span class="file-meta">${fmtDate(f.ts)} · ${fmtSize(f.size)}</span>
-      <button class="file-btn green" onclick="uploadOne('${f.name}')">▲</button>
-    </div>`).join('');
-}
+  _syncing = true;
+  document.getElementById('btn-sync').disabled = true;
+  syncBar('info', '同期中…', true);
 
-async function refreshDropbox() {
-  const list = document.getElementById('dbx-list');
-  if (!localStorage.getItem('dbx_token')) { list.innerHTML='<div style="color:#555;font-size:11px;padding:8px">未接続</div>'; return; }
-  list.innerHTML = '<div style="color:#555;font-size:11px;padding:8px">読み込み中…</div>';
   try {
-    const files = await dbxList();
-    if (!files.length) { list.innerHTML='<div style="color:#555;font-size:11px;padding:8px">Dropbox が空です</div>'; return; }
-    list.innerHTML = files.map(f => `
-      <div class="file-item">
-        <span class="file-name">${f.name}</span>
-        <span class="file-meta">${fmtSize(f.size)}</span>
-        <button class="file-btn primary" onclick="downloadOne('${f.path_lower}','${f.name}')">▼</button>
-      </div>`).join('');
-  } catch(e) { showStatus('dbx','err',e.message); }
+    const [opfsFiles, dbxFiles] = await Promise.all([listOPFS(), dbxList()]);
+    if (!opfsFiles) throw new Error('OPFS アクセス不可 — このページを同じオリジンで開いてください');
+
+    const opfsMap = new Map(opfsFiles.map(f => [f.name, f]));
+    const dbxMap  = new Map(dbxFiles.map(f => [f.name, f]));
+
+    let up = 0, down = 0, skip = 0;
+    const log = [];
+
+    // OPFS → Dropbox（端末側が新しい or Dropbox になし）
+    for (const f of opfsFiles) {
+      const d = dbxMap.get(f.name);
+      const dbxTs = d ? new Date(d.server_modified).getTime() : 0;
+      if (!d || f.ts > dbxTs + 5000) {
+        const file = await f.handle.getFile();
+        await dbxUpload(f.name, await file.text());
+        log.push('↑ ' + f.name); up++;
+      } else { skip++; }
+    }
+
+    // Dropbox → OPFS（Dropbox 側が新しい or OPFS になし）
+    for (const d of dbxFiles) {
+      const f = opfsMap.get(d.name);
+      const dbxTs = new Date(d.server_modified).getTime();
+      if (!f || dbxTs > f.ts + 5000) {
+        await saveToOPFS(d.name, await dbxDownload(d.path_lower));
+        log.push('↓ ' + d.name); down++;
+      }
+    }
+
+    const now = new Date().toLocaleTimeString('ja');
+    localStorage.setItem('dbx_last_sync', now);
+    document.getElementById('last-sync-label').textContent = '最終同期: ' + now;
+    syncBar('ok', `✓ 同期完了 ${now}　↑${up} ↓${down} スキップ${skip}`);
+    showFileStatus('ok', log.length ? log.join('\n') : '変更なし — 両側が最新です');
+    await Promise.all([renderOPFS(opfsFiles, dbxMap), renderDropbox(dbxFiles, opfsMap)]);
+
+  } catch(e) {
+    syncBar('err', '同期失敗: ' + e.message);
+    showFileStatus('err', e.message);
+  } finally {
+    _syncing = false;
+    document.getElementById('btn-sync').disabled = false;
+  }
 }
 
+// ─── 手動アップロード / ダウンロード ─────────────────────────────
 async function uploadOne(name) {
   try {
-    showStatus('opfs','info',name+' アップロード中…');
-    const dir = await opfsDir();
-    const fh = await dir.getFileHandle(name);
-    const file = await fh.getFile();
-    const text = await file.text();
-    await dbxUpload(name, text);
-    showStatus('opfs','ok','✓ アップロード完了: '+name);
+    showFileStatus('info', name + ' アップロード中…');
+    const dir = await opfsDir(false);
+    const fh  = await dir.getFileHandle(name);
+    await dbxUpload(name, await (await fh.getFile()).text());
+    showFileStatus('ok', '✓ アップロード: ' + name);
     await refreshDropbox();
-  } catch(e) { showStatus('opfs','err','失敗: '+e.message); }
+  } catch(e) { showFileStatus('err', '失敗: ' + e.message); }
 }
 
 async function downloadOne(path, name) {
   try {
-    showStatus('dbx','info',name+' ダウンロード中…');
-    const text = await dbxDownload(path);
-    await saveToOPFS(name, text);
-    showStatus('dbx','ok','✓ ギャラリーに保存: '+name);
+    showFileStatus('info', name + ' ダウンロード中…');
+    await saveToOPFS(name, await dbxDownload(path));
+    showFileStatus('ok', '✓ ダウンロード: ' + name);
     await refreshOPFS();
-  } catch(e) { showStatus('dbx','err','失敗: '+e.message); }
+  } catch(e) { showFileStatus('err', '失敗: ' + e.message); }
 }
 
 async function uploadAll() {
   const files = await listOPFS();
-  if (!files || !files.length) { showStatus('opfs','info','アップロードするファイルがありません'); return; }
-  showStatus('opfs','info',`0 / ${files.length} アップロード中…`);
-  let ok=0;
+  if (!files || !files.length) { showFileStatus('info', 'アップロードするファイルがありません'); return; }
+  let ok = 0;
   for (const f of files) {
+    showFileStatus('info', `↑ ${++ok}/${files.length} ${f.name}`);
     try {
-      const file = await f.handle.getFile();
-      const text = await file.text();
-      await dbxUpload(f.name, text);
-      ok++;
-      showStatus('opfs','info',`${ok} / ${files.length} アップロード中…`);
-    } catch(e) { showStatus('opfs','err','失敗: '+f.name+' — '+e.message); return; }
+      await dbxUpload(f.name, await (await f.handle.getFile()).text());
+    } catch(e) { showFileStatus('err', '失敗: ' + f.name); return; }
   }
-  showStatus('opfs','ok',`✓ ${ok} 件アップロード完了`);
+  showFileStatus('ok', `✓ ${ok} 件アップロード完了`);
   await refreshDropbox();
 }
 
-async function loadAll() {
-  setConnected(!!localStorage.getItem('dbx_token'));
+async function downloadAll() {
+  let files;
+  try { files = await dbxList(); } catch(e) { showFileStatus('err', e.message); return; }
+  if (!files.length) { showFileStatus('info', 'Dropbox が空です'); return; }
+  let ok = 0;
+  for (const f of files) {
+    showFileStatus('info', `↓ ${++ok}/${files.length} ${f.name}`);
+    try {
+      await saveToOPFS(f.name, await dbxDownload(f.path_lower));
+    } catch(e) { showFileStatus('err', '失敗: ' + f.name); return; }
+  }
+  showFileStatus('ok', `✓ ${ok} 件ダウンロード完了`);
   await refreshOPFS();
-  if (localStorage.getItem('dbx_token')) await refreshDropbox();
 }
 
-// ─── 起動 ─────────────────────────────────────────────────────
+// ─── 表示 ──────────────────────────────────────────────────────
+function fmtSize(b){ return b>1e6?(b/1e6).toFixed(1)+'MB':b>1e3?(b/1e3).toFixed(0)+'KB':b+'B'; }
+function fmtDate(ts){ const d=new Date(ts);return (d.getMonth()+1)+'/'+(d.getDate())+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function showFileStatus(type, msg){ const el=document.getElementById('file-status');el.className='status '+type;el.style.whiteSpace='pre-wrap';el.textContent=msg; }
+
+async function renderOPFS(files, dbxMap) {
+  const list = document.getElementById('opfs-list');
+  if (!files || !files.length) { list.innerHTML='<div style="color:#555;font-size:11px;padding:6px">空</div>'; return; }
+  list.innerHTML = files.map(f => {
+    const inDbx = dbxMap && dbxMap.get(f.name);
+    const cls   = !inDbx ? 'new-local' : '';
+    return `<div class="file-item ${cls}">
+      <span class="file-name" title="${f.name}">${f.name.replace('.bpf','')}</span>
+      <span class="file-meta">${fmtDate(f.ts)}</span>
+      <button class="file-btn green" onclick="uploadOne('${f.name}')">▲</button>
+    </div>`;
+  }).join('');
+}
+
+async function renderDropbox(files, opfsMap) {
+  const list = document.getElementById('dbx-list');
+  if (!files || !files.length) { list.innerHTML='<div style="color:#555;font-size:11px;padding:6px">空</div>'; return; }
+  list.innerHTML = files.map(f => {
+    const inOpfs  = opfsMap && opfsMap.get(f.name);
+    const dbxTs   = new Date(f.server_modified).getTime();
+    const cls     = !inOpfs ? 'new-cloud' : (dbxTs > (inOpfs.ts||0) + 5000 ? 'conflict' : '');
+    return `<div class="file-item ${cls}">
+      <span class="file-name" title="${f.name}">${f.name.replace('.bpf','')}</span>
+      <span class="file-meta">${fmtDate(dbxTs)}</span>
+      <button class="file-btn primary" onclick="downloadOne('${f.path_lower}','${f.name}')">▼</button>
+    </div>`;
+  }).join('');
+}
+
+async function refreshOPFS() {
+  const files = await listOPFS();
+  let dbxMap = null;
+  try { dbxMap = new Map((await dbxList()).map(f=>[f.name,f])); } catch {}
+  await renderOPFS(files, dbxMap);
+}
+
+async function refreshDropbox() {
+  try {
+    const files = await dbxList();
+    const opfsFiles = await listOPFS();
+    const opfsMap = opfsFiles ? new Map(opfsFiles.map(f=>[f.name,f])) : null;
+    await renderDropbox(files, opfsMap);
+  } catch(e) { document.getElementById('dbx-list').innerHTML = `<div style="color:#f87171;font-size:11px;padding:6px">${e.message}</div>`; }
+}
+
+// ─── 起動 ──────────────────────────────────────────────────────
 (async () => {
   const savedKey = localStorage.getItem('dbx_app_key');
   if (savedKey) document.getElementById('app-key').value = savedKey;
-  await handleCallback();   // OAuth コールバック処理
-  await loadAll();
+
+  // OAuth コールバック処理
+  await handleCallback();
+
+  const isConn = !!localStorage.getItem('dbx_token');
+  setConnected(isConn);
+
+  // 最終同期時刻を表示
+  const last = localStorage.getItem('dbx_last_sync');
+  if (last) document.getElementById('last-sync-label').textContent = '最終同期: ' + last;
+
+  if (isConn) {
+    // 起動時に自動同期
+    await autoSync();
+  } else {
+    // OPFS だけ表示
+    const files = await listOPFS();
+    if (files !== null) {
+      document.getElementById('sec-files').style.display = '';
+      await renderOPFS(files, null);
+    }
+  }
 })();
 </script>
 </body>

@@ -6030,6 +6030,27 @@ async function openFromPreview(){
   }catch(err){showToast('読み込み失敗: '+err.message);}
 }
 
+// ─── Dropbox サイレントバックアップ（saveBPF から fire-and-forget で呼ぶ） ───
+// v84+: Dropbox トークンがあり、オンラインなら OPFS 保存直後に自動アップロード。
+// 失敗してもユーザーに通知しない（バックアップ的位置づけ）。
+async function _dbxSilentUpload(filename, payloadStr){
+  try{
+    const token=localStorage.getItem('dbx_token');
+    if(!token||!navigator.onLine)return;
+    const r=await fetch('https://content.dropboxapi.com/2/files/upload',{
+      method:'POST',
+      headers:{
+        'Authorization':'Bearer '+token,
+        'Dropbox-API-Arg':JSON.stringify({path:'/'+filename,mode:'overwrite',autorename:false}),
+        'Content-Type':'application/octet-stream'
+      },
+      body:new TextEncoder().encode(payloadStr)
+    });
+    // 401 = トークン期限切れ。sync.html で再接続してもらう。ここでは無視。
+    if(r.ok)console.info('Inkstride: Dropbox backup OK →',filename);
+  }catch(e){console.warn('Inkstride: Dropbox backup failed (silent)',e.message);}
+}
+
 // ─── saveBPF の置き換え（OPFS保存 + 外部ダウンロード） ──────
 async function saveBPF(downloadAlso){
   showToast('保存中…');
@@ -6040,6 +6061,8 @@ async function saveBPF(downloadAlso){
     // OPFSに保存（常時）
     const saved = await saveBPFToOPFS(fn, payload);
     if(saved) showToast('ギャラリーに保存しました');
+    // v84+: Dropbox にも自動バックアップ（非同期・エラーは無視）
+    _dbxSilentUpload(fn, payload).catch(()=>{});
     // 外部ダウンロードも（ボタン長押し or downloadAlso=true）
     if(downloadAlso){
       const blob=new Blob([payload],{type:'application/octet-stream'});
@@ -6533,6 +6556,18 @@ function _sampleCanvasColor(screenX,screenY){
     },50);
   });
   window.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleDraw();});
+
+  // v84+: Service Worker 登録（PWA オフライン対応 + Dropbox バックアップ連携）
+  // sw.js がアプリをキャッシュし、キャッシュクリアなしでオフライン動作を保証。
+  // OPFS のギャラリーデータは SW とは独立しているため SW 更新で消えない。
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('./sw.js').then(reg=>{
+      // 新バージョンが検出されたら自動で更新（skipWaiting 済みなので次ロード時に反映）
+      reg.addEventListener('updatefound',()=>{
+        console.info('Inkstride: SW 新バージョン検出 → 次回起動時に適用');
+      });
+    }).catch(e=>console.warn('SW登録失敗:',e));
+  }
 })();
 </script>
 
