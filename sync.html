@@ -166,8 +166,9 @@ async function connectDropbox() {
   localStorage.setItem('dbx_app_key', appKey);
   const { verifier, challenge } = await generatePKCE();
   const state = b64url(crypto.getRandomValues(new Uint8Array(8)));
-  sessionStorage.setItem('dbx_v', verifier);
-  sessionStorage.setItem('dbx_s', state);
+  // v85: sessionStorage は PWA→外部Safari 遷移で消えるため localStorage を使用
+  localStorage.setItem('dbx_v', verifier);
+  localStorage.setItem('dbx_s', state);
   location.href = 'https://www.dropbox.com/oauth2/authorize?' + new URLSearchParams({
     client_id: appKey, response_type: 'code',
     code_challenge: challenge, code_challenge_method: 'S256',
@@ -179,20 +180,23 @@ async function handleCallback() {
   const p = new URLSearchParams(location.search);
   const code = p.get('code'), state = p.get('state');
   if (!code) return;
-  history.replaceState({}, '', location.pathname);
-  if (state !== sessionStorage.getItem('dbx_s')) { syncBar('err','State 不一致 — やり直してください'); return; }
+  // v85: history.replaceState は Safari PWA で失敗するため try で囲む
+  try { history.replaceState({}, '', location.origin + location.pathname); } catch(_) {}
+  if (state !== localStorage.getItem('dbx_s')) { syncBar('err','State 不一致 — やり直してください'); return; }
   syncBar('info', 'Dropbox 認証中…', true);
   try {
     const r = await fetch('https://api.dropboxapi.com/oauth2/token', {
       method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ code, grant_type: 'authorization_code',
-        code_verifier: sessionStorage.getItem('dbx_v'),
+        code_verifier: localStorage.getItem('dbx_v'),
         client_id: localStorage.getItem('dbx_app_key'), redirect_uri: REDIRECT_URI })
     });
     const d = await r.json();
     if (!d.access_token) throw new Error(d.error_description || JSON.stringify(d));
     localStorage.setItem('dbx_token', d.access_token);
     if (d.refresh_token) localStorage.setItem('dbx_refresh', d.refresh_token);
+    // 使用済み PKCE キーを削除
+    localStorage.removeItem('dbx_v'); localStorage.removeItem('dbx_s');
     setConnected(true);
   } catch(e) { syncBar('err', '認証失敗: ' + e.message); }
 }
