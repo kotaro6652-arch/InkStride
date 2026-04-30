@@ -3739,7 +3739,8 @@ function _setTransformMode(m){
 })();
 function readR8Full(l){const buf=new Uint8Array(CW*CH*4);gl.bindFramebuffer(gl.READ_FRAMEBUFFER,l.fbo);gl.readPixels(0,0,CW,CH,gl.RGBA,gl.UNSIGNED_BYTE,buf);gl.bindFramebuffer(gl.READ_FRAMEBUFFER,null);return buf;}
 function writeR8Full(l,rgba){gl.bindTexture(gl.TEXTURE_2D,l.tex);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,CW,CH,gl.RGBA,gl.UNSIGNED_BYTE,rgba);gl.bindTexture(gl.TEXTURE_2D,null);scheduleDraw();}
-async function copyLassoToClipboard(cutMode){
+// v80: enterTransformAfter=false でクリップボード保存のみ（COPYボタン/CUTボタン用）
+async function copyLassoToClipboard(cutMode, enterTransformAfter=true){
   const l=gLayers[gActiveIdx];if(!l||lassoPath.length<3){lassoPath=[];setSelState(null);return;}
   if(cutMode)captureNow();
   const xs=lassoPath.map(p=>p.x),ys=lassoPath.map(p=>p.y);
@@ -3797,7 +3798,15 @@ async function copyLassoToClipboard(cutMode){
     }
     writeR8Full(l,clr);
   }
-  selTx={cx:bx+bw/2,cy:by+bh/2,rot:0,sx:1,sy:1};lassoPath=[];initMesh();initWarpHandles();transformMode='grid';setSelState('transform');
+  if(enterTransformAfter){
+    // 通常ラッソ確定フロー: 変形モードへ移行
+    selTx={cx:bx+bw/2,cy:by+bh/2,rot:0,sx:1,sy:1};lassoPath=[];initMesh();initWarpHandles();transformMode='grid';setSelState('transform');
+  } else {
+    // v80: COPY/CUTボタン用 — クリップボードに保存して選択解除。transformに移行しない
+    selBBox=null;selImg=null;selTx=null;meshPts=null;warpHandles=null;
+    origLassoPath=[];lassoPath=[];transformMode='grid';
+    setSelState(null);drawSelOv();
+  }
   showToast(cutMode?'切り取り':'コピー');
 }
 async function execLasso(){
@@ -4551,8 +4560,8 @@ function applyBg(hex){bgColor=hex;bgRGB=hexToRGB01(hex);scheduleDraw();} // bg-w
 applyBg('#ffffff');
 document.getElementById('reset-view-btn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();resetView();});
 document.getElementById('grid-btn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();drawGridLayer();});
-document.getElementById('sel-copy-btn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();copyLassoToClipboard(false).catch(err=>{console.error(err);showToast('コピー失敗');});});
-document.getElementById('sel-cut-btn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();copyLassoToClipboard(true).catch(err=>{console.error(err);showToast('切り取り失敗');});});
+document.getElementById('sel-copy-btn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();copyLassoToClipboard(false,false).catch(err=>{console.error(err);showToast('コピー失敗');});});
+document.getElementById('sel-cut-btn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();copyLassoToClipboard(true,false).catch(err=>{console.error(err);showToast('切り取り失敗');});});
 document.getElementById('paste-current').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();pasteClipboard(false);});
 document.getElementById('paste-new-layer').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();pasteClipboard(true);});
 document.getElementById('paste-cancel').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();closePasteDialog();});
