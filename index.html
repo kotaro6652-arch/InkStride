@@ -575,7 +575,7 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
   <div class="row"><label>最小</label><div class="csl" id="csl-emsz" data-min="1" data-max="100" data-ratio="5"></div><span class="val" id="v-emsz">1px</span></div>
   <div class="slabel">手振れ補正</div>
   <canvas class="stab-cv" id="er-stab-cv" width="244" height="36"></canvas>
-  <div class="row"><label>強さ</label><div class="csl" id="csl-estab" data-min="1" data-max="20" data-ratio="3"></div><span class="val" id="v-estab">1</span></div>
+  <div class="row"><label>強さ</label><div class="csl" id="csl-estab" data-min="0" data-max="20" data-ratio="3"></div><span class="val" id="v-estab">1</span></div>
   <div class="slabel">ブラシ形状</div>
   <div class="shape-row" id="er-shape-row"><button class="shape-btn act" data-shape="0">ハード</button><button class="shape-btn" data-shape="1">シャープ</button><button class="shape-btn" data-shape="2">標準</button><button class="shape-btn" data-shape="3">ソフト</button></div>
   <div class="row"><label>不透明度</label><div class="csl" id="csl-er-opac" data-min="0" data-max="100" data-ratio="5"></div><span class="val" id="v-er-opac">100%</span></div>
@@ -586,9 +586,17 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
     <canvas class="curve-cv" id="er-curve-cv" width="244" height="100"></canvas>
     <div style="font-size:9px;color:var(--tx2);margin-bottom:6px">点をドラッグ（端点はY軸のみ）</div>
     <div class="row"><label>1px閾値</label><div class="csl" id="csl-er-thr" data-min="0" data-max="30" data-ratio="8"></div><span class="val" id="v-er-thr">0%</span></div>
+    <div class="row"><label>始点無視</label><div class="csl" id="csl-er-deadzone" data-min="0" data-max="100" data-ratio="5"></div><span class="val" id="v-er-deadzone">0</span></div>
+    <div class="row"><label>入り (px)</label><div class="csl" id="csl-er-stap" data-min="0" data-max="200" data-ratio="3"></div><span class="val" id="v-er-stap">0</span></div>
+    <div class="row"><label>抜き (px)</label><div class="csl" id="csl-er-etap" data-min="0" data-max="200" data-ratio="3"></div><span class="val" id="v-er-etap">0</span></div>
   </div>
   <div class="togrow"><span class="lbl">鉛筆モード</span><label class="tog"><input type="checkbox" id="cb-er-pencil"><div class="ttr"></div><div class="tth"></div></label></div>
   <div class="togrow"><span class="lbl">筆圧→不透明度</span><label class="tog"><input type="checkbox" id="cb-er-pr-opac"><div class="ttr"></div><div class="tth"></div></label></div>
+  <div id="er-pr-opac-sec" style="opacity:.4">
+    <div class="slabel" style="margin-top:4px">不透明度カーブ</div>
+    <canvas class="curve-cv" id="er-opac-curve-cv" width="244" height="100"></canvas>
+    <div style="font-size:9px;color:var(--tx2);margin-bottom:6px">点をドラッグ（端点はY軸のみ）</div>
+  </div>
 </div></div>
 <div class="rpanel" id="ly-panel"><div class="ph">レイヤー <button id="btn-addlayer">＋</button></div><div class="pb"><div id="llist"></div></div></div>
 <div id="flip-btn" class="leftbtn"><div class="lbtn-lbl">FLIP</div></div>
@@ -802,8 +810,8 @@ function _calcPointOpac(rawF){
 //
 // 戻り値: 0..1 の係数. 1 = 入り抜きの影響なし、 0 = 完全フェード
 function _calcStartTaperFactor(){
-  if(eraserOn)return 1.0;
-  const tool=activeTool==='marker'?TOOLS.marker:TOOLS.pen;
+  // v84: eraser uses its own startTaper like pen/marker
+  const tool=eraserOn?TOOLS.eraser:(activeTool==='marker'?TOOLS.marker:TOOLS.pen);
   const tp=tool.startTaper||0;
   if(tp<=0)return 1.0;
   if(_strokeDistAcc>=tp)return 1.0;
@@ -5475,8 +5483,12 @@ function spActivateTool(slotIdx){
     _setCslValue('csl-emsz',eMin);document.getElementById('v-emsz').textContent=eMin+'px';
     _setCslValue('csl-estab',eStab);document.getElementById('v-estab').textContent=eStab;
     _setCslValue('csl-er-thr',Math.round(eThresh*100));document.getElementById('v-er-thr').textContent=Math.round(eThresh*100)+'%';
+    const _erDz=TOOLS.eraser.deadZone||0;_setCslValue('csl-er-deadzone',_erDz);document.getElementById('v-er-deadzone').textContent=_erDz;
+    const _erSt=TOOLS.eraser.startTaper||0;_setCslValue('csl-er-stap',_erSt);document.getElementById('v-er-stap').textContent=_erSt;
+    const _erEt=TOOLS.eraser.endTaper||0;_setCslValue('csl-er-etap',_erEt);document.getElementById('v-er-etap').textContent=_erEt;
     const cbEr=document.getElementById('cb-er-pr');if(cbEr)cbEr.checked=ePressure;
     const erPrSec=document.getElementById('er-pr-sec');if(erPrSec)erPrSec.style.opacity=ePressure?'1':'0.4';
+    const erOpacSec=document.getElementById('er-pr-opac-sec');if(erOpacSec)erOpacSec.style.opacity=(TOOLS.eraser.pressureOpac)?'1':'0.4';
     drawStabOn('er-stab-cv',eStab);
   }else{
     eraserOn=false;erb.classList.remove('on');badge.classList.remove('show');
@@ -6368,25 +6380,33 @@ function _sampleCanvasColor(screenX,screenY){
 
   erb.classList.toggle('on',eraserOn);badge.classList.toggle('show',eraserOn);
 
-  // 消しゴム設定スライダー（ブラシと同等）
+  // 消しゴム設定スライダー（ブラシと同等） v84: deadzone/taper/opac curve 統一
   const drawErCurve=initCurveEditor('er-curve-cv',
     ()=>({pts:TOOLS.eraser.pts,min:TOOLS.eraser.min,sz:TOOLS.eraser.sz,pressure:TOOLS.eraser.pressure,thresh:TOOLS.eraser.thresh||0}),
     (t)=>{TOOLS.eraser.pts=t.pts;}
   );
-  function drawEr(){if(drawErCurve)drawErCurve();}
+  const drawErOpacCurve=initCurveEditor('er-opac-curve-cv',
+    ()=>({pts:TOOLS.eraser.opacPts,min:TOOLS.eraser.min,sz:TOOLS.eraser.sz,pressure:TOOLS.eraser.pressure,thresh:0}),
+    (t)=>{TOOLS.eraser.opacPts=t.pts;}
+  );
+  function drawEr(){if(drawErCurve)drawErCurve();if(drawErOpacCurve)drawErOpacCurve();}
   initCsl('csl-esz',TOOLS.eraser.sz,v=>{TOOLS.eraser.sz=v;eSize=v;document.getElementById('v-esz').textContent=v+'px';drawEr();});
   initCsl('csl-emsz',TOOLS.eraser.min,v=>{TOOLS.eraser.min=v;eMin=v;document.getElementById('v-emsz').textContent=v+'px';drawEr();});
   initCsl('csl-estab',TOOLS.eraser.stab,v=>{TOOLS.eraser.stab=v;eStab=v;document.getElementById('v-estab').textContent=v;drawStabOn('er-stab-cv',v);});
   initCsl('csl-er-opac',Math.round((TOOLS.eraser.opacity||1)*100),v=>{TOOLS.eraser.opacity=v/100;document.getElementById('v-er-opac').textContent=v+'%';});
   initCsl('csl-er-spacing',Math.round((TOOLS.eraser.spacing||0.8)*100),v=>{TOOLS.eraser.spacing=v/100;document.getElementById('v-er-spacing').textContent=v+'%';});
   initCsl('csl-er-thr',Math.round((TOOLS.eraser.thresh||0)*100),v=>{TOOLS.eraser.thresh=v/100;eThresh=TOOLS.eraser.thresh;document.getElementById('v-er-thr').textContent=v+'%';drawEr();});
+  initCsl('csl-er-deadzone',TOOLS.eraser.deadZone||0,v=>{TOOLS.eraser.deadZone=v;document.getElementById('v-er-deadzone').textContent=v;});
+  initCsl('csl-er-stap',TOOLS.eraser.startTaper||0,v=>{TOOLS.eraser.startTaper=v;document.getElementById('v-er-stap').textContent=v;});
+  initCsl('csl-er-etap',TOOLS.eraser.endTaper||0,v=>{TOOLS.eraser.endTaper=v;document.getElementById('v-er-etap').textContent=v;});
   document.getElementById('cb-er-pr').checked=TOOLS.eraser.pressure;
   document.getElementById('cb-er-pr').addEventListener('change',e=>{TOOLS.eraser.pressure=e.target.checked;ePressure=e.target.checked;document.getElementById('er-pr-sec').style.opacity=e.target.checked?'1':'0.4';drawEr();});
   (document.getElementById('cb-er-pencil')||{}).checked=TOOLS.eraser.pencil||false;
   document.getElementById('cb-er-pencil')?.addEventListener('change',e=>{TOOLS.eraser.pencil=e.target.checked;});
   (document.getElementById('cb-er-pr-opac')||{}).checked=TOOLS.eraser.pressureOpac||false;
-  document.getElementById('cb-er-pr-opac')?.addEventListener('change',e=>{TOOLS.eraser.pressureOpac=e.target.checked;});
+  document.getElementById('cb-er-pr-opac')?.addEventListener('change',e=>{TOOLS.eraser.pressureOpac=e.target.checked;document.getElementById('er-pr-opac-sec').style.opacity=e.target.checked?'1':'0.4';drawEr();});
   document.getElementById('er-pr-sec').style.opacity=TOOLS.eraser.pressure?'1':'0.4';
+  document.getElementById('er-pr-opac-sec').style.opacity=TOOLS.eraser.pressureOpac?'1':'0.4';
 
   drawStabOn('stab-cv',TOOLS.pen.stab);drawStabOn('mk-stab-cv',TOOLS.marker.stab);drawStabOn('er-stab-cv',TOOLS.eraser.stab);
   document.getElementById('sz-cur').textContent=CW+'×'+CH;
