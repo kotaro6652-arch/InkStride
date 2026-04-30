@@ -2233,7 +2233,7 @@ function unpackBits(data,n){
 const KEYFRAME_EVERY=100; // 100イベントごとにキーフレーム（半分に削減）
 let timeline=[],timelinePos=-1;
 let _recStroke=null,_strokeCount=0;
-let undoBusy=false,lastCaptureTime=0;
+let undoBusy=false,lastCaptureTime=0,_selTransformActive=false; // v85: block auto-KF during lasso/transform
 
 function expandDirty(x,y,r){}  // 互換性維持
 
@@ -2658,9 +2658,10 @@ function _insertKeyframe(){
   const doInsert=async()=>{
     if(penId!==null){setTimeout(doInsert,500);return;}
     if(undoBusy)return; // undo/redo中はスキップ
+    if(_selTransformActive)return; // v85: lasso/transform中の穴状態KFを防ぐ
     const snap=await readAllLayersAsync();
-    // 非同期待機中にundo/redoで状態が変わった場合はスキップ
     if(undoBusy)return;
+    if(_selTransformActive)return; // v85: 非同期待機中にtransformが始まった場合もスキップ
     _tlPush({type:'keyframe',snap});
   };
   if(typeof requestIdleCallback!=='undefined'){
@@ -2858,6 +2859,7 @@ function _replayStroke(s,scW,scH){
 }
 
 function _replayFill(ev){
+  // v85: use saved color+thresh to match floodFill behavior
   const li=gLayers.findIndex(l=>l.id===ev.layerId);if(li<0)return;
   gActiveIdx=li;const l=gLayers[li];
   eraserOn=ev.eraserOn;
@@ -2867,8 +2869,12 @@ function _replayFill(ev){
   const glR=CH-1-cy;const oi=(glR*CW+cx)*4;
   const tgtR=rgba[oi],tgtG=rgba[oi+1],tgtB=rgba[oi+2],tgtA=rgba[oi+3];
   const col=ev.layerColor||inkRGBA;
-  const[fr,fg,fb,fa]=ev.eraserOn?[0,0,0,0]:[Math.round(col[0]*255),Math.round(col[1]*255),Math.round(col[2]*255),255];
-  if(tgtR===fr&&tgtG===fg&&tgtB===fb&&tgtA===fa)return;
+  let fr,fg,fb,fa;
+  if(ev.eraserOn){fr=0;fg=0;fb=0;fa=0;}
+  else{const[r,g,b,a]=col;fa=Math.round(a*255);fr=Math.round(r*fa);fg=Math.round(g*fa);fb=Math.round(b*fa);}
+  const thresh=ev.thresh!=null?ev.thresh:0;
+  const dFill=Math.abs(tgtR-fr)+Math.abs(tgtG-fg)+Math.abs(tgtB-fb)+Math.abs(tgtA-fa);
+  if(dFill<=thresh)return;
   const visited=new Uint8Array(CW*CH);const stk=[cx,cy];visited[glR*CW+cx]=1;
   while(stk.length>0){
     const py=stk.pop(),px=stk.pop();const gr=CH-1-py;const pi=(gr*CW+px)*4;
@@ -2876,7 +2882,9 @@ function _replayFill(ev){
     for(const[nx,ny]of[[px-1,py],[px+1,py],[px,py-1],[px,py+1]]){
       if(nx<0||nx>=CW||ny<0||ny>=CH)continue;
       const ni=(CH-1-ny)*CW+nx;if(visited[ni])continue;
-      const noi=ni*4;if(rgba[noi]!==tgtR||rgba[noi+1]!==tgtG||rgba[noi+2]!==tgtB||rgba[noi+3]!==tgtA)continue;
+      const noi=ni*4;
+      const d=Math.abs(rgba[noi]-tgtR)+Math.abs(rgba[noi+1]-tgtG)+Math.abs(rgba[noi+2]-tgtB)+Math.abs(rgba[noi+3]-tgtA);
+      if(d>thresh)continue;
       visited[ni]=1;stk.push(nx,ny);
     }
   }
@@ -3888,6 +3896,7 @@ async function copyLassoToClipboard(cutMode, enterTransformAfter=true){
   }
   if(enterTransformAfter){
     // 通常ラッソ確定フロー: 変形モードへ移行
+    _selTransformActive=true; // v85: block auto-KF during transform
     selTx={cx:bx+bw/2,cy:by+bh/2,rot:0,sx:1,sy:1};lassoPath=[];initMesh();initWarpHandles();transformMode='grid';setSelState('transform');
   } else {
     // v80: COPY/CUTボタン用 — クリップボードに保存して選択解除。transformに移行しない
@@ -3951,6 +3960,7 @@ async function commitTransform(){
     }
   }
   writeR8Full(l,curRGBA);
+  _selTransformActive=false; // v85: re-enable auto-KF
   selState=null;selBBox=null;selImg=null;selTx=null;meshPts=null;warpHandles=null;transformMode="grid";selHandle=null;selPrevPt=null;origLassoPath=[];
   const _sb=document.getElementById('sel-btn');if(_sb){_sb.className='bottomleftbtn';};setSelHint(null);drawSelOv();scheduleDraw();renderLayers();
   lastCaptureTime=0;captureNow('transform'); // v85: force-capture bypassing throttle
@@ -4019,7 +4029,7 @@ function pasteClipboard(toNewLayer){
   scheduleDraw();
   showToast(toNewLayer?'新規レイヤーにペースト':'このレイヤーにペースト');
 }
-function cancelSel(){selState=null;selBBox=null;selImg=null;selTx=null;meshPts=null;warpHandles=null;transformMode="grid";selHandle=null;selPrevPt=null;origLassoPath=[];lassoPath=[];_lassoStrokes=[];const _sb=document.getElementById('sel-btn');if(_sb){_sb.className='bottomleftbtn';};setSelHint(null);updateSelActions();drawSelOv();}
+function cancelSel(){_selTransformActive=false;selState=null;selBBox=null;selImg=null;selTx=null;meshPts=null;warpHandles=null;transformMode="grid";selHandle=null;selPrevPt=null;origLassoPath=[];lassoPath=[];_lassoStrokes=[];const _sb=document.getElementById('sel-btn');if(_sb){_sb.className='bottomleftbtn';};setSelHint(null);updateSelActions();drawSelOv();}
 function drawSelOv(){
   updateSelActions();
   sovCtx.clearRect(0,0,selOv.width,selOv.height);
@@ -5808,7 +5818,7 @@ async function floodFill(canvasX,canvasY){
     dstRGBA[pi]=fr;dstRGBA[pi+1]=fg;dstRGBA[pi+2]=fb;dstRGBA[pi+3]=fa;
   }}
   writeR8Full(l,dstRGBA);
-  _rec({type:'fill',layerId:l.id,layerName:l.name,x:x0/CW,y:y0/CH,eraserOn});
+  _rec({type:'fill',layerId:l.id,layerName:l.name,x:x0/CW,y:y0/CH,eraserOn,layerColor:[...inkRGBA],thresh:thresh}); // v85: save color+thresh for replay
   scheduleDraw();renderLayers();
   showToast('塗りつぶし完了 ('+cnt+'px)');
 }
