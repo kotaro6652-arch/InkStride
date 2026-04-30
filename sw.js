@@ -2,7 +2,7 @@
 // HTML（index.html / sync.html）はネットワーク優先 → 毎回最新を取得。
 // アイコン・manifest 等の静的ファイルはキャッシュ優先。
 // OPFS のギャラリーデータは SW キャッシュとは独立しており、ここでは一切触れない。
-const CACHE_VERSION = '2026-04-30-v85';
+const CACHE_VERSION = '2026-04-30-v86';
 const CACHE_NAME = 'inkstride-' + CACHE_VERSION;
 
 const STATIC_SHELL = [

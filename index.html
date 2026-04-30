@@ -289,6 +289,11 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
 /* タイムラプスプレーヤー */
 #tl-btn{position:fixed;top:calc(6px + var(--safe-top));left:270px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:26px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
 #grid-btn{position:fixed;top:calc(6px + var(--safe-top));left:336px;z-index:220;background:var(--sf);border:1px solid var(--bd);border-radius:8px;height:26px;width:60px;font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.04em;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation;white-space:nowrap;user-select:none;-webkit-user-select:none}
+#mirror-btn{left:402px}
+#mirror-btn.active{background:#1a3535;border-color:var(--aqua)}
+#mirror-line-btn{right:270px;display:none}
+#mirror-line-btn.active{background:#1a3535;border-color:var(--aqua)}
+#mirror-ov{position:fixed;inset:0;pointer-events:none;z-index:151}
 #tl-overlay{position:fixed;inset:0;z-index:600;background:#000c;display:none;flex-direction:column;align-items:center;justify-content:center;touch-action:none}
 #tl-overlay.show{display:flex}
 #tl-canvas{border-radius:8px;max-width:92vw;max-height:72vh;background:#fff;image-rendering:pixelated}
@@ -393,6 +398,9 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
   </div>
 </div><div class="topbtn" id="tl-btn">PLAY</div>
 <div class="topbtn" id="grid-btn">GRID</div>
+<div class="topbtn" id="mirror-btn">MIRROR</div>
+<div class="topbtn" id="mirror-line-btn">LINE</div>
+<canvas id="mirror-ov"></canvas>
 <div class="topbtn" id="gallery-btn">GALLERY</div>
 <div class="topbtn" id="export-btn">EXPORT</div>
 <div class="topbtn" id="bpf-save-btn">SAVE</div>
@@ -715,6 +723,7 @@ let _lastPressure=1.0; // 最新筆圧値 (再マッピング後)
 let _lastRawPressure=1.0; // rev17: 再マッピング前の生筆圧 (pressureOpac 閾値計算用)
 let view={x:0,y:0,scale:1,rot:0};
 let flipState=false;
+let mirrorMode=false,mirrorLineVisible=true,_mirrorPass=false;
 let bgColor='#ffffff';
 let bgRGB=[1,1,1];
 let inkHex='#000000';
@@ -929,6 +938,33 @@ function applyView(){
   cw.style.webkitTransform=t;cw.style.transform=t;
   document.getElementById('zl').textContent=Math.round(scale*100)+'%'+(rot!==0?' '+Math.round(rot*180/Math.PI)+'°':'');
   scheduleDraw();
+  updateMirrorLineOverlay();
+}
+function updateMirrorLineOverlay(){
+  const ov=document.getElementById('mirror-ov');
+  if(!ov)return;
+  const W=window.innerWidth,H=window.innerHeight;
+  if(ov.width!==W||ov.height!==H){ov.width=W;ov.height=H;}
+  const ctx=ov.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  if(!mirrorMode||!mirrorLineVisible)return;
+  const top=canvasToScreen(CW/2,0),bot=canvasToScreen(CW/2,CH);
+  ctx.save();
+  ctx.strokeStyle='rgba(130,170,255,0.7)';
+  ctx.lineWidth=1.5;
+  ctx.setLineDash([8,6]);
+  ctx.beginPath();
+  ctx.moveTo(top.x,top.y);
+  ctx.lineTo(bot.x,bot.y);
+  ctx.stroke();
+  ctx.restore();
+}
+function syncMirrorBtn(){
+  document.getElementById('mirror-btn').classList.toggle('active',mirrorMode);
+  const lb=document.getElementById('mirror-line-btn');
+  lb.style.display=mirrorMode?'flex':'none';
+  lb.classList.toggle('active',mirrorMode&&mirrorLineVisible);
+  updateMirrorLineOverlay();
 }
 function syncFlipBtn(){document.getElementById('flip-btn').classList.toggle('active',flipState);}
 function fitView(){
@@ -1627,6 +1663,7 @@ function _fadeInMul(d0,d1){
 }
 
 function queueDot(x,y,d,opac){
+  if(mirrorMode&&!_mirrorPass){_mirrorPass=true;queueDot(CW-x,y,d,opac);_mirrorPass=false;}
   _ensureStrokeBufCovers(x,y,d/2);
   if(segCount>=MAX_SEG)flushBrushGPU();
   const b=segCount*7,r=d/2;
@@ -1637,6 +1674,7 @@ function queueDot(x,y,d,opac){
 function queueLine(x0,y0,x1,y1,d0,d1,opac){
   // v36: 始点=終点の縮退セグメントをスキップ.
   if(Math.abs(x1-x0)<0.01 && Math.abs(y1-y0)<0.01)return;
+  if(mirrorMode&&!_mirrorPass){_mirrorPass=true;queueLine(CW-x0,y0,CW-x1,y1,d0,d1,opac);_mirrorPass=false;}
   if(d1===undefined)d1=d0;
   // v42: 短すぎるセグメント (長さが直径の半分未満) は queueDot に振り替え.
   // 短いカプセルは方向ベクトルが浮動小数誤差でブレ、 長方形が「ランダム角度の歪な形」で
@@ -3299,6 +3337,9 @@ function drawGridLayer(){
   _rec({type:'layer_add',id:layer.id,name:layer.name,color:[...layer.color],opacity:layer.opacity,visible:layer.visible,blend:layer.blend,layerName:layer.name});
   scheduleDraw();renderLayers();setTimeout(()=>{lastCaptureTime=0;captureNow('grid_layer');},0);
   showToast(name+' を作成');
+  // GRID作成後に変形モードへ移行
+  lassoPath=[{x:0,y:0},{x:CW,y:0},{x:CW,y:CH},{x:0,y:CH}];
+  execLasso();
 }
 function moveLayer(from,to){
   if(to<0||to>=gLayers.length)return;
@@ -4038,7 +4079,7 @@ function isStylusP(p){return p.pointerType==='pen';}
 function isTouchP(p){return p.pointerType==='touch';}
 
 const TAB_MAP={'tab-br':'brush','tab-mk':'marker','tab-er':'eraser','tab-ly':'layers','tab-dot':null};
-function classifyPenTarget(x,y){const el=document.elementFromPoint(x,y);if(!el)return'canvas';if(el.closest('.rpanel.open')||el.closest('.toppanel.open'))return'panel';if(el.closest('#sub-palette,#sel-actions,#paste-dialog,#flip-btn,#color-btn,#alpha-btn,#erb,#sz-btn,#export-btn,#bpf-save-btn,#open-btn,#new-btn,#ref-btn,#sel-btn,#ruler-btn,#fill-btn,#fill-dialog,#topbar,#gallery-overlay,#new-dialog,#new-dialog-box,#bpf-preview-dialog,#cpicker-modal,#tl-overlay,#tl-btn,#grid-btn,#gallery-btn,#xform-toggle,.toppanel'))return'ui';return'canvas';}
+function classifyPenTarget(x,y){const el=document.elementFromPoint(x,y);if(!el)return'canvas';if(el.closest('.rpanel.open')||el.closest('.toppanel.open'))return'panel';if(el.closest('#sub-palette,#sel-actions,#paste-dialog,#flip-btn,#color-btn,#alpha-btn,#erb,#sz-btn,#export-btn,#bpf-save-btn,#open-btn,#new-btn,#ref-btn,#sel-btn,#ruler-btn,#fill-btn,#fill-dialog,#topbar,#gallery-overlay,#new-dialog,#new-dialog-box,#bpf-preview-dialog,#cpicker-modal,#tl-overlay,#tl-btn,#grid-btn,#mirror-btn,#mirror-line-btn,#gallery-btn,#xform-toggle,.toppanel'))return'ui';return'canvas';}
 
 let rulerPreviewPt=null;
 
@@ -4068,7 +4109,7 @@ document.addEventListener('pointerdown',function(e){
   let tgt='canvas';
   if(hitEl){
     if(hitEl.closest('.rpanel.open')||hitEl.closest('.toppanel.open'))tgt='panel';
-    else if(hitEl.closest('#sub-palette,#sel-actions,#paste-dialog,#flip-btn,#color-btn,#alpha-btn,#erb,#sz-btn,#export-btn,#bpf-save-btn,#open-btn,#new-btn,#ref-btn,#sel-btn,#ruler-btn,#fill-btn,#fill-dialog,#topbar,#gallery-overlay,#new-dialog,#new-dialog-box,#bpf-preview-dialog,#cpicker-modal,#tl-overlay,#tl-btn,#grid-btn,#gallery-btn,.toppanel'))tgt='ui';
+    else if(hitEl.closest('#sub-palette,#sel-actions,#paste-dialog,#flip-btn,#color-btn,#alpha-btn,#erb,#sz-btn,#export-btn,#bpf-save-btn,#open-btn,#new-btn,#ref-btn,#sel-btn,#ruler-btn,#fill-btn,#fill-dialog,#topbar,#gallery-overlay,#new-dialog,#new-dialog-box,#bpf-preview-dialog,#cpicker-modal,#tl-overlay,#tl-btn,#grid-btn,#mirror-btn,#mirror-line-btn,#gallery-btn,.toppanel'))tgt='ui';
   }
   if(tgt==='panel')return;if(tgt==='ui'){closePanel();return;}
   e.preventDefault();
@@ -4604,6 +4645,8 @@ function applyBg(hex){bgColor=hex;bgRGB=hexToRGB01(hex);scheduleDraw();} // bg-w
 applyBg('#ffffff');
 document.getElementById('reset-view-btn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();resetView();});
 document.getElementById('grid-btn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();drawGridLayer();});
+document.getElementById('mirror-btn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();mirrorMode=!mirrorMode;syncMirrorBtn();});
+document.getElementById('mirror-line-btn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();mirrorLineVisible=!mirrorLineVisible;syncMirrorBtn();});
 document.getElementById('sel-copy-btn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();copyLassoToClipboard(false,false).catch(err=>{console.error(err);showToast('コピー失敗');});});
 document.getElementById('sel-cut-btn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();copyLassoToClipboard(true,false).catch(err=>{console.error(err);showToast('切り取り失敗');});});
 document.getElementById('paste-current').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();pasteClipboard(false);});
