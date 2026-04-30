@@ -3822,7 +3822,7 @@ function writeR8Full(l,rgba){gl.bindTexture(gl.TEXTURE_2D,l.tex);gl.texSubImage2
 // v80: enterTransformAfter=false でクリップボード保存のみ（COPYボタン/CUTボタン用）
 async function copyLassoToClipboard(cutMode, enterTransformAfter=true){
   const l=gLayers[gActiveIdx];if(!l||lassoPath.length<3){lassoPath=[];setSelState(null);return;}
-  if(cutMode)captureNow();
+  if(cutMode){lastCaptureTime=0;captureNow('lasso_cut');} // v85: force-capture bypassing throttle
   const xs=lassoPath.map(p=>p.x),ys=lassoPath.map(p=>p.y);
   let bx=Math.max(0,Math.floor(Math.min(...xs))),by=Math.max(0,Math.floor(Math.min(...ys)));
   let bw=Math.min(CW-bx,Math.ceil(Math.max(...xs))-bx+1),bh=Math.min(CH-by,Math.ceil(Math.max(...ys))-by+1);
@@ -3945,7 +3945,8 @@ async function commitTransform(){
   writeR8Full(l,curRGBA);
   selState=null;selBBox=null;selImg=null;selTx=null;meshPts=null;warpHandles=null;transformMode="grid";selHandle=null;selPrevPt=null;origLassoPath=[];
   const _sb=document.getElementById('sel-btn');if(_sb){_sb.className='bottomleftbtn';};setSelHint(null);drawSelOv();scheduleDraw();renderLayers();
-  setTimeout(captureNow,0);showToast('変形確定');
+  lastCaptureTime=0;captureNow('transform'); // v85: force-capture bypassing throttle
+  showToast('変形確定');
 }
 function nextNamedLayerName(base){
   const names=new Set(gLayers.map(l=>l.name));
