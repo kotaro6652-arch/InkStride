@@ -482,6 +482,15 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
   <div class="sz-opt cur" data-w="2360" data-h="1640"><div class="sz-opt-row">1x 標準 <small>2360×1640</small></div></div>
   <div class="sz-opt" data-w="4720" data-h="3280"><div class="sz-opt-row">2x 高解像度 <small>4720×3280</small></div></div>
   <div class="sz-opt" data-w="9440" data-h="6560"><div class="sz-opt-row">4x 超高解像度 <small>9440×6560</small></div></div>
+  <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--bd2)">
+    <div style="font-size:11px;color:var(--tx2);margin-bottom:6px">カスタムサイズ</div>
+    <div style="display:flex;gap:4px;align-items:center">
+      <input type="number" id="sz-custom-w" placeholder="幅" min="1" max="20000" style="width:0;flex:1;padding:6px 4px;background:var(--sf2);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:'DM Mono',monospace;touch-action:manipulation;-webkit-appearance:none">
+      <span style="color:var(--tx2);font-size:12px;flex-shrink:0">×</span>
+      <input type="number" id="sz-custom-h" placeholder="高さ" min="1" max="20000" style="width:0;flex:1;padding:6px 4px;background:var(--sf2);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:'DM Mono',monospace;touch-action:manipulation;-webkit-appearance:none">
+      <button id="sz-custom-btn" style="flex-shrink:0;padding:6px 10px;background:var(--sf2);border:1px solid var(--acc);border-radius:6px;color:var(--acc);font-size:11px;cursor:pointer;touch-action:manipulation;white-space:nowrap">設定</button>
+    </div>
+  </div>
   <button id="sz-confirm"> タップで確定（描画を拡大縮小して変換）</button>
   <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bd2)">
     <div style="font-size:11px;color:var(--tx2);margin-bottom:4px;display:flex;justify-content:space-between;align-items:center">
@@ -494,7 +503,7 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
     </div>
     <button id="ps-reset" style="width:100%;margin-top:6px;padding:6px;background:var(--sf2);border:1px solid var(--bd2);border-radius:6px;color:var(--tx2);font-size:11px;cursor:pointer;touch-action:manipulation">標準に戻す (1.0)</button>
   </div>
-  <div id="sz-ver">Inkstride v21r77<br>WebGL2 + bbox undo + Pointer Events<br>iPad / Apple Pencil 対応<br>© 2025 Claude / Anthropic</div>
+  <div id="sz-ver">Inkstride v21r84<br>WebGL2 + bbox undo + Pointer Events<br>iPad / Apple Pencil 対応<br>© 2025 Claude / Anthropic</div>
   <button id="sz-reset" style="width:100%;margin-top:6px;padding:8px;background:var(--sf2);border:1px solid var(--ora);border-radius:8px;color:var(--ora);font-size:11px;cursor:pointer;touch-action:manipulation">🔧 ブラシ・パレット設定をリセット</button>
 </div>
 <div class="toppanel" id="sv-panel">
@@ -4863,6 +4872,23 @@ document.getElementById('btn-addlayer').addEventListener('pointerdown',e=>{
 const szBtn=document.getElementById('sz-btn'),szPanel=document.getElementById('sz-panel'),szConfirm=document.getElementById('sz-confirm');
 szBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();szPanel.classList.toggle('open');szConfirm.style.display='none';pendingSize=null;});
 document.querySelectorAll('.sz-opt').forEach(opt=>{opt.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();const w=+opt.dataset.w,h=+opt.dataset.h;if(w===CW&&h===CH){showToast('現在と同じサイズです');return;}pendingSize={w,h};document.querySelectorAll('.sz-opt').forEach(o=>o.classList.remove('cur'));opt.classList.add('cur');szConfirm.style.display='block';});});
+// v84: カスタムサイズ — 値をlocalStorageに保存し次回も残す
+(function(){
+  const cw=document.getElementById('sz-custom-w'),ch=document.getElementById('sz-custom-h');
+  const saved_w=localStorage.getItem('inkstride_custom_w'),saved_h=localStorage.getItem('inkstride_custom_h');
+  if(saved_w)cw.value=saved_w;if(saved_h)ch.value=saved_h;
+  cw.addEventListener('input',()=>localStorage.setItem('inkstride_custom_w',cw.value));
+  ch.addEventListener('input',()=>localStorage.setItem('inkstride_custom_h',ch.value));
+  document.getElementById('sz-custom-btn').addEventListener('pointerdown',e=>{
+    e.preventDefault();e.stopPropagation();
+    const w=parseInt(cw.value),h=parseInt(ch.value);
+    if(!w||!h||w<1||h<1){showToast('幅と高さを入力してください');return;}
+    if(w===CW&&h===CH){showToast('現在と同じサイズです');return;}
+    pendingSize={w,h};
+    document.querySelectorAll('.sz-opt').forEach(o=>o.classList.remove('cur'));
+    szConfirm.style.display='block';
+  });
+})();
 szConfirm.addEventListener('pointerdown',async e=>{
   e.preventDefault();e.stopPropagation();if(!pendingSize)return;
   const oldCW=CW,oldCH=CH,{w,h}=pendingSize;showToast('変換中…');
@@ -4880,6 +4906,12 @@ szConfirm.addEventListener('pointerdown',async e=>{
     const di=dstCtx.getImageData(0,0,w,h);const r8new=new Uint8Array(w*h*4);
     for(let row=0;row<h;row++){const fr=h-1-row;for(let col=0;col<w;col++){const oi=(fr*w+col)*4,si=(row*w+col)*4;r8new[oi]=di.data[si];r8new[oi+1]=di.data[si+1];r8new[oi+2]=di.data[si+2];r8new[oi+3]=di.data[si+3];}}
     scaledLayers.push({ref:l,r8new});await new Promise(r=>setTimeout(r,0));
+  }
+  // v84: refTransform をリサイズ比率に合わせてスケール補正
+  if(refImgEl&&refTransform){
+    const sx=w/oldCW,sy=h/oldCH;
+    refTransform.cx*=sx;refTransform.cy*=sy;
+    refTransform.scale*=Math.min(sx,sy);
   }
   CW=w;CH=h;
   // rev23: 座標系変更で既存 snapshot は無効. timeline クリア前に GPU 解放.
