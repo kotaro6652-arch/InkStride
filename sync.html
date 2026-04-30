@@ -82,6 +82,20 @@ button:disabled{opacity:.4;cursor:default}
     <button class="primary" onclick="connectDropbox()" id="btn-connect">接続</button>
     <button class="danger" id="btn-disconnect" onclick="disconnect()" style="display:none">切断</button>
   </div>
+  <div class="row" id="secret-row">
+    <label style="color:#f97316">App Secret</label>
+    <input type="text" id="app-secret" placeholder="任意 — 通常不要" style="flex:1;border-color:#3a3a44">
+  </div>
+  <!-- iOS PWA での location.href 問題を回避するための隠しフォーム -->
+  <form id="auth-form" method="GET" action="https://www.dropbox.com/oauth2/authorize" style="display:none">
+    <input type="hidden" name="client_id" id="f-client-id">
+    <input type="hidden" name="response_type" value="code">
+    <input type="hidden" name="code_challenge" id="f-challenge">
+    <input type="hidden" name="code_challenge_method" id="f-method">
+    <input type="hidden" name="redirect_uri" id="f-redirect">
+    <input type="hidden" name="state" id="f-state">
+    <input type="hidden" name="token_access_type" value="offline">
+  </form>
   <div class="row" id="manual-sync-row" style="display:none">
     <button class="green" onclick="autoSync()" id="btn-sync">↺ 今すぐ同期</button>
     <span id="last-sync-label" style="font-size:10px;color:#555"></span>
@@ -150,8 +164,6 @@ function syncBar(type, msg, spin=false) {
 function syncBarHide() { document.getElementById('sync-bar').classList.remove('show'); }
 
 // ─── PKCE (plain方式: crypto.subtle不使用) ─────────────────────
-// v85b: S256ハッシュをやめplain方式に変更。crypto.subtleがSafari PWAで
-// 失敗するケースを回避。セキュリティ上の差異はiPad個人用途では許容範囲。
 function makeRandStr(len) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   return Array.from(crypto.getRandomValues(new Uint8Array(len)))
@@ -162,31 +174,25 @@ function makeRandStr(len) {
 async function connectDropbox() {
   const appKey = document.getElementById('app-key').value.trim();
   if (!appKey) { syncBar('err', 'App Key を入力してください'); return; }
+  const appSecret = document.getElementById('app-secret').value.trim();
   localStorage.setItem('dbx_app_key', appKey);
+  if (appSecret) localStorage.setItem('dbx_app_secret', appSecret);
 
   try {
-    const verifier = makeRandStr(64); // plain方式: challenge = verifier
+    const verifier = makeRandStr(64);
     const state    = makeRandStr(16);
     localStorage.setItem('dbx_v', verifier);
     localStorage.setItem('dbx_s', state);
 
-    const params = new URLSearchParams();
-    params.set('client_id',             appKey);
-    params.set('response_type',         'code');
-    params.set('code_challenge',        verifier);
-    params.set('code_challenge_method', 'plain');
-    params.set('redirect_uri',          REDIRECT_URI);
-    params.set('state',                 state);
-    params.set('token_access_type',     'offline');
-    const authUrl = 'https://www.dropbox.com/oauth2/authorize?' + params.toString();
-
+    // v85c: フォーム submit で遷移 — iOS PWA での location.href エラーを回避
+    document.getElementById('f-client-id').value  = appKey;
+    document.getElementById('f-challenge').value  = verifier;
+    document.getElementById('f-method').value     = 'plain';
+    document.getElementById('f-redirect').value   = REDIRECT_URI;
+    document.getElementById('f-state').value      = state;
     syncBar('info', 'Dropbox 認証ページへ移動中…');
-    // v85b: location.href が PWA で失敗する場合に備えて try/catch
-    try {
-      location.href = authUrl;
-    } catch(navErr) {
-      syncBar('err', 'ページ移動失敗: ' + navErr.message + '\n\nURL: ' + authUrl);
-    }
+    document.getElementById('auth-form').submit();
+
   } catch(e) {
     syncBar('err', '接続エラー: ' + e.message);
   }
@@ -197,7 +203,6 @@ async function handleCallback() {
   const code = p.get('code'), state = p.get('state'), errParam = p.get('error');
   if (!code && !errParam) return;
 
-  // Dropbox がエラーを返した場合
   if (errParam) {
     syncBar('err', 'Dropbox 認証拒否: ' + (p.get('error_description') || errParam));
     return;
@@ -207,28 +212,32 @@ async function handleCallback() {
 
   const savedState = localStorage.getItem('dbx_s');
   if (!savedState || state !== savedState) {
-    syncBar('err', 'State 不一致 — 再度「接続」してください\n(期待値: ' + savedState + ')');
+    syncBar('err', 'State 不一致 — 再度「接続」してください');
     return;
   }
 
   syncBar('info', 'Dropbox トークン取得中…', true);
   try {
-    const body = new URLSearchParams({
-      code,
-      grant_type:    'authorization_code',
-      code_verifier: localStorage.getItem('dbx_v'),
-      client_id:     localStorage.getItem('dbx_app_key'),
-      redirect_uri:  REDIRECT_URI
-    });
-    const r = await fetch('https://api.dropboxapi.com/oauth2/token', {
+    // v85c: SDK と同じくパラメータを URL クエリ文字列で送る
+    const appSecret = localStorage.getItem('dbx_app_secret') || '';
+    const secretOrVerifier = appSecret
+      ? `&client_secret=${encodeURIComponent(appSecret)}`
+      : `&code_verifier=${encodeURIComponent(localStorage.getItem('dbx_v'))}`;
+    const tokenUrl = 'https://api.dropboxapi.com/oauth2/token'
+      + `?grant_type=authorization_code`
+      + `&code=${encodeURIComponent(code)}`
+      + `&client_id=${encodeURIComponent(localStorage.getItem('dbx_app_key'))}`
+      + secretOrVerifier
+      + `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+
+    const r = await fetch(tokenUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString()
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
     const text = await r.text();
     let d;
-    try { d = JSON.parse(text); } catch(_) { throw new Error('レスポンス解析失敗: ' + text.slice(0,200)); }
-    if (!d.access_token) throw new Error(d.error_description || d.error || JSON.stringify(d).slice(0,200));
+    try { d = JSON.parse(text); } catch(_) { throw new Error('レスポンス解析失敗: ' + text.slice(0, 300)); }
+    if (!d.access_token) throw new Error(d.error_description || d.error || JSON.stringify(d).slice(0, 300));
     localStorage.setItem('dbx_token', d.access_token);
     if (d.refresh_token) localStorage.setItem('dbx_refresh', d.refresh_token);
     localStorage.removeItem('dbx_v');
