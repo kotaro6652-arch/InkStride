@@ -243,9 +243,11 @@ async function dbxFetch(url, opts, retry=true) {
 async function dbxList() {
   const r = await dbxFetch('https://api.dropboxapi.com/2/files/list_folder', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ path: '' })
+    body: JSON.stringify({ path: '/BPF' })
   });
   const d = await r.json();
+  // /BPF フォルダ未作成（初回）は空リストを返す
+  if (d.error_summary && d.error_summary.includes('not_found')) return [];
   if (d.error_summary) throw new Error(d.error_summary);
   return (d.entries || []).filter(e => e.name.endsWith('.bpf'));
 }
@@ -254,7 +256,7 @@ async function dbxUpload(name, text) {
   const r = await dbxFetch('https://content.dropboxapi.com/2/files/upload', {
     method: 'POST',
     headers: {
-      'Dropbox-API-Arg': JSON.stringify({ path: '/'+name, mode: 'overwrite', autorename: false }),
+      'Dropbox-API-Arg': JSON.stringify({ path: '/BPF/'+name, mode: 'overwrite', autorename: false }),
       'Content-Type': 'application/octet-stream'
     },
     body: new TextEncoder().encode(text)

@@ -6032,9 +6032,8 @@ async function openFromPreview(){
   }catch(err){showToast('読み込み失敗: '+err.message);}
 }
 
-// ─── Dropbox サイレントバックアップ（saveBPF から fire-and-forget で呼ぶ） ───
-// v84+: Dropbox トークンがあり、オンラインなら OPFS 保存直後に自動アップロード。
-// 失敗してもユーザーに通知しない（バックアップ的位置づけ）。
+// ─── Dropbox バックアップ（saveBPF から fire-and-forget で呼ぶ） ───
+// v85: /BPF/ ディレクトリに保存。成功/401 をトーストで通知。
 async function _dbxSilentUpload(filename, payloadStr){
   try{
     const token=localStorage.getItem('dbx_token');
@@ -6043,14 +6042,20 @@ async function _dbxSilentUpload(filename, payloadStr){
       method:'POST',
       headers:{
         'Authorization':'Bearer '+token,
-        'Dropbox-API-Arg':JSON.stringify({path:'/'+filename,mode:'overwrite',autorename:false}),
+        'Dropbox-API-Arg':JSON.stringify({path:'/BPF/'+filename,mode:'overwrite',autorename:false}),
         'Content-Type':'application/octet-stream'
       },
       body:new TextEncoder().encode(payloadStr)
     });
-    // 401 = トークン期限切れ。sync.html で再接続してもらう。ここでは無視。
-    if(r.ok)console.info('Inkstride: Dropbox backup OK →',filename);
-  }catch(e){console.warn('Inkstride: Dropbox backup failed (silent)',e.message);}
+    if(r.ok){
+      showToast('Dropbox /BPF/ に保存済み');
+      console.info('Inkstride: Dropbox backup OK → /BPF/'+filename);
+    } else if(r.status===401){
+      showToast('Dropbox トークン期限切れ — sync.html で再接続してください');
+    } else {
+      console.warn('Inkstride: Dropbox backup failed', r.status);
+    }
+  }catch(e){console.warn('Inkstride: Dropbox backup failed',e.message);}
 }
 
 // ─── saveBPF の置き換え（OPFS保存 + 外部ダウンロード） ──────
