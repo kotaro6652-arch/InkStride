@@ -3301,6 +3301,7 @@ function saveState(){
   _saveTimer=setTimeout(()=>{
     try{localStorage.setItem(LS_KEY,JSON.stringify({
       tools:{pen:{...TOOLS.pen,pts:TOOLS.pen.pts},marker:{...TOOLS.marker,pts:TOOLS.marker.pts},eraser:{...TOOLS.eraser,pts:TOOLS.eraser.pts}},
+      _eraserV:82,
       activeTool,eraserOn,erbMode,eSize,bgColor,pressureSensitivity,
       view:{x:view.x,y:view.y,scale:view.scale,rot:view.rot},
       flipState,inkTransparent,rulerMode,
@@ -3323,7 +3324,17 @@ function loadState(){
       _migrateOpac(s.tools.marker);
       if(s.tools.pen)Object.assign(TOOLS.pen,s.tools.pen);
       if(s.tools.marker)Object.assign(TOOLS.marker,s.tools.marker);
-      if(s.tools.eraser)Object.assign(TOOLS.eraser,s.tools.eraser);
+      if(s.tools.eraser){
+        // v82 migration: 旧保存データは pressure/pressureOpac=false がデフォルト値だった
+        // _eraserV:82 フラグがない保存データは一回限り新デフォルト(true)を強制適用する
+        if(!(s._eraserV>=82)){delete s.tools.eraser.pressure;delete s.tools.eraser.pressureOpac;}
+        Object.assign(TOOLS.eraser,s.tools.eraser);
+        // ローカル変数を TOOLS.eraser と同期（loadState 後に UI が初期化される前に必要）
+        ePressure=!!TOOLS.eraser.pressure;
+        eStab=TOOLS.eraser.stab||3;
+        eThresh=TOOLS.eraser.thresh||0;
+        eMin=TOOLS.eraser.min||1;
+      }
     }
     if(s.activeTool)activeTool=s.activeTool;loadToolState(activeTool);
     if(s.eraserOn!==undefined)eraserOn=s.eraserOn;
