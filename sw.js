@@ -2,7 +2,7 @@
 // !! CACHE_VERSION をデプロイのたびに変更すること (例: 日付+バージョン) !!
 // 変更すると古いキャッシュが自動削除され、新しいアプリが再キャッシュされる。
 // OPFS のギャラリーデータは SW キャッシュとは独立しており、ここでは一切触れない。
-const CACHE_VERSION = '2026-04-30-v84';
+const CACHE_VERSION = '2026-04-30-v84-pwa';
 const CACHE_NAME = 'inkstride-' + CACHE_VERSION;
 
 // 起動時に必ずキャッシュするファイル（アプリシェル）
@@ -10,6 +10,11 @@ const APP_SHELL = [
   './',
   './index.html',
   './sync.html',
+  './manifest.json',
+  './icon.svg',
+  './icon-180.png',
+  './icon-192.png',
+  './icon-512.png',
 ];
 
 // ── インストール: アプリシェルをキャッシュ ──────────────────────
