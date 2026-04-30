@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Inkstride — Dropbox Sync</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#111113;color:#d4d4e0;font:13px/1.5 'DM Mono',monospace;padding:16px;min-height:100vh}
+h1{font-size:14px;letter-spacing:.08em;color:#5b9cf6;margin-bottom:16px}
+section{background:#1c1c22;border:1px solid #2f2f38;border-radius:8px;padding:14px;margin-bottom:14px}
+section h2{font-size:11px;letter-spacing:.06em;color:#888;margin-bottom:10px;text-transform:uppercase}
+input[type=text]{width:100%;background:#111113;border:1px solid #3a3a44;border-radius:5px;color:#d4d4e0;padding:7px 10px;font:12px monospace;outline:none}
+input[type=text]:focus{border-color:#5b9cf6}
+button{background:#2a2a32;border:1px solid #3a3a44;border-radius:5px;color:#d4d4e0;padding:6px 14px;font:12px monospace;cursor:pointer;transition:background .15s}
+button:hover{background:#3a3a44}
+button.primary{background:#1a3a6a;border-color:#5b9cf6;color:#93c5fd}
+button.primary:hover{background:#1e4a8a}
+button.danger{background:#3a1a1a;border-color:#f87171;color:#fca5a5}
+button.green{background:#1a3a1a;border-color:#4ade80;color:#86efac}
+button:disabled{opacity:.4;cursor:default}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.row label{color:#888;font-size:11px;min-width:70px}
+.hint{font-size:10px;color:#555;margin-top:4px;line-height:1.6}
+.hint a{color:#5b9cf6}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.cols{grid-template-columns:1fr}}
+.file-list{max-height:260px;overflow-y:auto}
+.file-item{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:4px;border-bottom:1px solid #1c1c22;gap:6px}
+.file-item:hover{background:#1c1c28}
+.file-name{font-size:11px;color:#d4d4e0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.file-meta{font-size:10px;color:#555;white-space:nowrap}
+.file-btn{padding:3px 8px;font-size:10px;flex-shrink:0}
+.status{font-size:11px;padding:6px 10px;border-radius:4px;margin-top:8px;display:none}
+.status.ok{display:block;background:#1a3a1a;border:1px solid #4ade80;color:#86efac}
+.status.err{display:block;background:#3a1a1a;border:1px solid #f87171;color:#fca5a5}
+.status.info{display:block;background:#1a2a3a;border:1px solid #5b9cf6;color:#93c5fd}
+.badge{display:inline-block;font-size:9px;padding:2px 6px;border-radius:3px;margin-left:6px;vertical-align:middle}
+.badge.conn{background:#1a3a1a;color:#4ade80;border:1px solid #4ade80}
+.badge.disc{background:#2a2a32;color:#555;border:1px solid #3a3a44}
+#setup-guide{font-size:11px;color:#888;line-height:1.8}
+#setup-guide ol{padding-left:18px}
+#setup-guide code{background:#2a2a32;padding:1px 5px;border-radius:3px;color:#93c5fd;font-size:10px}
+</style>
+</head>
+<body>
+
+<h1>✦ INKSTRIDE — DROPBOX SYNC</h1>
+
+<!-- Step 1: Dropbox App Key -->
+<section id="sec-setup">
+  <h2>Step 1 — Dropbox アプリ設定</h2>
+  <div class="row">
+    <label>App Key</label>
+    <input type="text" id="app-key" placeholder="xxxxxxxxxxxxxxxxxxxx">
+    <button class="primary" onclick="connectDropbox()">接続</button>
+    <button class="danger" id="btn-disconnect" onclick="disconnect()" style="display:none">切断</button>
+  </div>
+  <div id="conn-status" class="hint">
+    未接続 <span class="badge disc" id="badge-conn">OFFLINE</span>
+  </div>
+  <div class="hint" id="setup-guide">
+    <strong style="color:#d4d4e0">初回セットアップ（3分）：</strong>
+    <ol>
+      <li><a href="https://www.dropbox.com/developers/apps" target="_blank">Dropbox Developers</a> → "Create app"</li>
+      <li>Scoped Access → <strong>App folder</strong>（または Full Dropbox）</li>
+      <li>アプリ名を入力（例: <code>InkStride</code>）→ Create app</li>
+      <li>Settings タブ → <strong>OAuth 2 Redirect URIs</strong> に以下を追加：<br>
+        <code id="redirect-uri-display"></code>
+      </li>
+      <li>App key をコピーして上の欄に入力 → 接続</li>
+    </ol>
+  </div>
+</section>
+
+<!-- Step 2: Gallery Files (OPFS) -->
+<section>
+  <h2>Step 2 — ギャラリー（端末 OPFS）
+    <button style="float:right;font-size:10px;padding:3px 8px" onclick="refreshOPFS()">更新</button>
+  </h2>
+  <button class="green" onclick="uploadAll()" id="btn-upload-all" disabled>▲ すべて Dropbox へアップロード</button>
+  <div class="file-list" id="opfs-list"><div style="color:#555;font-size:11px;padding:8px">読み込み中…</div></div>
+  <div id="opfs-status" class="status"></div>
+</section>
+
+<!-- Step 3: Dropbox Files -->
+<section>
+  <h2>Step 3 — Dropbox ファイル
+    <button style="float:right;font-size:10px;padding:3px 8px" onclick="refreshDropbox()">更新</button>
+  </h2>
+  <div class="file-list" id="dbx-list"><div style="color:#555;font-size:11px;padding:8px">未接続</div></div>
+  <div id="dbx-status" class="status"></div>
+</section>
+
+<script>
+'use strict';
+
+// ─── Redirect URI (このページの URL、クエリなし) ──────────────
+const REDIRECT_URI = location.origin + location.pathname;
+document.getElementById('redirect-uri-display').textContent = REDIRECT_URI;
+
+// ─── PKCE ────────────────────────────────────────────────────
+function b64url(bytes) {
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+async function generatePKCE() {
+  const verifier = b64url(crypto.getRandomValues(new Uint8Array(32)));
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+  return { verifier, challenge: b64url(new Uint8Array(hash)) };
+}
+
+// ─── OAuth2 フロー ────────────────────────────────────────────
+async function connectDropbox() {
+  const appKey = document.getElementById('app-key').value.trim();
+  if (!appKey) { alert('App Key を入力してください'); return; }
+  localStorage.setItem('dbx_app_key', appKey);
+  const { verifier, challenge } = await generatePKCE();
+  const state = b64url(crypto.getRandomValues(new Uint8Array(8)));
+  sessionStorage.setItem('dbx_v', verifier);
+  sessionStorage.setItem('dbx_s', state);
+  location.href = 'https://www.dropbox.com/oauth2/authorize?' + new URLSearchParams({
+    client_id: appKey, response_type: 'code',
+    code_challenge: challenge, code_challenge_method: 'S256',
+    redirect_uri: REDIRECT_URI, state, token_access_type: 'offline'
+  });
+}
+
+async function handleCallback() {
+  const p = new URLSearchParams(location.search);
+  const code = p.get('code'), state = p.get('state');
+  if (!code) return;
+  history.replaceState({}, '', location.pathname);
+  if (state !== sessionStorage.getItem('dbx_s')) { showStatus('dbx','err','State 不一致 — やり直してください'); return; }
+  const appKey = localStorage.getItem('dbx_app_key');
+  const verifier = sessionStorage.getItem('dbx_v');
+  showStatus('dbx','info','トークン取得中…');
+  try {
+    const r = await fetch('https://api.dropboxapi.com/oauth2/token', {
+      method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body: new URLSearchParams({ code, grant_type:'authorization_code',
+        code_verifier: verifier, client_id: appKey, redirect_uri: REDIRECT_URI })
+    });
+    const d = await r.json();
+    if (!d.access_token) throw new Error(d.error_description || JSON.stringify(d));
+    localStorage.setItem('dbx_token', d.access_token);
+    if (d.refresh_token) localStorage.setItem('dbx_refresh', d.refresh_token);
+    setConnected(true);
+    await loadAll();
+  } catch(e) { showStatus('dbx','err','認証失敗: ' + e.message); }
+}
+
+async function refreshToken() {
+  const appKey = localStorage.getItem('dbx_app_key');
+  const refresh = localStorage.getItem('dbx_refresh');
+  if (!appKey || !refresh) return false;
+  try {
+    const r = await fetch('https://api.dropboxapi.com/oauth2/token', {
+      method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body: new URLSearchParams({ grant_type:'refresh_token', refresh_token:refresh, client_id:appKey })
+    });
+    const d = await r.json();
+    if (!d.access_token) return false;
+    localStorage.setItem('dbx_token', d.access_token);
+    return true;
+  } catch(e) { return false; }
+}
+
+function disconnect() {
+  localStorage.removeItem('dbx_token'); localStorage.removeItem('dbx_refresh');
+  setConnected(false);
+  document.getElementById('dbx-list').innerHTML = '<div style="color:#555;font-size:11px;padding:8px">未接続</div>';
+}
+
+function setConnected(on) {
+  const badge = document.getElementById('badge-conn');
+  const connDiv = document.getElementById('conn-status');
+  const discBtn = document.getElementById('btn-disconnect');
+  const uploadBtn = document.getElementById('btn-upload-all');
+  badge.textContent = on ? 'ONLINE' : 'OFFLINE';
+  badge.className = 'badge ' + (on ? 'conn' : 'disc');
+  connDiv.style.color = on ? '#4ade80' : '';
+  discBtn.style.display = on ? '' : 'none';
+  uploadBtn.disabled = !on;
+  if (on) document.getElementById('setup-guide').style.display = 'none';
+}
+
+// ─── Dropbox API ─────────────────────────────────────────────
+async function dbxFetch(url, opts, retry=true) {
+  const token = localStorage.getItem('dbx_token');
+  const r = await fetch(url, { ...opts, headers: { 'Authorization':'Bearer '+token, ...(opts.headers||{}) } });
+  if (r.status === 401 && retry) {
+    if (await refreshToken()) return dbxFetch(url, opts, false);
+    setConnected(false); throw new Error('セッション期限切れ — 再接続してください');
+  }
+  return r;
+}
+
+async function dbxList() {
+  const r = await dbxFetch('https://api.dropboxapi.com/2/files/list_folder', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ path:'' })
+  });
+  const d = await r.json();
+  if (d.error_summary) throw new Error(d.error_summary);
+  return (d.entries || []).filter(e => e.name.endsWith('.bpf') || e.name.endsWith('.bpf'));
+}
+
+async function dbxUpload(name, text) {
+  const r = await dbxFetch('https://content.dropboxapi.com/2/files/upload', {
+    method:'POST',
+    headers:{
+      'Dropbox-API-Arg': JSON.stringify({ path:'/'+name, mode:'overwrite', autorename:false }),
+      'Content-Type':'application/octet-stream'
+    },
+    body: new TextEncoder().encode(text)
+  });
+  return r.json();
+}
+
+async function dbxDownload(path) {
+  const r = await dbxFetch('https://content.dropboxapi.com/2/files/download', {
+    method:'POST',
+    headers:{ 'Dropbox-API-Arg': JSON.stringify({ path }) }
+  });
+  if (!r.ok) throw new Error('ダウンロード失敗 ' + r.status);
+  return r.text();
+}
+
+// ─── OPFS アクセス ────────────────────────────────────────────
+async function opfsDir() {
+  const root = await navigator.storage.getDirectory();
+  return root.getDirectoryHandle('binarypaint', { create: false });
+}
+
+async function listOPFS() {
+  try {
+    const dir = await opfsDir();
+    const files = [];
+    for await (const [name, handle] of dir.entries()) {
+      if (!name.endsWith('.bpf')) continue;
+      const file = await handle.getFile();
+      files.push({ name, size: file.size, ts: file.lastModified, handle });
+    }
+    return files.sort((a,b) => b.ts - a.ts);
+  } catch(e) {
+    return null; // 別オリジンまたは OPFS 未対応
+  }
+}
+
+async function saveToOPFS(name, text) {
+  const dir = await opfsDir();
+  const fh = await dir.getFileHandle(name, { create: true });
+  const w = await fh.createWritable();
+  await w.write(text); await w.close();
+}
+
+// ─── UI ──────────────────────────────────────────────────────
+function fmtSize(b){ return b>1e6?(b/1e6).toFixed(1)+'MB':b>1e3?(b/1e3).toFixed(0)+'KB':b+'B'; }
+function fmtDate(ts){ const d=new Date(ts);return (d.getMonth()+1)+'/'+(d.getDate())+' '+d.getHours()+':'+(String(d.getMinutes()).padStart(2,'0')); }
+function showStatus(id, type, msg){ const el=document.getElementById(id+'-status');el.className='status '+type;el.textContent=msg; }
+
+async function refreshOPFS() {
+  const list = document.getElementById('opfs-list');
+  list.innerHTML = '<div style="color:#555;font-size:11px;padding:8px">読み込み中…</div>';
+  const files = await listOPFS();
+  if (files === null) {
+    list.innerHTML = '<div style="color:#f87171;font-size:11px;padding:8px">OPFS アクセス不可 — このページを GitHub Pages の同じ URL（sync.html）で開いてください</div>';
+    return;
+  }
+  if (!files.length) { list.innerHTML = '<div style="color:#555;font-size:11px;padding:8px">ギャラリーが空です</div>'; return; }
+  list.innerHTML = files.map(f => `
+    <div class="file-item">
+      <span class="file-name">${f.name}</span>
+      <span class="file-meta">${fmtDate(f.ts)} · ${fmtSize(f.size)}</span>
+      <button class="file-btn green" onclick="uploadOne('${f.name}')">▲</button>
+    </div>`).join('');
+}
+
+async function refreshDropbox() {
+  const list = document.getElementById('dbx-list');
+  if (!localStorage.getItem('dbx_token')) { list.innerHTML='<div style="color:#555;font-size:11px;padding:8px">未接続</div>'; return; }
+  list.innerHTML = '<div style="color:#555;font-size:11px;padding:8px">読み込み中…</div>';
+  try {
+    const files = await dbxList();
+    if (!files.length) { list.innerHTML='<div style="color:#555;font-size:11px;padding:8px">Dropbox が空です</div>'; return; }
+    list.innerHTML = files.map(f => `
+      <div class="file-item">
+        <span class="file-name">${f.name}</span>
+        <span class="file-meta">${fmtSize(f.size)}</span>
+        <button class="file-btn primary" onclick="downloadOne('${f.path_lower}','${f.name}')">▼</button>
+      </div>`).join('');
+  } catch(e) { showStatus('dbx','err',e.message); }
+}
+
+async function uploadOne(name) {
+  try {
+    showStatus('opfs','info',name+' アップロード中…');
+    const dir = await opfsDir();
+    const fh = await dir.getFileHandle(name);
+    const file = await fh.getFile();
+    const text = await file.text();
+    await dbxUpload(name, text);
+    showStatus('opfs','ok','✓ アップロード完了: '+name);
+    await refreshDropbox();
+  } catch(e) { showStatus('opfs','err','失敗: '+e.message); }
+}
+
+async function downloadOne(path, name) {
+  try {
+    showStatus('dbx','info',name+' ダウンロード中…');
+    const text = await dbxDownload(path);
+    await saveToOPFS(name, text);
+    showStatus('dbx','ok','✓ ギャラリーに保存: '+name);
+    await refreshOPFS();
+  } catch(e) { showStatus('dbx','err','失敗: '+e.message); }
+}
+
+async function uploadAll() {
+  const files = await listOPFS();
+  if (!files || !files.length) { showStatus('opfs','info','アップロードするファイルがありません'); return; }
+  showStatus('opfs','info',`0 / ${files.length} アップロード中…`);
+  let ok=0;
+  for (const f of files) {
+    try {
+      const file = await f.handle.getFile();
+      const text = await file.text();
+      await dbxUpload(f.name, text);
+      ok++;
+      showStatus('opfs','info',`${ok} / ${files.length} アップロード中…`);
+    } catch(e) { showStatus('opfs','err','失敗: '+f.name+' — '+e.message); return; }
+  }
+  showStatus('opfs','ok',`✓ ${ok} 件アップロード完了`);
+  await refreshDropbox();
+}
+
+async function loadAll() {
+  setConnected(!!localStorage.getItem('dbx_token'));
+  await refreshOPFS();
+  if (localStorage.getItem('dbx_token')) await refreshDropbox();
+}
+
+// ─── 起動 ─────────────────────────────────────────────────────
+(async () => {
+  const savedKey = localStorage.getItem('dbx_app_key');
+  if (savedKey) document.getElementById('app-key').value = savedKey;
+  await handleCallback();   // OAuth コールバック処理
+  await loadAll();
+})();
+</script>
+</body>
+</html>
