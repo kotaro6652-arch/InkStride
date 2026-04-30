@@ -3529,9 +3529,11 @@ function applyHandle(h,psx,psy,csx,csy){
   if(h==='h:MOVE'){
     if(transformMode==='warp' && warpHandles){
       // ワープモードでは全 8 ハンドルを平行移動
+      // v81: キャッシュ無効化 — 移動後にホモグラフィを再計算して描画を更新する
       for(const k of ['TL','TR','BR','BL','TM','RM','BM','LM']){
         warpHandles[k].x+=dx; warpHandles[k].y+=dy;
       }
+      _warpHomographyCache=null;
     } else {
       selTx.cx+=dx;selTx.cy+=dy;
     }
@@ -3908,19 +3910,26 @@ function closePasteDialog(){
 function pasteClipboard(toNewLayer){
   if(!selClipboard||!selClipboard.canvas){showToast('コピーがありません');return;}
   closePasteDialog();
-  const center={x:CW/2,y:CH/2};
-  let layer=gLayers[gActiveIdx];
+  // v81: ペースト後にtransformモードへ移行 — 移動・変形してから確定できる
+  const sc=selClipboard;
+  const pw=sc.canvas.width, ph=sc.canvas.height;
   if(toNewLayer){
     if(gLayers.length>=12){showToast('レイヤーは最大12枚まで');return;}
-    layer=addGLLayer(nextNamedLayerName('PASTE'),rgb01ToHex(inkRGBA.slice(0,3)));
+    const layer=addGLLayer(nextNamedLayerName('PASTE'),rgb01ToHex(inkRGBA.slice(0,3)));
     _rec({type:'layer_add',id:layer.id,name:layer.name,color:[...layer.color],opacity:layer.opacity,visible:layer.visible,blend:layer.blend,layerName:layer.name});
-    blendCanvasIntoLayer(layer,selClipboard.canvas,center.x,center.y,true);
+    gActiveIdx=gLayers.indexOf(layer);
+    renderLayers();
   } else {
-    if(!layer)return;
+    if(!gLayers[gActiveIdx])return;
     lastCaptureTime=0;captureNow('paste_before');
-    blendCanvasIntoLayer(layer,selClipboard.canvas,center.x,center.y,false);
   }
-  renderLayers();scheduleDraw();setTimeout(()=>{lastCaptureTime=0;captureNow('paste');},0);
+  selImg=sc.canvas;
+  selBBox={x:Math.round(CW/2-pw/2),y:Math.round(CH/2-ph/2),w:pw,h:ph};
+  selTx={cx:CW/2,cy:CH/2,rot:0,sx:1,sy:1};
+  origLassoPath=[];lassoPath=[];
+  initMesh();initWarpHandles();transformMode='grid';
+  setSelState('transform');
+  scheduleDraw();
   showToast(toNewLayer?'新規レイヤーにペースト':'このレイヤーにペースト');
 }
 function cancelSel(){selState=null;selBBox=null;selImg=null;selTx=null;meshPts=null;warpHandles=null;transformMode="grid";selHandle=null;selPrevPt=null;origLassoPath=[];lassoPath=[];const _sb=document.getElementById('sel-btn');if(_sb){_sb.className='bottomleftbtn';};setSelHint(null);updateSelActions();drawSelOv();}
