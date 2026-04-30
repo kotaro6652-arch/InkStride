@@ -665,9 +665,15 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
       <span style="font-size:10px;color:var(--tx2);font-family:'DM Mono',monospace">FILL</span>
       <button id="fill-dialog-close" style="background:none;border:none;color:var(--tx2);font-size:12px;cursor:pointer;padding:0 2px;line-height:1">✕</button>
     </div>
-    <div style="display:flex;align-items:center;gap:6px">
+    <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">
+      <span style="font-size:9px;color:var(--tx2);min-width:24px">閾値</span>
       <input type="range" id="fill-thresh-slider" min="0" max="100" value="30" style="flex:1">
       <span id="fill-thresh-val" style="font-size:10px;color:var(--tx);min-width:20px;text-align:right;font-family:'DM Mono',monospace">30</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:4px">
+      <span style="font-size:9px;color:var(--tx2);min-width:24px">拡張</span>
+      <input type="range" id="fill-expand-slider" min="0" max="10" value="0" style="flex:1">
+      <span id="fill-expand-val" style="font-size:10px;color:var(--tx);min-width:20px;text-align:right;font-family:'DM Mono',monospace">0</span>
     </div>
   </div>
 </div>
@@ -3188,7 +3194,7 @@ function addGLLayer(name,hexColor){
   }
   const l={
     id:(Date.now()*1000+Math.random()*999)|0,name,color:col,
-    opacity:1,visible:true,blend:'normal',
+    opacity:1,visible:true,blend:'normal',reference:false,
     tex:chunks[0][0].tex, fbo:chunks[0][0].fbo,
     chunks, chunkCols:ncx, chunkRows:ncy
   };
@@ -4497,7 +4503,7 @@ makeDraggableBtn(eyedrBtn,window.innerHeight*.65,()=>{
 const selBtnEl=document.getElementById('sel-btn');
 const rulerBtnEl=document.getElementById('ruler-btn');
 const fillBtnEl=document.getElementById('fill-btn');
-let _fillThresh=30;
+let _fillThresh=30,_fillExpand=0;
 
 // SEL ボタン: 水平ドラッグで移動, タップで状態遷移, 長押し600msでキャンセル
 makeDraggableBottomBtn(selBtnEl,Math.max(8,window.innerWidth*.08),()=>{_clearFillMode();_clearEyedropMode();
@@ -4523,8 +4529,10 @@ function syncRulerBtn(){
 
 // FILL ボタン: 水平ドラッグで移動, タップでダイアログ表示＋fill開始
 // rev28: 連続バケツモード. タップで ON/OFF トグル. 他ツールを押すと自動解除.
+// v83: ラッソ選択中はタップで即時選択範囲塗りつぶし
 makeDraggableBottomBtn(fillBtnEl,Math.max(8,window.innerWidth*.44),()=>{
   _clearEyedropMode();
+  if(selState==='lasso'&&lassoPath.length>2){lassoFill().catch(console.error);return;}
   const dlg=document.getElementById('fill-dialog');
   if(dlg.classList.contains('show')){
     // 2回目タップで閉じる (連続モード解除)
@@ -4548,6 +4556,11 @@ makeDraggableBottomBtn(fillBtnEl,Math.max(8,window.innerWidth*.44),()=>{
   slider.addEventListener('input',()=>{_fillThresh=+slider.value;val.textContent=slider.value;});
   slider.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
   slider.addEventListener('touchmove',e=>e.stopPropagation(),{passive:true});
+  const expandSlider=document.getElementById('fill-expand-slider');
+  const expandVal=document.getElementById('fill-expand-val');
+  expandSlider.addEventListener('input',()=>{_fillExpand=+expandSlider.value;expandVal.textContent=expandSlider.value;});
+  expandSlider.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+  expandSlider.addEventListener('touchmove',e=>e.stopPropagation(),{passive:true});
   document.getElementById('fill-dialog-close').addEventListener('pointerdown',e=>{
     e.preventDefault();e.stopPropagation();
     dlg.classList.remove('show');subMode=null;fillBtnEl.classList.remove('fill-on');
@@ -4737,8 +4750,18 @@ function renderLayers(){
         scheduleDraw();renderLayers();showToast('レイヤーを削除');
       },0);
     });
-    // 上段: arrows + thumb + info(name) + bmodes + color + eye + del
-    item.appendChild(arrows);item.appendChild(tw);item.appendChild(info);item.appendChild(bmodes);item.appendChild(vb);item.appendChild(mb);item.appendChild(db);
+    // v83: REF ボタン — 基準レイヤー設定（塗りつぶしの境界検出ソース）
+    const refb=document.createElement('div');refb.className='ldel';refb.title='基準レイヤー';
+    refb.textContent='REF';
+    refb.style.cssText='font-size:8px;padding:0 3px;'+(layer.reference?'color:var(--grn);font-weight:700':'color:var(--tx2)');
+    refb.addEventListener('pointerdown',e=>{
+      e.stopPropagation();const wasRef=layer.reference;
+      gLayers.forEach(lr=>{lr.reference=false;});
+      layer.reference=!wasRef;
+      renderLayers();showToast(layer.reference?layer.name+' → 基準レイヤー':'基準レイヤー解除');
+    });
+    // 上段: arrows + thumb + info(name) + bmodes + ref + eye + merge + del
+    item.appendChild(arrows);item.appendChild(tw);item.appendChild(info);item.appendChild(bmodes);item.appendChild(refb);item.appendChild(vb);item.appendChild(mb);item.appendChild(db);
     // 下段: 不透明度スライダー（独立した行、サムネイルと重ならない）
     const opRow=document.createElement('div');opRow.style.cssText='display:flex;align-items:center;gap:6px;padding:0 5px 5px;width:100%;box-sizing:border-box';
     const opLbl=document.createElement('span');opLbl.textContent='不透明度';opLbl.style.cssText='font-size:9px;color:var(--tx2);white-space:nowrap;flex-shrink:0';
@@ -5613,50 +5636,100 @@ function drawRefHandles(ctx){
 }
 
 // ── 塗りつぶし（BFS） ────────────────────────────────────
+// v83: 基準レイヤー対応・拡張ダイレーション対応
 async function floodFill(canvasX,canvasY){
   const x0=Math.floor(canvasX),y0=Math.floor(canvasY);
   if(x0<0||x0>=CW||y0<0||y0>=CH)return;
   const l=gLayers[gActiveIdx];if(!l)return;
-  const rgba=readR8Full(l); // RGBA: 4 bytes/pixel
+  // 基準レイヤーがあれば境界検出ソースに使う
+  const refLayer=gLayers.find(lr=>lr.reference&&lr!==l);
+  const srcRGBA=readR8Full(refLayer||l);
   const thresh=typeof _fillThresh==='number'?_fillThresh:30;
-  // 塗りつぶし色（pre-multiplied alpha）
   let fr,fg,fb,fa;
   if(eraserOn){fr=0;fg=0;fb=0;fa=0;}
   else{const[r,g,b,a]=inkRGBA;fa=Math.round(a*255);fr=Math.round(r*fa);fg=Math.round(g*fa);fb=Math.round(b*fa);}
-  // タッチ点のターゲット色を取得（FBO座標: y反転）
   const glR0=CH-1-y0;
   const pi0=(glR0*CW+x0)*4;
-  const tR=rgba[pi0],tG=rgba[pi0+1],tB=rgba[pi0+2],tA=rgba[pi0+3];
-  // 既に同色ならスキップ
-  const dFill=Math.abs(tR-fr)+Math.abs(tG-fg)+Math.abs(tB-fb)+Math.abs(tA-fa);
-  if(dFill<=thresh){showToast('既に同じ色です');return;}
+  const tR=srcRGBA[pi0],tG=srcRGBA[pi0+1],tB=srcRGBA[pi0+2],tA=srcRGBA[pi0+3];
+  if(!refLayer){
+    const dFill=Math.abs(tR-fr)+Math.abs(tG-fg)+Math.abs(tB-fb)+Math.abs(tA-fa);
+    if(dFill<=thresh){showToast('既に同じ色です');return;}
+  }
   showToast('塗りつぶし中…');
   const visited=new Uint8Array(CW*CH);
   const stk=[];stk.push(x0,y0);
-  const glR0v=CH-1-y0;visited[glR0v*CW+x0]=1;
+  visited[(CH-1-y0)*CW+x0]=1;
   let cnt=0;
   while(stk.length>0){
     const py=stk.pop(),px=stk.pop();
-    const gr=CH-1-py;
-    const pi=(gr*CW+px)*4;
-    rgba[pi]=fr;rgba[pi+1]=fg;rgba[pi+2]=fb;rgba[pi+3]=fa;
     cnt++;
     const nb=[[px-1,py],[px+1,py],[px,py-1],[px,py+1]];
     for(const[nx,ny]of nb){
       if(nx<0||nx>=CW||ny<0||ny>=CH)continue;
-      const nr=CH-1-ny;
-      const ni=nr*CW+nx;
+      const ni=(CH-1-ny)*CW+nx;
       if(visited[ni])continue;
       const npi=ni*4;
-      const d=Math.abs(rgba[npi]-tR)+Math.abs(rgba[npi+1]-tG)+Math.abs(rgba[npi+2]-tB)+Math.abs(rgba[npi+3]-tA);
+      const d=Math.abs(srcRGBA[npi]-tR)+Math.abs(srcRGBA[npi+1]-tG)+Math.abs(srcRGBA[npi+2]-tB)+Math.abs(srcRGBA[npi+3]-tA);
       if(d>thresh)continue;
       visited[ni]=1;stk.push(nx,ny);
     }
     if(cnt%40000===0)await new Promise(r=>setTimeout(r,0));
   }
-  writeR8Full(l,rgba);
+  // 拡張ダイレーション (v83: アンチエイリアス余白対策)
+  const expand=_fillExpand||0;
+  for(let pass=0;pass<expand;pass++){
+    const toAdd=[];
+    for(let fy=0;fy<CH;fy++){for(let fx=0;fx<CW;fx++){
+      if(visited[fy*CW+fx])continue;
+      if((fx>0&&visited[fy*CW+(fx-1)])||(fx<CW-1&&visited[fy*CW+(fx+1)])||
+         (fy>0&&visited[(fy-1)*CW+fx])||(fy<CH-1&&visited[(fy+1)*CW+fx]))
+        toAdd.push(fy*CW+fx);
+    }}
+    for(const idx of toAdd)visited[idx]=1;
+    if(pass%2===1)await new Promise(r=>setTimeout(r,0));
+  }
+  // アクティブレイヤーに書き込む
+  const dstRGBA=refLayer?readR8Full(l):srcRGBA;
+  for(let fy=0;fy<CH;fy++){for(let fx=0;fx<CW;fx++){
+    if(!visited[fy*CW+fx])continue;
+    const pi=(fy*CW+fx)*4;
+    dstRGBA[pi]=fr;dstRGBA[pi+1]=fg;dstRGBA[pi+2]=fb;dstRGBA[pi+3]=fa;
+  }}
+  writeR8Full(l,dstRGBA);
   _rec({type:'fill',layerId:l.id,layerName:l.name,x:x0/CW,y:y0/CH,eraserOn});
+  scheduleDraw();renderLayers();
   showToast('塗りつぶし完了 ('+cnt+'px)');
+}
+// v83: ラッソ選択範囲塗りつぶし
+async function lassoFill(){
+  const l=gLayers[gActiveIdx];if(!l||lassoPath.length<3)return;
+  let fr,fg,fb,fa;
+  if(eraserOn){fr=0;fg=0;fb=0;fa=0;}
+  else{const[r,g,b,a]=inkRGBA;fa=Math.round(a*255);fr=Math.round(r*fa);fg=Math.round(g*fa);fb=Math.round(b*fa);}
+  showToast('選択範囲を塗りつぶし中…');
+  const mc=document.createElement('canvas');mc.width=CW;mc.height=CH;
+  const mctx=mc.getContext('2d');
+  mctx.fillStyle='#fff';
+  mctx.beginPath();
+  lassoPath.forEach((p,i)=>i?mctx.lineTo(p.x,p.y):mctx.moveTo(p.x,p.y));
+  mctx.closePath();mctx.fill();
+  const maskData=mctx.getImageData(0,0,CW,CH).data;
+  await new Promise(r=>setTimeout(r,0));
+  const rgba=readR8Full(l);
+  let cnt=0;
+  for(let fy=0;fy<CH;fy++){
+    const glY=CH-1-fy;
+    for(let fx=0;fx<CW;fx++){
+      if(maskData[(fy*CW+fx)*4+3]<128)continue;
+      const pi=(glY*CW+fx)*4;
+      rgba[pi]=fr;rgba[pi+1]=fg;rgba[pi+2]=fb;rgba[pi+3]=fa;cnt++;
+    }
+    if(fy%300===0)await new Promise(r=>setTimeout(r,0));
+  }
+  writeR8Full(l,rgba);
+  lastCaptureTime=0;captureNow('lasso_fill');
+  scheduleDraw();renderLayers();
+  showToast('選択範囲塗りつぶし完了 ('+cnt+'px)');
 }
 
 // ── 3点透視法 ────────────────────────────────────────────
