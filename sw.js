@@ -1,15 +1,11 @@
-// Inkstride Service Worker
-// !! CACHE_VERSION をデプロイのたびに変更すること (例: 日付+バージョン) !!
-// 変更すると古いキャッシュが自動削除され、新しいアプリが再キャッシュされる。
+// Inkstride Service Worker v85
+// HTML（index.html / sync.html）はネットワーク優先 → 毎回最新を取得。
+// アイコン・manifest 等の静的ファイルはキャッシュ優先。
 // OPFS のギャラリーデータは SW キャッシュとは独立しており、ここでは一切触れない。
-const CACHE_VERSION = '2026-04-30-v84-pwa';
+const CACHE_VERSION = '2026-04-30-v85';
 const CACHE_NAME = 'inkstride-' + CACHE_VERSION;
 
-// 起動時に必ずキャッシュするファイル（アプリシェル）
-const APP_SHELL = [
-  './',
-  './index.html',
-  './sync.html',
+const STATIC_SHELL = [
   './manifest.json',
   './icon.svg',
   './icon-180.png',
@@ -17,12 +13,12 @@ const APP_SHELL = [
   './icon-512.png',
 ];
 
-// ── インストール: アプリシェルをキャッシュ ──────────────────────
+// ── インストール: 静的アセットのみキャッシュ ────────────────────
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME)
-      .then(c => c.addAll(APP_SHELL))
-      .then(() => self.skipWaiting()) // 即座に新しい SW を有効化
+      .then(c => c.addAll(STATIC_SHELL))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -33,7 +29,7 @@ self.addEventListener('activate', e => {
       .then(keys => Promise.all(
         keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
       ))
-      .then(() => self.clients.claim()) // 開いているタブをすぐ制御下に
+      .then(() => self.clients.claim())
   );
 });
 
@@ -69,7 +65,23 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // アプリファイル（同一オリジン）: キャッシュ優先 → なければネットワーク取得してキャッシュ
+  // HTML ナビゲーション（index.html / sync.html）: ネットワーク優先
+  // → 常に最新版を取得。オフライン時のみキャッシュにフォールバック。
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request)
+        .then(resp => {
+          if (resp.ok) {
+            caches.open(CACHE_NAME).then(c => c.put(e.request, resp.clone()));
+          }
+          return resp;
+        })
+        .catch(() => caches.match(e.request).then(c => c || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // 静的ファイル（アイコン・manifest 等）: キャッシュ優先 → なければネットワーク
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
@@ -78,11 +90,7 @@ self.addEventListener('fetch', e => {
           caches.open(CACHE_NAME).then(c => c.put(e.request, resp.clone()));
         }
         return resp;
-      }).catch(() => {
-        // オフライン時: ナビゲーションは index.html にフォールバック
-        if (e.request.mode === 'navigate') return caches.match('./index.html');
-        return new Response('Offline', { status: 503 });
-      });
+      }).catch(() => new Response('Offline', { status: 503 }));
     })
   );
 });
