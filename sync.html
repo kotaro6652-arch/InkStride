@@ -97,11 +97,16 @@ button:disabled{opacity:.4;cursor:default}
     <span id="last-sync-label" style="font-size:10px;color:#555"></span>
   </div>
   <div id="setup-guide">
-    <strong style="color:#d4d4e0">初回セットアップ（3分）：</strong>
+    <strong style="color:#d4d4e0">初回セットアップ：</strong>
     <ol>
       <li><a href="https://www.dropbox.com/developers/apps" target="_blank">Dropbox Developers</a> → "Create app"</li>
       <li>Scoped Access → <strong>App folder</strong>（InkStride 専用フォルダが自動作成）</li>
       <li>アプリ名を入力 → Create app</li>
+      <li><strong style="color:#f97316">Permissions タブ</strong> → 以下3つにチェックを入れて "Submit" ：<br>
+        <code style="display:block;margin-top:4px">files.metadata.read</code>
+        <code style="display:block">files.content.read</code>
+        <code style="display:block">files.content.write</code>
+      </li>
       <li>Settings タブ → <strong>OAuth 2 Redirect URIs</strong> に追加：<br>
         <code id="redirect-uri-display"></code>
       </li>
