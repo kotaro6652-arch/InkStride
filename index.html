@@ -2978,6 +2978,14 @@ function _restoreToPos(pos){
   scheduleDraw();if(openPanel==='layers'){renderLayers();debouncedUpdateThumbs();}
 }
 function undo(){
+  // v85: lasso mode — undo last lasso stroke, don't touch canvas history
+  if(selState==='lasso'){
+    if(_lassoStrokes.length===0){showToast('これ以上戻せません');return;}
+    lassoPath.length=_lassoStrokes.pop();
+    drawSelOv();updateSelActions();
+    showToast('1ストローク戻す');
+    return;
+  }
   if(undoBusy){showToast('処理中…');return;}
   if(timelinePos<=0){showToast('これ以上元に戻せません');return;}
 
@@ -3463,7 +3471,7 @@ function debouncedUpdateThumbs(){
 }
 
 // ── セレクション ────────────────────────────────────────────
-let selState=null,lassoPath=[],origLassoPath=[];
+let selState=null,lassoPath=[],origLassoPath=[],_lassoStrokes=[]; // v85: stroke break indices for lasso undo
 // v52: 変形サブモード — 'grid' = 矩形ハンドルでスケール/回転 (旧来), 'warp' = 8 ハンドル自由変形.
 // ワープ変形は 4 頂点 + 4 辺中点を個別操作してパース補正等に使う (Photoshop の「ゆがみ」相当).
 let transformMode='grid';
@@ -4011,7 +4019,7 @@ function pasteClipboard(toNewLayer){
   scheduleDraw();
   showToast(toNewLayer?'新規レイヤーにペースト':'このレイヤーにペースト');
 }
-function cancelSel(){selState=null;selBBox=null;selImg=null;selTx=null;meshPts=null;warpHandles=null;transformMode="grid";selHandle=null;selPrevPt=null;origLassoPath=[];lassoPath=[];const _sb=document.getElementById('sel-btn');if(_sb){_sb.className='bottomleftbtn';};setSelHint(null);updateSelActions();drawSelOv();}
+function cancelSel(){selState=null;selBBox=null;selImg=null;selTx=null;meshPts=null;warpHandles=null;transformMode="grid";selHandle=null;selPrevPt=null;origLassoPath=[];lassoPath=[];_lassoStrokes=[];const _sb=document.getElementById('sel-btn');if(_sb){_sb.className='bottomleftbtn';};setSelHint(null);updateSelActions();drawSelOv();}
 function drawSelOv(){
   updateSelActions();
   sovCtx.clearRect(0,0,selOv.width,selOv.height);
@@ -4138,7 +4146,7 @@ document.addEventListener('pointerdown',function(e){
   }
   activePenId=e.pointerId;
   penId=e.pointerId;
-  if(selState==='lasso'){lassoPath.push(screenToCanvas(e.clientX,e.clientY));drawSelOv();return;}
+  if(selState==='lasso'){_lassoStrokes.push(lassoPath.length);lassoPath.push(screenToCanvas(e.clientX,e.clientY));drawSelOv();return;} // v85: record stroke start
   if(selState==='transform'){
     const h=hitHandle(e.clientX,e.clientY);
     selHandle=h||null;
@@ -4582,7 +4590,7 @@ let _fillThresh=30,_fillExpand=0;
 
 // SEL ボタン: 水平ドラッグで移動, タップで状態遷移, 長押し600msでキャンセル
 makeDraggableBottomBtn(selBtnEl,Math.max(8,window.innerWidth*.08),()=>{_clearFillMode();_clearEyedropMode();
-  if(selState===null){lassoPath=[];setSelState('lasso');}
+  if(selState===null){lassoPath=[];_lassoStrokes=[];setSelState('lasso');}
   else if(selState==='lasso')execLasso().catch(e2=>console.error('execLasso:',e2));
   else if(selState==='transform')commitTransform().catch(e2=>showToast('変形エラー: '+e2.message));
   else{cancelSel();showToast('選択解除');}
