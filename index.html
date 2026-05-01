@@ -593,14 +593,39 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
   </div>
 </div></div>
 <div class="rpanel" id="bl-panel"><div class="ph">ブレンド設定</div><div class="pb">
-  <canvas class="stab-cv" id="bl-stab-cv" width="244" height="36"></canvas>
   <div class="slabel">サイズ（直径 px）</div>
   <div class="row"><label>最大</label><div class="csl" id="csl-bl-sz" data-min="1" data-max="200" data-ratio="5"></div><span class="val" id="v-bl-sz">20px</span></div>
   <div class="row"><label>最小</label><div class="csl" id="csl-bl-msz" data-min="1" data-max="100" data-ratio="5"></div><span class="val" id="v-bl-msz">1px</span></div>
-  <div class="row"><label>手振れ補正</label><div class="csl" id="csl-bl-stab" data-min="0" data-max="20" data-ratio="3"></div><span class="val" id="v-bl-stab">3</span></div>
+  <div class="slabel">手振れ補正</div>
+  <canvas class="stab-cv" id="bl-stab-cv" width="244" height="36"></canvas>
+  <div class="row"><label>強さ</label><div class="csl" id="csl-bl-stab" data-min="0" data-max="20" data-ratio="3"></div><span class="val" id="v-bl-stab">3</span></div>
+  <div class="slabel">ブラシ形状</div>
+  <div id="bl-shapes" style="display:flex;gap:4px;padding:4px 0 10px">
+    <button class="shape-btn" data-tool="blender" data-shape="0" style="flex:1;padding:5px 2px;background:var(--sf2);border:1px solid var(--bd2);border-radius:6px;color:var(--tx2);font-size:9px;cursor:pointer;touch-action:manipulation">ハード</button>
+    <button class="shape-btn" data-tool="blender" data-shape="1" style="flex:1;padding:5px 2px;background:var(--sf2);border:1px solid var(--bd2);border-radius:6px;color:var(--tx2);font-size:9px;cursor:pointer;touch-action:manipulation">シャープ</button>
+    <button class="shape-btn" data-tool="blender" data-shape="2" style="flex:1;padding:5px 2px;background:var(--sf2);border:1px solid var(--bd2);border-radius:6px;color:var(--tx2);font-size:9px;cursor:pointer;touch-action:manipulation">標準</button>
+    <button class="shape-btn act" data-tool="blender" data-shape="3" style="flex:1;padding:5px 2px;background:var(--sf2);border:1px solid var(--acc);border-radius:6px;color:var(--acc);font-size:9px;cursor:pointer;touch-action:manipulation">ソフト</button>
+  </div>
+  <div class="row"><label>強さ</label><div class="csl" id="csl-bl-str" data-min="1" data-max="100" data-ratio="5"></div><span class="val" id="v-bl-str">30%</span></div>
+  <div class="row"><label>色取得</label><div class="csl" id="csl-bl-pickup" data-min="1" data-max="100" data-ratio="5"></div><span class="val" id="v-bl-pickup">10%</span></div>
   <div class="row"><label>間隔</label><div class="csl" id="csl-bl-spacing" data-min="1" data-max="200" data-ratio="3"></div><span class="val" id="v-bl-spacing">80%</span></div>
-  <div class="row"><label>強さ</label><div class="csl" id="csl-bl-str" data-min="1" data-max="100" data-ratio="5"></div><span class="val" id="v-bl-str">60%</span></div>
-  <div class="row"><label>色取得</label><div class="csl" id="csl-bl-pickup" data-min="1" data-max="100" data-ratio="5"></div><span class="val" id="v-bl-pickup">30%</span></div>
+  <div class="slabel">筆圧カーブ</div>
+  <div class="togrow"><span class="lbl">筆圧感知</span><label class="tog"><input type="checkbox" id="cb-bl-pr" checked><div class="ttr"></div><div class="tth"></div></label></div>
+  <div id="bl-pr-sec">
+    <canvas class="curve-cv" id="bl-curve-cv" width="244" height="100"></canvas>
+    <div style="font-size:9px;color:var(--tx2);margin-bottom:6px">点をドラッグ（端点はY軸のみ）</div>
+    <div class="row"><label>1px閾値</label><div class="csl" id="csl-bl-thr" data-min="0" data-max="30" data-ratio="8"></div><span class="val" id="v-bl-thr">0%</span></div>
+    <div class="row"><label>始点無視</label><div class="csl" id="csl-bl-deadzone" data-min="0" data-max="100" data-ratio="5"></div><span class="val" id="v-bl-deadzone">0</span></div>
+    <div class="row"><label>入り (px)</label><div class="csl" id="csl-bl-stap" data-min="0" data-max="200" data-ratio="3"></div><span class="val" id="v-bl-stap">0</span></div>
+    <div class="row"><label>抜き (px)</label><div class="csl" id="csl-bl-etap" data-min="0" data-max="200" data-ratio="3"></div><span class="val" id="v-bl-etap">0</span></div>
+  </div>
+  <div class="togrow"><span class="lbl">鉛筆モード</span><label class="tog"><input type="checkbox" id="cb-bl-pencil"><div class="ttr"></div><div class="tth"></div></label></div>
+  <div class="togrow"><span class="lbl">筆圧→不透明度</span><label class="tog"><input type="checkbox" id="cb-bl-pr-opac"><div class="ttr"></div><div class="tth"></div></label></div>
+  <div id="bl-pr-opac-sec" style="opacity:.4">
+    <div class="slabel" style="margin-top:4px">不透明度カーブ</div>
+    <canvas class="curve-cv" id="bl-opac-curve-cv" width="244" height="100"></canvas>
+    <div style="font-size:9px;color:var(--tx2);margin-bottom:6px">点をドラッグ（端点はY軸のみ）</div>
+  </div>
 </div></div>
 <div class="rpanel" id="er-panel"><div class="ph">消しゴム設定</div><div class="pb">
   <div class="slabel">サイズ（直径 px）</div>
@@ -777,19 +802,22 @@ let activePenId=null;
 // またはキャンバス領域で日本語 (Scribble 非対応言語) を使うなど.
 let eraserOn=false,erbMode='toggle';
 let blenderOn=false; // v86: Krita-style color blender tool
-let _blendColor=[0,0,0,1];
+let _blendColor=[0,0,0,0]; // premul-safe carry color; starts transparent
 const _blendSampleBuf=new Uint8Array(4);
 function _sampleLayerForBlend(cx,cy){
+  // Initialize carry color from the canvas at stroke start
   const layer=gLayers[gActiveIdx];if(!layer)return;
   const px=Math.round(cx),py=Math.round(cy);
-  if(px<0||py<0||px>=CW||py>=CH)return;
+  if(px<0||py<0||px>=CW||py>=CH){_blendColor=[0,0,0,0];return;}
   gl.bindFramebuffer(gl.FRAMEBUFFER,layer.fbo);
   gl.readPixels(px,CH-1-py,1,1,gl.RGBA,gl.UNSIGNED_BYTE,_blendSampleBuf);
   gl.bindFramebuffer(gl.FRAMEBUFFER,null);
-  const a=_blendSampleBuf[3]/255;
-  if(a>0.001){_blendColor=[_blendSampleBuf[0]/255/a,_blendSampleBuf[1]/255/a,_blendSampleBuf[2]/255/a,a];}
+  const sa=_blendSampleBuf[3]/255;
+  if(sa>0.001){_blendColor=[_blendSampleBuf[0]/255/sa,_blendSampleBuf[1]/255/sa,_blendSampleBuf[2]/255/sa,sa];}
+  else{_blendColor=[0,0,0,0];}
 }
 function _updateBlendColor(cx,cy){
+  // Per-point: sample canvas, lerp carry color toward sample (including alpha)
   const layer=gLayers[gActiveIdx];if(!layer)return;
   const px=Math.round(cx),py=Math.round(cy);
   if(px<0||py<0||px>=CW||py>=CH)return;
@@ -797,11 +825,15 @@ function _updateBlendColor(cx,cy){
   gl.readPixels(px,CH-1-py,1,1,gl.RGBA,gl.UNSIGNED_BYTE,_blendSampleBuf);
   gl.bindFramebuffer(gl.FRAMEBUFFER,null);
   const sa=_blendSampleBuf[3]/255;
+  const k=TOOLS.blender.pickup;
+  // Always lerp alpha toward sampled alpha (allows picking up transparency)
+  _blendColor[3]=_blendColor[3]*(1-k)+sa*k;
+  // Only lerp RGB if sampled pixel has meaningful color
   if(sa>0.001){
     const sr=_blendSampleBuf[0]/255/sa,sg=_blendSampleBuf[1]/255/sa,sb=_blendSampleBuf[2]/255/sa;
-    const k=TOOLS.blender.pickup;
-    _blendColor[0]=_blendColor[0]*(1-k)+sr*k;_blendColor[1]=_blendColor[1]*(1-k)+sg*k;
-    _blendColor[2]=_blendColor[2]*(1-k)+sb*k;_blendColor[3]=Math.min(1,_blendColor[3]*(1-k)+sa*k);
+    _blendColor[0]=_blendColor[0]*(1-k)+sr*k;
+    _blendColor[1]=_blendColor[1]*(1-k)+sg*k;
+    _blendColor[2]=_blendColor[2]*(1-k)+sb*k;
   }
 }
 // v21 rev10: ホールドモードは iPad Safari の多ポインタ制約で実現不可 (rev8-9 調査済).
@@ -853,12 +885,10 @@ function _remapPressure(p){
   return Math.pow(scaled,pressureSensitivity);
 }
 function _calcPointOpac(rawF){
-  if(blenderOn)return 1.0;
-  // v82: 消しゴムも pressureOpac を尊重するよう統一
-  const usePO=eraserOn?TOOLS.eraser.pressureOpac:(activeTool==='marker'?TOOLS.marker.pressureOpac:TOOLS.pen.pressureOpac);
-  if(!usePO)return 1.0;
+  // v82: 消しゴムも pressureOpac を尊重するよう統一; v86: blender 同様
+  const tool=blenderOn?TOOLS.blender:eraserOn?TOOLS.eraser:(activeTool==='marker'?TOOLS.marker:TOOLS.pen);
+  if(!tool.pressureOpac)return 1.0;
   const p=_remapPressure(rawF);
-  const tool=eraserOn?TOOLS.eraser:(activeTool==='marker'?TOOLS.marker:TOOLS.pen);
   const pts=tool.opacPts||tool.pts;
   return Math.max(0,Math.min(1,evalCurvePts(pts,p)));
 }
@@ -873,9 +903,8 @@ function _calcPointOpac(rawF){
 //
 // 戻り値: 0..1 の係数. 1 = 入り抜きの影響なし、 0 = 完全フェード
 function _calcStartTaperFactor(){
-  if(eraserOn||blenderOn)return 1.0;
-  // v84: eraser uses its own startTaper like pen/marker
-  const tool=activeTool==='marker'?TOOLS.marker:TOOLS.pen;
+  // v84: each tool uses its own startTaper; v86: blender added
+  const tool=blenderOn?TOOLS.blender:eraserOn?TOOLS.eraser:(activeTool==='marker'?TOOLS.marker:TOOLS.pen);
   const tp=tool.startTaper||0;
   if(tp<=0)return 1.0;
   if(_strokeDistAcc>=tp)return 1.0;
@@ -912,7 +941,7 @@ const TOOLS={
   pen:   {sz:12,min:1,pressure:true, curve:2.0,stab:3,thresh:0,soft:0.0, opacity:1.0,spacing:1.0,shape:2,airbrush:false,pencil:false,pressureOpac:true, deadZone:0,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]},
   marker:{sz:12,min:1,pressure:false,curve:2.0,stab:3,thresh:0,soft:0.15,opacity:0.8,spacing:0.5, shape:1,airbrush:false,pencil:false,pressureOpac:false,deadZone:0,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]},
   eraser:{sz:20,min:1,pressure:true, curve:2.0,stab:3,thresh:0,soft:0.0, opacity:1.0,spacing:0.8, shape:0,pencil:false,pressureOpac:true, deadZone:0,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]},
-  blender:{sz:20,min:1,pressure:true, stab:3,soft:0.5,spacing:0.8, strength:0.6,pickup:0.3,shape:3,pts:DEFAULT_PTS.map(p=>({...p}))}
+  blender:{sz:20,min:1,pressure:true,stab:3,soft:0.5,spacing:0.8,strength:0.3,pickup:0.1,shape:3,thresh:0,deadZone:0,startTaper:0,endTaper:0,pencil:false,pressureOpac:false,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]}
 };
 let activeTool='pen';
 let bSize=12,bMin=1,bPressure=true,bCurve=2.0,stabLen=3,eSize=20,eMin=1,eStab=3,ePressure=true,eThresh=0,bThresh=0;
@@ -950,6 +979,8 @@ function calcD(f,isFirst){
     if(!TOOLS.blender.pressure)return Math.max(1,TOOLS.blender.sz|0);
     const p=_remapPressure(f);
     if(isFirst&&p===0)return 1;
+    const thr=TOOLS.blender.thresh||0;
+    if(thr>0&&p<=thr)return 1;
     const ratio=evalCurvePts(TOOLS.blender.pts,p);
     return Math.max(1,Math.min(TOOLS.blender.sz,Math.round(TOOLS.blender.min+(TOOLS.blender.sz-TOOLS.blender.min)*ratio)))|0;
   }
@@ -1679,7 +1710,8 @@ function flushBrushGPU(){
     gl.blendEquation(gl.FUNC_ADD);
     gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
     const [br,bg,bb,ba]=_blendColor;
-    gl.uniform4f(ul(PROG.brush,'u_inkColor'),br*ba,bg*ba,bb*ba,ba*baseO);
+    // premultiplied src-over: rgb = straight*alpha*strength, a = alpha*strength
+    gl.uniform4f(ul(PROG.brush,'u_inkColor'),br*ba*baseO,bg*ba*baseO,bb*ba*baseO,ba*baseO);
     gl.uniform1i(ul(PROG.brush,'u_erase'),0);
   } else if(eraserOn||(inkTransparent && !_abActive)){
     gl.blendEquation(gl.FUNC_ADD);
@@ -1926,7 +1958,7 @@ function beginStroke(sx,sy,f,isTap){
   _dbgAdd('BEGIN #'+_dbgBeginCount+' f='+((f||0)).toFixed(3)+' xy='+_pt0.x.toFixed(1)+','+_pt0.y.toFixed(1)+' tap='+(isTap?1:0));
   stabClear();_crBuf=[];lastDrawPt=null;
   _resetStrokeBBox();
-  const isPencil=blenderOn?false:eraserOn?TOOLS.eraser.pencil:(activeTool==='marker'?TOOLS.marker.pencil:TOOLS.pen.pencil);
+  const isPencil=blenderOn?TOOLS.blender.pencil:eraserOn?TOOLS.eraser.pencil:(activeTool==='marker'?TOOLS.marker.pencil:TOOLS.pen.pencil);
   _abActive=(!eraserOn&&!blenderOn)&&!!strokeBufFBO;
   _pencilMode=isPencil;
   {
@@ -4627,7 +4659,7 @@ makeDraggableBtn(alphaBtnEl,window.innerHeight*.72,()=>{
 const erb=document.getElementById('erb'),badge=document.getElementById('badge');
 // v21 rev10: ホールドモードは iPad Safari の仕様制約で実現不可能と判明 (rev8-9 の調査結果).
 // トグル動作のみを残す. Pointer Events 移行は維持 (描画信頼性向上のため).
-makeDraggableBtn(erb,window.innerHeight*.50,()=>{_clearFillMode();_clearEyedropMode();eraserOn=!eraserOn;erb.classList.toggle('on',eraserOn);badge.classList.toggle('show',eraserOn);showToast(eraserOn?'消しゴム ON':'ペン モード');});
+makeDraggableBtn(erb,window.innerHeight*.50,()=>{_clearFillMode();_clearEyedropMode();eraserOn=!eraserOn;if(eraserOn&&blenderOn){blenderOn=false;if(openPanel==='blender')closePanel();}erb.classList.toggle('on',eraserOn);badge.classList.toggle('show',eraserOn);showToast(eraserOn?'消しゴム ON':'ペン モード');});
 // rev25: EYEDR ボタン (スポイト一回モード)
 const eyedrBtn=document.getElementById('eyedr-btn');
 function syncEyedrBtn(){if(eyedrBtn)eyedrBtn.classList.toggle('on',subMode==='eyedrop');}
@@ -4777,7 +4809,7 @@ function openPanelFn(id){
   if(TABS[id])document.getElementById(TABS[id]).classList.add('act');
   rpg.classList.add('shifted');
   if(id==='brush'&&activeTool!=='pen')switchTool('pen');if(id==='marker'&&activeTool!=='marker')switchTool('marker');
-  if(id==='blender'){blenderOn=true;eraserOn=false;}else if(id==='eraser'){eraserOn=true;blenderOn=false;}else{blenderOn=false;}
+  if(id==='blender'){blenderOn=true;eraserOn=false;}else{blenderOn=false;}
   if(id==='layers')requestAnimationFrame(()=>{if(penId===null)renderLayers();});
 }
 function closePanel(r=true){
@@ -6594,12 +6626,34 @@ function _sampleCanvasColor(screenX,screenY){
   document.getElementById('er-pr-sec').style.opacity=TOOLS.eraser.pressure?'1':'0.4';
   document.getElementById('er-pr-opac-sec').style.opacity=TOOLS.eraser.pressureOpac?'1':'0.4';
 
-  initCsl('csl-bl-sz',TOOLS.blender.sz,v=>{TOOLS.blender.sz=v;document.getElementById('v-bl-sz').textContent=v+'px';});
-  initCsl('csl-bl-msz',TOOLS.blender.min,v=>{TOOLS.blender.min=v;document.getElementById('v-bl-msz').textContent=v+'px';});
+  // ── ブレンド設定スライダー v86
+  const drawBlCurve=initCurveEditor('bl-curve-cv',
+    ()=>({pts:TOOLS.blender.pts,min:TOOLS.blender.min,sz:TOOLS.blender.sz,pressure:TOOLS.blender.pressure,thresh:TOOLS.blender.thresh||0}),
+    (t)=>{TOOLS.blender.pts=t.pts;}
+  );
+  const drawBlOpacCurve=initCurveEditor('bl-opac-curve-cv',
+    ()=>({pts:TOOLS.blender.opacPts,min:TOOLS.blender.min,sz:TOOLS.blender.sz,pressure:TOOLS.blender.pressure,thresh:0}),
+    (t)=>{TOOLS.blender.opacPts=t.pts;}
+  );
+  function drawBl(){if(drawBlCurve)drawBlCurve();if(drawBlOpacCurve)drawBlOpacCurve();}
+  initCsl('csl-bl-sz',TOOLS.blender.sz,v=>{TOOLS.blender.sz=v;document.getElementById('v-bl-sz').textContent=v+'px';drawBl();});
+  initCsl('csl-bl-msz',TOOLS.blender.min,v=>{TOOLS.blender.min=v;document.getElementById('v-bl-msz').textContent=v+'px';drawBl();});
   initCsl('csl-bl-stab',TOOLS.blender.stab,v=>{TOOLS.blender.stab=v;document.getElementById('v-bl-stab').textContent=v;drawStabOn('bl-stab-cv',v);});
+  initCsl('csl-bl-str',Math.round((TOOLS.blender.strength||0.3)*100),v=>{TOOLS.blender.strength=v/100;document.getElementById('v-bl-str').textContent=v+'%';});
+  initCsl('csl-bl-pickup',Math.round((TOOLS.blender.pickup||0.1)*100),v=>{TOOLS.blender.pickup=v/100;document.getElementById('v-bl-pickup').textContent=v+'%';});
   initCsl('csl-bl-spacing',Math.round((TOOLS.blender.spacing||0.8)*100),v=>{TOOLS.blender.spacing=v/100;document.getElementById('v-bl-spacing').textContent=v+'%';});
-  initCsl('csl-bl-str',Math.round((TOOLS.blender.strength||0.6)*100),v=>{TOOLS.blender.strength=v/100;document.getElementById('v-bl-str').textContent=v+'%';});
-  initCsl('csl-bl-pickup',Math.round((TOOLS.blender.pickup||0.3)*100),v=>{TOOLS.blender.pickup=v/100;document.getElementById('v-bl-pickup').textContent=v+'%';});
+  initCsl('csl-bl-thr',Math.round((TOOLS.blender.thresh||0)*100),v=>{TOOLS.blender.thresh=v/100;document.getElementById('v-bl-thr').textContent=v+'%';drawBl();});
+  initCsl('csl-bl-deadzone',TOOLS.blender.deadZone||0,v=>{TOOLS.blender.deadZone=v;document.getElementById('v-bl-deadzone').textContent=v;});
+  initCsl('csl-bl-stap',TOOLS.blender.startTaper||0,v=>{TOOLS.blender.startTaper=v;document.getElementById('v-bl-stap').textContent=v;});
+  initCsl('csl-bl-etap',TOOLS.blender.endTaper||0,v=>{TOOLS.blender.endTaper=v;document.getElementById('v-bl-etap').textContent=v;});
+  document.getElementById('cb-bl-pr').checked=TOOLS.blender.pressure;
+  document.getElementById('cb-bl-pr').addEventListener('change',e=>{TOOLS.blender.pressure=e.target.checked;document.getElementById('bl-pr-sec').style.opacity=e.target.checked?'1':'0.4';drawBl();});
+  document.getElementById('bl-pr-sec').style.opacity=TOOLS.blender.pressure?'1':'0.4';
+  (document.getElementById('cb-bl-pencil')||{}).checked=TOOLS.blender.pencil||false;
+  document.getElementById('cb-bl-pencil')?.addEventListener('change',e=>{TOOLS.blender.pencil=e.target.checked;});
+  (document.getElementById('cb-bl-pr-opac')||{}).checked=TOOLS.blender.pressureOpac||false;
+  document.getElementById('cb-bl-pr-opac')?.addEventListener('change',e=>{TOOLS.blender.pressureOpac=e.target.checked;document.getElementById('bl-pr-opac-sec').style.opacity=e.target.checked?'1':'0.4';drawBl();});
+  document.getElementById('bl-pr-opac-sec').style.opacity=TOOLS.blender.pressureOpac?'1':'0.4';
   drawStabOn('stab-cv',TOOLS.pen.stab);drawStabOn('mk-stab-cv',TOOLS.marker.stab);drawStabOn('er-stab-cv',TOOLS.eraser.stab);drawStabOn('bl-stab-cv',TOOLS.blender.stab);
   document.getElementById('sz-cur').textContent=CW+'×'+CH;
   document.querySelectorAll('.sz-opt').forEach(o=>o.classList.toggle('cur',+o.dataset.w===CW&&+o.dataset.h===CH));
