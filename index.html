@@ -962,7 +962,7 @@ const TOOLS={
   pen:   {sz:12,min:1,pressure:true, curve:2.0,stab:3,thresh:0,soft:0.0, opacity:1.0,spacing:1.0,shape:2,airbrush:false,pencil:false,pressureOpac:true, deadZone:0,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]},
   marker:{sz:12,min:1,pressure:false,curve:2.0,stab:3,thresh:0,soft:0.15,opacity:0.8,spacing:0.5, shape:1,airbrush:false,pencil:false,pressureOpac:false,deadZone:0,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]},
   eraser:{sz:20,min:1,pressure:true, curve:2.0,stab:3,thresh:0,soft:0.0, opacity:1.0,spacing:0.8, shape:0,pencil:false,pressureOpac:true, deadZone:0,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]},
-  blender:{sz:20,min:1,pressure:true,stab:3,soft:0.5,spacing:0.8,strength:0.3,pickup:0.1,opacity:1.0,shape:3,thresh:0,deadZone:0,startTaper:0,endTaper:0,pencil:false,pressureOpac:false,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]}
+  blender:{sz:20,min:20,pressure:false,stab:3,soft:0.5,spacing:0.8,strength:0.5,pickup:0.5,opacity:1.0,shape:3,thresh:0,deadZone:0,startTaper:0,endTaper:0,pencil:false,pressureOpac:false,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]} // v86g: Krita-like defaults — pickup/strength 0.5, no pressure shrink
 };
 let activeTool='pen';
 let bSize=12,bMin=1,bPressure=true,bCurve=2.0,stabLen=3,eSize=20,eMin=1,eStab=3,ePressure=true,eThresh=0,bThresh=0;
@@ -1730,13 +1730,19 @@ function flushBrushGPU(){
   if(blenderOn){
     gl.blendEquation(gl.FUNC_ADD);
     gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
-    // v86f: deposit straight RGB at carry alpha * strength * brush opacity.
-    // Skip deposit until carry has picked up real color (_blendPrimed) — this
-    // prevents starting a stroke outside/over transparent canvas from painting
-    // black before any color has been acquired.
+    // v86g: Krita-style smear — deposit at CONSTANT strength when primed.
+    // Earlier _blendA modulation made the trail vanish too quickly when going
+    // into transparent areas (no color "smearing") and made bright semi-
+    // transparent destinations under-saturated. Now deposit is straight
+    // (carry_rgb, strength*opacity), so:
+    //  - smudging into transparent leaves a strong color trail (smear)
+    //  - smudging onto a faint bright pixel brightens it normally via src-over
+    //  - _blendA still gates deposit so we fully release at far transparency
+    //    (sqrt curve gives gentle fade-out instead of cliff)
     const blOpacity=TOOLS.blender.opacity!==undefined?TOOLS.blender.opacity:1.0;
-    if(_blendPrimed&&_blendA>0.01){
-      gl.uniform4f(ul(PROG.brush,'u_inkColor'),_blendR,_blendG,_blendB,_blendA*baseO*blOpacity);
+    if(_blendPrimed){
+      const alphaGate=Math.sqrt(Math.min(1,_blendA*4)); // primed → min 0 at A=0, ~1 at A>=0.25
+      gl.uniform4f(ul(PROG.brush,'u_inkColor'),_blendR,_blendG,_blendB,alphaGate*baseO*blOpacity);
     } else {
       gl.uniform4f(ul(PROG.brush,'u_inkColor'),0,0,0,0);
     }
