@@ -804,38 +804,58 @@ let activePenId=null;
 let eraserOn=false,erbMode='toggle';
 let blenderOn=false; // v86: Krita-style color blender tool
 let _blenderBeforeEraser=false; // v86e: remember blender state when toggling eraser
-// v86e: carry color stored in PREMULTIPLIED space (matches FBO format).
-// In premul space: transparent = (0,0,0,0), so lerping toward transparent
-// pixels does NOT introduce black. Conversion to straight RGB happens
-// only at deposit time (in flushBrushGPU), avoiding division when alpha is low.
-let _blendColor=[0,0,0,0];
+// v86f: Krita BlendBasic-style — straight RGB and alpha tracked SEPARATELY.
+// _blendR/G/B: straight color, only updated from samples with meaningful alpha (>5%).
+//   This prevents transparent areas from polluting the carry color toward 0
+//   (which would deposit "transparent black" and darken the destination).
+// _blendA: separate alpha follower, lerps toward sample alpha so smudging
+//   into transparent areas naturally fades the deposit (transparency-follows).
+// _blendPrimed: false until carry has picked up real color at least once.
+//   Deposit is skipped when not primed, so going from outside/transparent
+//   into the canvas never paints black before any color is acquired.
+let _blendR=0,_blendG=0,_blendB=0,_blendA=0,_blendPrimed=false;
 const _blendSampleBuf=new Uint8Array(4);
+function _resetBlendCarry(){_blendR=0;_blendG=0;_blendB=0;_blendA=0;_blendPrimed=false;}
 function _sampleLayerForBlend(cx,cy){
-  const layer=gLayers[gActiveIdx];if(!layer)return;
+  const layer=gLayers[gActiveIdx];if(!layer){_resetBlendCarry();return;}
   const px=Math.round(cx),py=Math.round(cy);
-  if(px<0||py<0||px>=CW||py>=CH){_blendColor=[0,0,0,0];return;}
+  if(px<0||py<0||px>=CW||py>=CH){_resetBlendCarry();return;}
   gl.bindFramebuffer(gl.FRAMEBUFFER,layer.fbo);
   gl.readPixels(px,CH-1-py,1,1,gl.RGBA,gl.UNSIGNED_BYTE,_blendSampleBuf);
   gl.bindFramebuffer(gl.FRAMEBUFFER,null);
-  // v86e: store directly as premul (no un-premultiply at sample time)
-  _blendColor[0]=_blendSampleBuf[0]/255;
-  _blendColor[1]=_blendSampleBuf[1]/255;
-  _blendColor[2]=_blendSampleBuf[2]/255;
-  _blendColor[3]=_blendSampleBuf[3]/255;
+  const sa=_blendSampleBuf[3]/255;
+  _blendA=sa;
+  if(sa>0.05){
+    // FBO is premultiplied — un-premultiply to get straight RGB, clamp to [0,1]
+    _blendR=Math.min(1,_blendSampleBuf[0]/255/sa);
+    _blendG=Math.min(1,_blendSampleBuf[1]/255/sa);
+    _blendB=Math.min(1,_blendSampleBuf[2]/255/sa);
+    _blendPrimed=true;
+  } else {
+    _blendR=0;_blendG=0;_blendB=0;_blendPrimed=false;
+  }
 }
 function _updateBlendColor(cx,cy){
   const layer=gLayers[gActiveIdx];if(!layer)return;
   const px=Math.round(cx),py=Math.round(cy);
-  if(px<0||py<0||px>=CW||py>=CH)return;
+  if(px<0||py<0||px>=CW||py>=CH)return; // outside canvas: keep carry as-is
   gl.bindFramebuffer(gl.FRAMEBUFFER,layer.fbo);
   gl.readPixels(px,CH-1-py,1,1,gl.RGBA,gl.UNSIGNED_BYTE,_blendSampleBuf);
   gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  const sa=_blendSampleBuf[3]/255;
   const k=TOOLS.blender.pickup;
-  // v86e: lerp in premul space — rgb and alpha decay together, no black overflow
-  _blendColor[0]=_blendColor[0]*(1-k)+(_blendSampleBuf[0]/255)*k;
-  _blendColor[1]=_blendColor[1]*(1-k)+(_blendSampleBuf[1]/255)*k;
-  _blendColor[2]=_blendColor[2]*(1-k)+(_blendSampleBuf[2]/255)*k;
-  _blendColor[3]=_blendColor[3]*(1-k)+(_blendSampleBuf[3]/255)*k;
+  // Alpha tracks sample (allows transparency-follows: carry alpha decays in transparent areas)
+  _blendA=_blendA*(1-k)+sa*k;
+  // RGB only updated when sample has meaningful color — preserves carry through transparent gaps
+  if(sa>0.05){
+    const sr=Math.min(1,_blendSampleBuf[0]/255/sa);
+    const sg=Math.min(1,_blendSampleBuf[1]/255/sa);
+    const sb=Math.min(1,_blendSampleBuf[2]/255/sa);
+    _blendR=_blendR*(1-k)+sr*k;
+    _blendG=_blendG*(1-k)+sg*k;
+    _blendB=_blendB*(1-k)+sb*k;
+    _blendPrimed=true;
+  }
 }
 // v21 rev10: ホールドモードは iPad Safari の多ポインタ制約で実現不可 (rev8-9 調査済).
 // erbMode は 'toggle' 固定. 下位互換のため localStorage キーだけ保持.
@@ -1710,16 +1730,14 @@ function flushBrushGPU(){
   if(blenderOn){
     gl.blendEquation(gl.FUNC_ADD);
     gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
-    // v86e: _blendColor is in PREMUL space. Convert to straight at deposit
-    // (only place where division by alpha happens, and only when pa>threshold).
-    // When pa is small, premul rgb is also small → straight rgb stays bounded.
-    const [pr,pg,pb,pa]=_blendColor;
+    // v86f: deposit straight RGB at carry alpha * strength * brush opacity.
+    // Skip deposit until carry has picked up real color (_blendPrimed) — this
+    // prevents starting a stroke outside/over transparent canvas from painting
+    // black before any color has been acquired.
     const blOpacity=TOOLS.blender.opacity!==undefined?TOOLS.blender.opacity:1.0;
-    if(pa>0.01){
-      const sr=Math.min(1,pr/pa),sg=Math.min(1,pg/pa),sb=Math.min(1,pb/pa);
-      gl.uniform4f(ul(PROG.brush,'u_inkColor'),sr,sg,sb,pa*baseO*blOpacity);
+    if(_blendPrimed&&_blendA>0.01){
+      gl.uniform4f(ul(PROG.brush,'u_inkColor'),_blendR,_blendG,_blendB,_blendA*baseO*blOpacity);
     } else {
-      // No meaningful color picked up yet — deposit nothing
       gl.uniform4f(ul(PROG.brush,'u_inkColor'),0,0,0,0);
     }
     gl.uniform1i(ul(PROG.brush,'u_erase'),0);
@@ -4240,7 +4258,7 @@ document.addEventListener('pointerdown',function(e){
   }
   if(tgt==='panel')return;if(tgt==='ui'){closePanel();return;}
   e.preventDefault();
-  if(openPanel&&openPanel!=='blender')closePanel();
+  if(openPanel)closePanel(); // v86f: blender panel now closes on canvas tap like other panels
   document.getElementById('sz-panel').classList.remove('open');document.getElementById('sv-panel').classList.remove('open');
   // rev26: pointerId 再利用 + 遅延 pointerup 対策.
   // activePenId が non-null なら前ストロークを強制 finishStroke.
@@ -4835,9 +4853,12 @@ function openPanelFn(id){
   if(id==='layers')requestAnimationFrame(()=>{if(penId===null)renderLayers();});
 }
 function closePanel(r=true){
-  clearTimeout(_panelAutoCloseTimer);Object.values(PANELS).forEach(p=>document.getElementById(p).classList.remove('open'));Object.values(TABS).forEach(t=>document.getElementById(t).classList.remove('act'));rpg.classList.remove('shifted');if(r){openPanel=null;blenderOn=false;}
+  // v86f: panel close no longer flips blenderOn — tool state persists like pen/marker
+  clearTimeout(_panelAutoCloseTimer);Object.values(PANELS).forEach(p=>document.getElementById(p).classList.remove('open'));Object.values(TABS).forEach(t=>document.getElementById(t).classList.remove('act'));rpg.classList.remove('shifted');if(r){openPanel=null;}
+  // v86f: keep BLEND tab visually active while blenderOn (so user knows the tool is still selected even with panel closed)
+  if(blenderOn){const _tb=document.getElementById('tab-bl');if(_tb)_tb.classList.add('act');}
 }
-function schedulePanelAutoClose(){clearTimeout(_panelAutoCloseTimer);if(openPanel&&openPanel!=='layers'&&openPanel!=='blender'){_panelAutoCloseTimer=setTimeout(()=>{if(openPanel&&openPanel!=='layers'&&openPanel!=='blender')closePanel();},1200);}}
+function schedulePanelAutoClose(){clearTimeout(_panelAutoCloseTimer);if(openPanel&&openPanel!=='layers'){_panelAutoCloseTimer=setTimeout(()=>{if(openPanel&&openPanel!=='layers')closePanel();},1200);}} // v86f: blender no longer excluded from auto-close
 // rev19 修正: タブ自身の pointerdown ハンドラを削除.
 // 指タッチを無効化する目的だが, rev18 で touch return に変更したことで
 // pen タップ時に L2771 (document level pen handler) と二重発火し
