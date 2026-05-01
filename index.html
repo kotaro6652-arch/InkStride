@@ -606,6 +606,7 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
     <button class="shape-btn" data-tool="blender" data-shape="2" style="flex:1;padding:5px 2px;background:var(--sf2);border:1px solid var(--bd2);border-radius:6px;color:var(--tx2);font-size:9px;cursor:pointer;touch-action:manipulation">標準</button>
     <button class="shape-btn act" data-tool="blender" data-shape="3" style="flex:1;padding:5px 2px;background:var(--sf2);border:1px solid var(--acc);border-radius:6px;color:var(--acc);font-size:9px;cursor:pointer;touch-action:manipulation">ソフト</button>
   </div>
+  <div class="row"><label>不透明度</label><div class="csl" id="csl-bl-opac" data-min="1" data-max="100" data-ratio="5"></div><span class="val" id="v-bl-opac">100%</span></div>
   <div class="row"><label>強さ</label><div class="csl" id="csl-bl-str" data-min="1" data-max="100" data-ratio="5"></div><span class="val" id="v-bl-str">30%</span></div>
   <div class="row"><label>色取得</label><div class="csl" id="csl-bl-pickup" data-min="1" data-max="100" data-ratio="5"></div><span class="val" id="v-bl-pickup">10%</span></div>
   <div class="row"><label>間隔</label><div class="csl" id="csl-bl-spacing" data-min="1" data-max="200" data-ratio="3"></div><span class="val" id="v-bl-spacing">80%</span></div>
@@ -941,7 +942,7 @@ const TOOLS={
   pen:   {sz:12,min:1,pressure:true, curve:2.0,stab:3,thresh:0,soft:0.0, opacity:1.0,spacing:1.0,shape:2,airbrush:false,pencil:false,pressureOpac:true, deadZone:0,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]},
   marker:{sz:12,min:1,pressure:false,curve:2.0,stab:3,thresh:0,soft:0.15,opacity:0.8,spacing:0.5, shape:1,airbrush:false,pencil:false,pressureOpac:false,deadZone:0,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]},
   eraser:{sz:20,min:1,pressure:true, curve:2.0,stab:3,thresh:0,soft:0.0, opacity:1.0,spacing:0.8, shape:0,pencil:false,pressureOpac:true, deadZone:0,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]},
-  blender:{sz:20,min:1,pressure:true,stab:3,soft:0.5,spacing:0.8,strength:0.3,pickup:0.1,shape:3,thresh:0,deadZone:0,startTaper:0,endTaper:0,pencil:false,pressureOpac:false,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]}
+  blender:{sz:20,min:1,pressure:true,stab:3,soft:0.5,spacing:0.8,strength:0.3,pickup:0.1,opacity:1.0,shape:3,thresh:0,deadZone:0,startTaper:0,endTaper:0,pencil:false,pressureOpac:false,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]}
 };
 let activeTool='pen';
 let bSize=12,bMin=1,bPressure=true,bCurve=2.0,stabLen=3,eSize=20,eMin=1,eStab=3,ePressure=true,eThresh=0,bThresh=0;
@@ -1710,8 +1711,10 @@ function flushBrushGPU(){
     gl.blendEquation(gl.FUNC_ADD);
     gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
     const [br,bg,bb,ba]=_blendColor;
-    // premultiplied src-over: rgb = straight*alpha*strength, a = alpha*strength
-    gl.uniform4f(ul(PROG.brush,'u_inkColor'),br*ba*baseO,bg*ba*baseO,bb*ba*baseO,ba*baseO);
+    // shader does: out=vec4(u_inkColor.rgb*fa,fa) where fa=u_inkColor.a*v_opac*alpha
+    // so send straight rgb; alpha = carry_alpha * strength * opacity
+    const blOpacity=TOOLS.blender.opacity!==undefined?TOOLS.blender.opacity:1.0;
+    gl.uniform4f(ul(PROG.brush,'u_inkColor'),br,bg,bb,ba*baseO*blOpacity);
     gl.uniform1i(ul(PROG.brush,'u_erase'),0);
   } else if(eraserOn||(inkTransparent && !_abActive)){
     gl.blendEquation(gl.FUNC_ADD);
@@ -4826,7 +4829,7 @@ document.addEventListener('pointerdown',e=>{if(e.pointerType==='pen')return;cons
 
 // ── タブ→スロット ドラッグ ───────────────────────────────
 (function setupTabDrag(){
-  const dragSources=[{tabId:'tab-br',getType:()=>'pen'},{tabId:'tab-mk',getType:()=>'marker'},{tabId:'tab-er',getType:()=>'eraser'}];
+  const dragSources=[{tabId:'tab-br',getType:()=>'pen'},{tabId:'tab-mk',getType:()=>'marker'},{tabId:'tab-er',getType:()=>'eraser'},{tabId:'tab-bl',getType:()=>'blender'}];
   let _dragging=false,_dragType=null;
   function slotAtPoint(x,y){const el=document.elementFromPoint(x,y);if(!el)return null;const slot=el.closest('.sp-slot');return slot?+slot.dataset.slot:null;}
   function clearDragOver(){document.querySelectorAll('.sp-slot.drag-over').forEach(s=>s.classList.remove('drag-over'));}
@@ -4834,7 +4837,7 @@ document.addEventListener('pointerdown',e=>{if(e.pointerType==='pen')return;cons
     const tab=document.getElementById(tabId);if(!tab)return;let _sx=0,_sy=0,_id=-1;
     tab.addEventListener('touchstart',e=>{const t=e.changedTouches[0];_dragging=false;_dragType=null;_sx=t.clientX;_sy=t.clientY;_id=t.identifier;},{passive:true});
     tab.addEventListener('touchmove',e=>{const t=[...e.changedTouches].find(c=>c.identifier===_id);if(!t)return;if(!_dragging){if(Math.abs(t.clientX-_sx)>8||Math.abs(t.clientY-_sy)>8){_dragging=true;_dragType=getType();if(openPanel)closePanel();if(penId!==null){finishStroke('tabDrag');penId=null;}}}if(_dragging){e.stopPropagation();clearDragOver();const idx=slotAtPoint(t.clientX,t.clientY);if(idx!==null){const slot=document.querySelector(`.sp-slot[data-slot="${idx}"]`);if(slot)slot.classList.add('drag-over');}}},{passive:true});
-    tab.addEventListener('touchend',e=>{if(_dragging&&_dragType){clearDragOver();const t=e.changedTouches[0];const idx=slotAtPoint(t.clientX,t.clientY);if(idx!==null){const prevTool=activeTool,prevEraser=eraserOn;if(_dragType==='eraser'){eraserOn=true;}else{eraserOn=false;if(activeTool!==_dragType)switchTool(_dragType);}spSaveCurrentTool(idx);eraserOn=prevEraser;if(activeTool!==prevTool)switchTool(prevTool);}_dragging=false;_dragType=null;}},{passive:true});
+    tab.addEventListener('touchend',e=>{if(_dragging&&_dragType){clearDragOver();const t=e.changedTouches[0];const idx=slotAtPoint(t.clientX,t.clientY);if(idx!==null){const prevTool=activeTool,prevEraser=eraserOn,prevBlender=blenderOn;if(_dragType==='eraser'){eraserOn=true;blenderOn=false;}else if(_dragType==='blender'){blenderOn=true;eraserOn=false;}else{eraserOn=false;blenderOn=false;if(activeTool!==_dragType)switchTool(_dragType);}spSaveCurrentTool(idx);eraserOn=prevEraser;blenderOn=prevBlender;if(activeTool!==prevTool)switchTool(prevTool);}_dragging=false;_dragType=null;}},{passive:true});
   });
 })();
 
@@ -5635,8 +5638,11 @@ spHeader.addEventListener('touchmove',e=>{if(!_spPD)return;e.preventDefault();co
 spHeader.addEventListener('touchend',e=>{_spPD=false;_spMov=false;},{passive:false});
 spMinBtn.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();spMinimized=!spMinimized;spEl.classList.toggle('minimized',spMinimized);spMinBtn.textContent=spMinimized?'＋':'—';spRender();});
 function spSaveCurrentTool(slotIdx){
-  const isEraser=eraserOn;const tool=activeTool;
-  if(isEraser){
+  const isEraser=eraserOn;const isBlender=blenderOn;const tool=activeTool;
+  if(isBlender){
+    spSlots[slotIdx]={type:'blender',icon:'🌊',label:'ブレンド',size:TOOLS.blender.sz,
+      settings:{...TOOLS.blender,pts:TOOLS.blender.pts.map(p=>({...p})),opacPts:TOOLS.blender.opacPts.map(p=>({...p}))}};
+  }else if(isEraser){
     spSlots[slotIdx]={type:'eraser',icon:'⬜',label:'消しゴム',size:eSize,
       settings:{sz:eSize,min:eMin,pressure:ePressure,stab:eStab,thresh:eThresh,pts:TOOLS.eraser.pts.map(p=>({...p}))}};
   }else if(tool==='pen'){
@@ -5662,7 +5668,20 @@ function _setCslValue(id,v){
 function spActivateTool(slotIdx){
   const slot=spSlots[slotIdx];if(!slot)return;spActiveSlot=slotIdx;spRenderSlots();
   const s=slot.settings;
-  if(slot.type==='eraser'){
+  if(slot.type==='blender'){
+    blenderOn=true;eraserOn=false;erb.classList.remove('on');badge.classList.remove('show');
+    Object.assign(TOOLS.blender,slot.settings);
+    if(slot.settings.pts)TOOLS.blender.pts=slot.settings.pts.map(p=>({...p}));
+    if(slot.settings.opacPts)TOOLS.blender.opacPts=slot.settings.opacPts.map(p=>({...p}));
+    _setCslValue('csl-bl-sz',TOOLS.blender.sz);document.getElementById('v-bl-sz').textContent=TOOLS.blender.sz+'px';
+    _setCslValue('csl-bl-msz',TOOLS.blender.min);document.getElementById('v-bl-msz').textContent=TOOLS.blender.min+'px';
+    _setCslValue('csl-bl-stab',TOOLS.blender.stab);document.getElementById('v-bl-stab').textContent=TOOLS.blender.stab;
+    _setCslValue('csl-bl-opac',Math.round((TOOLS.blender.opacity||1)*100));document.getElementById('v-bl-opac').textContent=Math.round((TOOLS.blender.opacity||1)*100)+'%';
+    _setCslValue('csl-bl-str',Math.round((TOOLS.blender.strength||0.3)*100));document.getElementById('v-bl-str').textContent=Math.round((TOOLS.blender.strength||0.3)*100)+'%';
+    _setCslValue('csl-bl-pickup',Math.round((TOOLS.blender.pickup||0.1)*100));document.getElementById('v-bl-pickup').textContent=Math.round((TOOLS.blender.pickup||0.1)*100)+'%';
+    drawStabOn('bl-stab-cv',TOOLS.blender.stab);
+    openPanelFn('blender');
+  }else if(slot.type==='eraser'){
     eraserOn=true;erb.classList.add('on');badge.classList.add('show');
     eSize=s.sz||s.eSize||20;eMin=s.min||1;ePressure=!!s.pressure;eStab=s.stab||1;eThresh=s.thresh||0;
     if(s.pts){TOOLS.eraser.pts=s.pts.map(p=>({...p}));}
@@ -6639,6 +6658,7 @@ function _sampleCanvasColor(screenX,screenY){
   initCsl('csl-bl-sz',TOOLS.blender.sz,v=>{TOOLS.blender.sz=v;document.getElementById('v-bl-sz').textContent=v+'px';drawBl();});
   initCsl('csl-bl-msz',TOOLS.blender.min,v=>{TOOLS.blender.min=v;document.getElementById('v-bl-msz').textContent=v+'px';drawBl();});
   initCsl('csl-bl-stab',TOOLS.blender.stab,v=>{TOOLS.blender.stab=v;document.getElementById('v-bl-stab').textContent=v;drawStabOn('bl-stab-cv',v);});
+  initCsl('csl-bl-opac',Math.round((TOOLS.blender.opacity||1)*100),v=>{TOOLS.blender.opacity=v/100;document.getElementById('v-bl-opac').textContent=v+'%';});
   initCsl('csl-bl-str',Math.round((TOOLS.blender.strength||0.3)*100),v=>{TOOLS.blender.strength=v/100;document.getElementById('v-bl-str').textContent=v+'%';});
   initCsl('csl-bl-pickup',Math.round((TOOLS.blender.pickup||0.1)*100),v=>{TOOLS.blender.pickup=v/100;document.getElementById('v-bl-pickup').textContent=v+'%';});
   initCsl('csl-bl-spacing',Math.round((TOOLS.blender.spacing||0.8)*100),v=>{TOOLS.blender.spacing=v/100;document.getElementById('v-bl-spacing').textContent=v+'%';});
