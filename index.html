@@ -814,7 +814,8 @@ function _sampleLayerForBlend(cx,cy){
   gl.readPixels(px,CH-1-py,1,1,gl.RGBA,gl.UNSIGNED_BYTE,_blendSampleBuf);
   gl.bindFramebuffer(gl.FRAMEBUFFER,null);
   const sa=_blendSampleBuf[3]/255;
-  if(sa>0.001){_blendColor=[_blendSampleBuf[0]/255/sa,_blendSampleBuf[1]/255/sa,_blendSampleBuf[2]/255/sa,sa];}
+  // v86d: raise threshold 0.001→0.05 + clamp to prevent near-transparent un-premultiply overflow
+  if(sa>0.05){_blendColor=[Math.min(1,_blendSampleBuf[0]/255/sa),Math.min(1,_blendSampleBuf[1]/255/sa),Math.min(1,_blendSampleBuf[2]/255/sa),sa];}
   else{_blendColor=[0,0,0,0];}
 }
 function _updateBlendColor(cx,cy){
@@ -830,8 +831,9 @@ function _updateBlendColor(cx,cy){
   // Always lerp alpha toward sampled alpha (allows picking up transparency)
   _blendColor[3]=_blendColor[3]*(1-k)+sa*k;
   // Only lerp RGB if sampled pixel has meaningful color
-  if(sa>0.001){
-    const sr=_blendSampleBuf[0]/255/sa,sg=_blendSampleBuf[1]/255/sa,sb=_blendSampleBuf[2]/255/sa;
+  // v86d: raise threshold 0.001→0.05 + clamp; prevents near-transparent overflow causing black bleed
+  if(sa>0.05){
+    const sr=Math.min(1,_blendSampleBuf[0]/255/sa),sg=Math.min(1,_blendSampleBuf[1]/255/sa),sb=Math.min(1,_blendSampleBuf[2]/255/sa);
     _blendColor[0]=_blendColor[0]*(1-k)+sr*k;
     _blendColor[1]=_blendColor[1]*(1-k)+sg*k;
     _blendColor[2]=_blendColor[2]*(1-k)+sb*k;
@@ -5699,7 +5701,7 @@ function spActivateTool(slotIdx){
     const erOpacSec=document.getElementById('er-pr-opac-sec');if(erOpacSec)erOpacSec.style.opacity=(TOOLS.eraser.pressureOpac)?'1':'0.4';
     drawStabOn('er-stab-cv',eStab);
   }else{
-    eraserOn=false;erb.classList.remove('on');badge.classList.remove('show');
+    blenderOn=false;eraserOn=false;erb.classList.remove('on');badge.classList.remove('show'); // v86d: clear blenderOn when activating pen/marker slot
     const target=slot.type==='marker'?'marker':'pen';if(activeTool!==target)switchTool(target);
     bSize=s.sz;bMin=s.min;bPressure=s.pressure;bCurve=s.curve||2.0;stabLen=s.stab;
     bThresh=s.thresh||0;
