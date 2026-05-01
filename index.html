@@ -111,7 +111,7 @@ html,body{width:100%;height:100%;height:-webkit-fill-available;overflow:hidden;b
 #rpanel-group.shifted{right:var(--pw)}
 #tab-dot{width:16px;height:16px;border-radius:50%;background:var(--aqua);cursor:grab;touch-action:none;flex-shrink:0;margin-right:9px;align-self:flex-end;margin-bottom:2px}
 #rtabs{display:flex;flex-direction:column;gap:4px}
-.rtab{width:var(--tw);height:52px;border:1px solid var(--bd);border-right:none;border-radius:8px 0 0 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;touch-action:manipulation;flex-shrink:0;background:var(--sf);color:var(--tx)}
+.rtab{width:var(--tw);height:26px;border:1px solid var(--bd);border-right:none;border-radius:8px 0 0 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;touch-action:manipulation;flex-shrink:0;background:var(--sf);color:var(--tx)}
 .rtab.act{outline:2px solid var(--tx2);outline-offset:-2px}
 .rtab-label{font-size:7px;font-family:'DM Mono',monospace;letter-spacing:.04em;pointer-events:none;opacity:.7}
 /* v54: ワープトグル用 — 全周ボーダー、 角丸 */
@@ -518,6 +518,7 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
   <div id="rtabs">
     <div class="rtab" id="tab-br"><div class="rtab-label">PEN</div></div>
     <div class="rtab" id="tab-mk"><div class="rtab-label">MARK</div></div>
+    <div class="rtab" id="tab-bl"><div class="rtab-label">BLEND</div></div>
     <div class="rtab" id="tab-er"><div class="rtab-label">ERASE</div></div>
     <div class="rtab" id="tab-ly"><div class="rtab-label">LAYER</div></div>
   </div>
@@ -590,6 +591,16 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
     <canvas class="curve-cv" id="mk-opac-curve-cv" width="244" height="100"></canvas>
     <div style="font-size:9px;color:var(--tx2);margin-bottom:6px">点をドラッグ（端点はY軸のみ）</div>
   </div>
+</div></div>
+<div class="rpanel" id="bl-panel"><div class="ph">ブレンド設定</div><div class="pb">
+  <canvas class="stab-cv" id="bl-stab-cv" width="244" height="36"></canvas>
+  <div class="slabel">サイズ（直径 px）</div>
+  <div class="row"><label>最大</label><div class="csl" id="csl-bl-sz" data-min="1" data-max="200" data-ratio="5"></div><span class="val" id="v-bl-sz">20px</span></div>
+  <div class="row"><label>最小</label><div class="csl" id="csl-bl-msz" data-min="1" data-max="100" data-ratio="5"></div><span class="val" id="v-bl-msz">1px</span></div>
+  <div class="row"><label>手振れ補正</label><div class="csl" id="csl-bl-stab" data-min="0" data-max="20" data-ratio="3"></div><span class="val" id="v-bl-stab">3</span></div>
+  <div class="row"><label>間隔</label><div class="csl" id="csl-bl-spacing" data-min="1" data-max="200" data-ratio="3"></div><span class="val" id="v-bl-spacing">80%</span></div>
+  <div class="row"><label>強さ</label><div class="csl" id="csl-bl-str" data-min="1" data-max="100" data-ratio="5"></div><span class="val" id="v-bl-str">60%</span></div>
+  <div class="row"><label>色取得</label><div class="csl" id="csl-bl-pickup" data-min="1" data-max="100" data-ratio="5"></div><span class="val" id="v-bl-pickup">30%</span></div>
 </div></div>
 <div class="rpanel" id="er-panel"><div class="ph">消しゴム設定</div><div class="pb">
   <div class="slabel">サイズ（直径 px）</div>
@@ -765,6 +776,34 @@ let activePenId=null;
 // 設定 → Apple Pencil → 「書き込んで入力」(Scribble) を OFF にする.
 // またはキャンバス領域で日本語 (Scribble 非対応言語) を使うなど.
 let eraserOn=false,erbMode='toggle';
+let blenderOn=false; // v86: Krita-style color blender tool
+let _blendColor=[0,0,0,1];
+const _blendSampleBuf=new Uint8Array(4);
+function _sampleLayerForBlend(cx,cy){
+  const layer=gLayers[gActiveIdx];if(!layer)return;
+  const px=Math.round(cx),py=Math.round(cy);
+  if(px<0||py<0||px>=CW||py>=CH)return;
+  gl.bindFramebuffer(gl.FRAMEBUFFER,layer.fbo);
+  gl.readPixels(px,CH-1-py,1,1,gl.RGBA,gl.UNSIGNED_BYTE,_blendSampleBuf);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  const a=_blendSampleBuf[3]/255;
+  if(a>0.001){_blendColor=[_blendSampleBuf[0]/255/a,_blendSampleBuf[1]/255/a,_blendSampleBuf[2]/255/a,a];}
+}
+function _updateBlendColor(cx,cy){
+  const layer=gLayers[gActiveIdx];if(!layer)return;
+  const px=Math.round(cx),py=Math.round(cy);
+  if(px<0||py<0||px>=CW||py>=CH)return;
+  gl.bindFramebuffer(gl.FRAMEBUFFER,layer.fbo);
+  gl.readPixels(px,CH-1-py,1,1,gl.RGBA,gl.UNSIGNED_BYTE,_blendSampleBuf);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  const sa=_blendSampleBuf[3]/255;
+  if(sa>0.001){
+    const sr=_blendSampleBuf[0]/255/sa,sg=_blendSampleBuf[1]/255/sa,sb=_blendSampleBuf[2]/255/sa;
+    const k=TOOLS.blender.pickup;
+    _blendColor[0]=_blendColor[0]*(1-k)+sr*k;_blendColor[1]=_blendColor[1]*(1-k)+sg*k;
+    _blendColor[2]=_blendColor[2]*(1-k)+sb*k;_blendColor[3]=Math.min(1,_blendColor[3]*(1-k)+sa*k);
+  }
+}
 // v21 rev10: ホールドモードは iPad Safari の多ポインタ制約で実現不可 (rev8-9 調査済).
 // erbMode は 'toggle' 固定. 下位互換のため localStorage キーだけ保持.
 let ftouches=new Map(),maxFC=0,fMoved=false,gStart=0,panBase=null,pinchBase=null;
@@ -814,6 +853,7 @@ function _remapPressure(p){
   return Math.pow(scaled,pressureSensitivity);
 }
 function _calcPointOpac(rawF){
+  if(blenderOn)return 1.0;
   // v82: 消しゴムも pressureOpac を尊重するよう統一
   const usePO=eraserOn?TOOLS.eraser.pressureOpac:(activeTool==='marker'?TOOLS.marker.pressureOpac:TOOLS.pen.pressureOpac);
   if(!usePO)return 1.0;
@@ -833,8 +873,9 @@ function _calcPointOpac(rawF){
 //
 // 戻り値: 0..1 の係数. 1 = 入り抜きの影響なし、 0 = 完全フェード
 function _calcStartTaperFactor(){
+  if(eraserOn||blenderOn)return 1.0;
   // v84: eraser uses its own startTaper like pen/marker
-  const tool=eraserOn?TOOLS.eraser:(activeTool==='marker'?TOOLS.marker:TOOLS.pen);
+  const tool=activeTool==='marker'?TOOLS.marker:TOOLS.pen;
   const tp=tool.startTaper||0;
   if(tp<=0)return 1.0;
   if(_strokeDistAcc>=tp)return 1.0;
@@ -870,7 +911,8 @@ const DEFAULT_PTS=CURVE_X.map((x,i)=>({x,y:DEFAULT_Y[i]}));
 const TOOLS={
   pen:   {sz:12,min:1,pressure:true, curve:2.0,stab:3,thresh:0,soft:0.0, opacity:1.0,spacing:1.0,shape:2,airbrush:false,pencil:false,pressureOpac:true, deadZone:0,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]},
   marker:{sz:12,min:1,pressure:false,curve:2.0,stab:3,thresh:0,soft:0.15,opacity:0.8,spacing:0.5, shape:1,airbrush:false,pencil:false,pressureOpac:false,deadZone:0,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]},
-  eraser:{sz:20,min:1,pressure:true, curve:2.0,stab:3,thresh:0,soft:0.0, opacity:1.0,spacing:0.8, shape:0,pencil:false,pressureOpac:true, deadZone:0,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]}
+  eraser:{sz:20,min:1,pressure:true, curve:2.0,stab:3,thresh:0,soft:0.0, opacity:1.0,spacing:0.8, shape:0,pencil:false,pressureOpac:true, deadZone:0,startTaper:0,endTaper:0,pts:DEFAULT_PTS.map(p=>({...p})),opacPts:[{x:0,y:0},{x:0.05,y:0.5},{x:0.15,y:0.85},{x:0.3,y:0.95},{x:0.5,y:1},{x:0.75,y:1},{x:1,y:1}]},
+  blender:{sz:20,min:1,pressure:true, stab:3,soft:0.5,spacing:0.8, strength:0.6,pickup:0.3,shape:3,pts:DEFAULT_PTS.map(p=>({...p}))}
 };
 let activeTool='pen';
 let bSize=12,bMin=1,bPressure=true,bCurve=2.0,stabLen=3,eSize=20,eMin=1,eStab=3,ePressure=true,eThresh=0,bThresh=0;
@@ -883,7 +925,7 @@ function switchTool(n){if(n===activeTool)return;saveToolState();activeTool=n;loa
 let stabBuf=[];
 function stabClear(){stabBuf=[];}
 function stabAdd(pt){
-  const sLen=eraserOn?eStab:stabLen;
+  const sLen=blenderOn?(TOOLS.blender.stab||3):eraserOn?eStab:stabLen;
   if(sLen<=0){stabBuf=[];return{x:pt.x,y:pt.y};}  // 手振れ補正OFF: 即時返す
   stabBuf.push({x:pt.x,y:pt.y});if(stabBuf.length>sLen)stabBuf.shift();
   const n=stabBuf.length;return{x:stabBuf.reduce((a,p)=>a+p.x,0)/n,y:stabBuf.reduce((a,p)=>a+p.y,0)/n};
@@ -904,6 +946,13 @@ function evalCurvePts(pts,pressure){
   return pts[pts.length-1].y;
 }
 function calcD(f,isFirst){
+  if(blenderOn){
+    if(!TOOLS.blender.pressure)return Math.max(1,TOOLS.blender.sz|0);
+    const p=_remapPressure(f);
+    if(isFirst&&p===0)return 1;
+    const ratio=evalCurvePts(TOOLS.blender.pts,p);
+    return Math.max(1,Math.min(TOOLS.blender.sz,Math.round(TOOLS.blender.min+(TOOLS.blender.sz-TOOLS.blender.min)*ratio)))|0;
+  }
   if(eraserOn){
     if(!ePressure)return Math.max(1,eSize|0);
     // v30: _remapPressure 適用 (PRESSURE_CEIL でフルレンジに飽和).
@@ -1198,7 +1247,7 @@ function _pencilMove(sx,sy,f){
   // v49: spacing スライダー (TOOLS.{tool}.spacing) を尊重.
   // 100% = ブラシ径と等しい間隔, 50% = 半分の間隔, 200% = 2倍間隔.
   // 旧版はハードコード d*0.2 (20%) で固定でスライダーが効かなかった.
-  const _toolForSp=eraserOn?TOOLS.eraser:(activeTool==='marker'?TOOLS.marker:TOOLS.pen);
+  const _toolForSp=blenderOn?TOOLS.blender:eraserOn?TOOLS.eraser:(activeTool==='marker'?TOOLS.marker:TOOLS.pen);
   const _spRatio=Math.max(0.05, _toolForSp.spacing||1.0);
   const spacing=Math.max(0.5, d*_spRatio);
   _pencilDist+=dist;
@@ -1617,16 +1666,22 @@ function flushBrushGPU(){
   gl.useProgram(PROG.brush);
   gl.uniform2f(ul(PROG.brush,'u_res'),vpW,vpH);
   gl.uniform2f(ul(PROG.brush,'u_offset'),offX,offY);
-  const shape=eraserOn?0:(activeTool==='marker'?TOOLS.marker.shape:TOOLS.pen.shape);
+  const shape=blenderOn?(TOOLS.blender.shape||3):eraserOn?0:(activeTool==='marker'?TOOLS.marker.shape:TOOLS.pen.shape);
   gl.uniform1i(ul(PROG.brush,'u_shape'),shape||0);
   // rev40: u_inkColor.a は基本不透明度のみ. 筆圧不透明度は per-instance (v_opac) で処理.
   const opac = (_replayOverrideOpac!==null)
     ? _replayOverrideOpac
-    : (eraserOn?TOOLS.eraser.opacity:(activeTool==='marker'?TOOLS.marker.opacity:TOOLS.pen.opacity));
+    : (blenderOn?TOOLS.blender.strength:eraserOn?TOOLS.eraser.opacity:(activeTool==='marker'?TOOLS.marker.opacity:TOOLS.pen.opacity));
   const baseO=opac!==undefined?opac:1.0;
   const [r,g,b,a]=inkRGBA;
   gl.enable(gl.BLEND);
-  if(eraserOn||(inkTransparent && !_abActive)){
+  if(blenderOn){
+    gl.blendEquation(gl.FUNC_ADD);
+    gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+    const [br,bg,bb,ba]=_blendColor;
+    gl.uniform4f(ul(PROG.brush,'u_inkColor'),br*ba,bg*ba,bb*ba,ba*baseO);
+    gl.uniform1i(ul(PROG.brush,'u_erase'),0);
+  } else if(eraserOn||(inkTransparent && !_abActive)){
     gl.blendEquation(gl.FUNC_ADD);
     gl.blendFuncSeparate(gl.ZERO,gl.ONE,gl.ZERO,gl.ONE_MINUS_SRC_ALPHA);
     gl.uniform4f(ul(PROG.brush,'u_inkColor'),0,0,0,baseO);
@@ -1871,8 +1926,8 @@ function beginStroke(sx,sy,f,isTap){
   _dbgAdd('BEGIN #'+_dbgBeginCount+' f='+((f||0)).toFixed(3)+' xy='+_pt0.x.toFixed(1)+','+_pt0.y.toFixed(1)+' tap='+(isTap?1:0));
   stabClear();_crBuf=[];lastDrawPt=null;
   _resetStrokeBBox();
-  const isPencil=eraserOn?TOOLS.eraser.pencil:(activeTool==='marker'?TOOLS.marker.pencil:TOOLS.pen.pencil);
-  _abActive=(!eraserOn)&&!!strokeBufFBO;
+  const isPencil=blenderOn?false:eraserOn?TOOLS.eraser.pencil:(activeTool==='marker'?TOOLS.marker.pencil:TOOLS.pen.pencil);
+  _abActive=(!eraserOn&&!blenderOn)&&!!strokeBufFBO;
   _pencilMode=isPencil;
   {
     const SB_MAX=4096;
@@ -1897,6 +1952,7 @@ function beginStroke(sx,sy,f,isTap){
     _sbNeedsClear=false;
   } else {
     _captureLayerShadow();
+    if(blenderOn){const _bpt=screenToCanvas(sx,sy);_sampleLayerForBlend(_bpt.x,_bpt.y);}
   }
   _strokeOnset=0;_strokePointCount=0;
   // v36: 始点フェードインのため _lastPressure を 0 から開始.
@@ -1963,6 +2019,7 @@ function continueStroke(sx,sy,f){
   const rawF=inputF<=_lastPressure?inputF:_lastPressure*0.85+inputF*0.15;
   _lastPressure=rawF;_lastRawPressure=rawF;
   const pt=stabAdd(screenToCanvas(sx,sy));
+  if(blenderOn)_updateBlendColor(pt.x,pt.y);
   const d=Math.max(1,calcD(rawF,false));
   const _ptOpac=_calcPointOpac(rawF);
   _crBuf.push({...pt,d,f:rawF,opac:_ptOpac});
@@ -2677,13 +2734,13 @@ function snapshotBeforeStroke(){
   if(!gLayers[gActiveIdx])return;
   _recStroke={
     type:'stroke',
-    tool:activeTool,
+    tool:blenderOn?'blender':activeTool,
     layerId:gLayers[gActiveIdx].id,
     layerName:gLayers[gActiveIdx].name,
-    layerColor:[...inkRGBA],  // 実際のブラシ色（l.colorではない）
-    eraserOn,inkTransparent,
-    opacity:eraserOn?TOOLS.eraser.opacity:(activeTool==='marker'?TOOLS.marker.opacity:TOOLS.pen.opacity),
-    brushSize:bSize,brushMin:bMin,
+    layerColor:[...inkRGBA],
+    eraserOn,blenderOn,inkTransparent,
+    opacity:blenderOn?TOOLS.blender.strength:eraserOn?TOOLS.eraser.opacity:(activeTool==='marker'?TOOLS.marker.opacity:TOOLS.pen.opacity),
+    brushSize:blenderOn?TOOLS.blender.sz:bSize,brushMin:blenderOn?TOOLS.blender.min:bMin,
     points:[]
   };
 }
@@ -4106,7 +4163,7 @@ function drawSelOv(){
 function isStylusP(p){return p.pointerType==='pen';}
 function isTouchP(p){return p.pointerType==='touch';}
 
-const TAB_MAP={'tab-br':'brush','tab-mk':'marker','tab-er':'eraser','tab-ly':'layers','tab-dot':null};
+const TAB_MAP={'tab-br':'brush','tab-mk':'marker','tab-er':'eraser','tab-bl':'blender','tab-ly':'layers','tab-dot':null};
 function classifyPenTarget(x,y){const el=document.elementFromPoint(x,y);if(!el)return'canvas';if(el.closest('.rpanel.open')||el.closest('.toppanel.open'))return'panel';if(el.closest('#sub-palette,#sel-actions,#paste-dialog,#flip-btn,#color-btn,#alpha-btn,#erb,#sz-btn,#export-btn,#bpf-save-btn,#open-btn,#new-btn,#ref-btn,#sel-btn,#ruler-btn,#fill-btn,#fill-dialog,#topbar,#gallery-overlay,#new-dialog,#new-dialog-box,#bpf-preview-dialog,#cpicker-modal,#tl-overlay,#tl-btn,#grid-btn,#mirror-btn,#mirror-line-btn,#gallery-btn,#xform-toggle,.toppanel'))return'ui';return'canvas';}
 
 let rulerPreviewPt=null;
@@ -4141,7 +4198,7 @@ document.addEventListener('pointerdown',function(e){
   }
   if(tgt==='panel')return;if(tgt==='ui'){closePanel();return;}
   e.preventDefault();
-  if(openPanel)closePanel();
+  if(openPanel&&openPanel!=='blender')closePanel();
   document.getElementById('sz-panel').classList.remove('open');document.getElementById('sv-panel').classList.remove('open');
   // rev26: pointerId 再利用 + 遅延 pointerup 対策.
   // activePenId が non-null なら前ストロークを強制 finishStroke.
@@ -4707,8 +4764,8 @@ tabDot.addEventListener('touchend',function(e){if(!tdPD)return;e.preventDefault(
 tabDot.addEventListener('touchcancel',function(){tdPD=false;},{passive:false});
 
 // ── パネル開閉 ───────────────────────────────────────────
-const PANELS={brush:'br-panel',marker:'mk-panel',eraser:'er-panel',layers:'ly-panel'};
-const TABS={brush:'tab-br',marker:'tab-mk',eraser:'tab-er',layers:'tab-ly'};
+const PANELS={brush:'br-panel',marker:'mk-panel',eraser:'er-panel',blender:'bl-panel',layers:'ly-panel'};
+const TABS={brush:'tab-br',marker:'tab-mk',eraser:'tab-er',blender:'tab-bl',layers:'tab-ly'};
 let _panelAutoCloseTimer=null;
 function openPanelFn(id){
   clearTimeout(_panelAutoCloseTimer);if(openPanel===id){closePanel();return;}
@@ -4720,12 +4777,13 @@ function openPanelFn(id){
   if(TABS[id])document.getElementById(TABS[id]).classList.add('act');
   rpg.classList.add('shifted');
   if(id==='brush'&&activeTool!=='pen')switchTool('pen');if(id==='marker'&&activeTool!=='marker')switchTool('marker');
+  if(id==='blender'){blenderOn=true;eraserOn=false;}else if(id==='eraser'){eraserOn=true;blenderOn=false;}else{blenderOn=false;}
   if(id==='layers')requestAnimationFrame(()=>{if(penId===null)renderLayers();});
 }
 function closePanel(r=true){
-  clearTimeout(_panelAutoCloseTimer);Object.values(PANELS).forEach(p=>document.getElementById(p).classList.remove('open'));Object.values(TABS).forEach(t=>document.getElementById(t).classList.remove('act'));rpg.classList.remove('shifted');if(r)openPanel=null;
+  clearTimeout(_panelAutoCloseTimer);Object.values(PANELS).forEach(p=>document.getElementById(p).classList.remove('open'));Object.values(TABS).forEach(t=>document.getElementById(t).classList.remove('act'));rpg.classList.remove('shifted');if(r){openPanel=null;blenderOn=false;}
 }
-function schedulePanelAutoClose(){clearTimeout(_panelAutoCloseTimer);if(openPanel&&openPanel!=='layers'){_panelAutoCloseTimer=setTimeout(()=>{if(openPanel&&openPanel!=='layers')closePanel();},1200);}}
+function schedulePanelAutoClose(){clearTimeout(_panelAutoCloseTimer);if(openPanel&&openPanel!=='layers'&&openPanel!=='blender'){_panelAutoCloseTimer=setTimeout(()=>{if(openPanel&&openPanel!=='layers'&&openPanel!=='blender')closePanel();},1200);}}
 // rev19 修正: タブ自身の pointerdown ハンドラを削除.
 // 指タッチを無効化する目的だが, rev18 で touch return に変更したことで
 // pen タップ時に L2771 (document level pen handler) と二重発火し
@@ -6536,7 +6594,13 @@ function _sampleCanvasColor(screenX,screenY){
   document.getElementById('er-pr-sec').style.opacity=TOOLS.eraser.pressure?'1':'0.4';
   document.getElementById('er-pr-opac-sec').style.opacity=TOOLS.eraser.pressureOpac?'1':'0.4';
 
-  drawStabOn('stab-cv',TOOLS.pen.stab);drawStabOn('mk-stab-cv',TOOLS.marker.stab);drawStabOn('er-stab-cv',TOOLS.eraser.stab);
+  initCsl('csl-bl-sz',TOOLS.blender.sz,v=>{TOOLS.blender.sz=v;document.getElementById('v-bl-sz').textContent=v+'px';});
+  initCsl('csl-bl-msz',TOOLS.blender.min,v=>{TOOLS.blender.min=v;document.getElementById('v-bl-msz').textContent=v+'px';});
+  initCsl('csl-bl-stab',TOOLS.blender.stab,v=>{TOOLS.blender.stab=v;document.getElementById('v-bl-stab').textContent=v;drawStabOn('bl-stab-cv',v);});
+  initCsl('csl-bl-spacing',Math.round((TOOLS.blender.spacing||0.8)*100),v=>{TOOLS.blender.spacing=v/100;document.getElementById('v-bl-spacing').textContent=v+'%';});
+  initCsl('csl-bl-str',Math.round((TOOLS.blender.strength||0.6)*100),v=>{TOOLS.blender.strength=v/100;document.getElementById('v-bl-str').textContent=v+'%';});
+  initCsl('csl-bl-pickup',Math.round((TOOLS.blender.pickup||0.3)*100),v=>{TOOLS.blender.pickup=v/100;document.getElementById('v-bl-pickup').textContent=v+'%';});
+  drawStabOn('stab-cv',TOOLS.pen.stab);drawStabOn('mk-stab-cv',TOOLS.marker.stab);drawStabOn('er-stab-cv',TOOLS.eraser.stab);drawStabOn('bl-stab-cv',TOOLS.blender.stab);
   document.getElementById('sz-cur').textContent=CW+'×'+CH;
   document.querySelectorAll('.sz-opt').forEach(o=>o.classList.toggle('cur',+o.dataset.w===CW&&+o.dataset.h===CH));
 
