@@ -803,41 +803,39 @@ let activePenId=null;
 // またはキャンバス領域で日本語 (Scribble 非対応言語) を使うなど.
 let eraserOn=false,erbMode='toggle';
 let blenderOn=false; // v86: Krita-style color blender tool
-let _blendColor=[0,0,0,0]; // premul-safe carry color; starts transparent
+let _blenderBeforeEraser=false; // v86e: remember blender state when toggling eraser
+// v86e: carry color stored in PREMULTIPLIED space (matches FBO format).
+// In premul space: transparent = (0,0,0,0), so lerping toward transparent
+// pixels does NOT introduce black. Conversion to straight RGB happens
+// only at deposit time (in flushBrushGPU), avoiding division when alpha is low.
+let _blendColor=[0,0,0,0];
 const _blendSampleBuf=new Uint8Array(4);
 function _sampleLayerForBlend(cx,cy){
-  // Initialize carry color from the canvas at stroke start
   const layer=gLayers[gActiveIdx];if(!layer)return;
   const px=Math.round(cx),py=Math.round(cy);
   if(px<0||py<0||px>=CW||py>=CH){_blendColor=[0,0,0,0];return;}
   gl.bindFramebuffer(gl.FRAMEBUFFER,layer.fbo);
   gl.readPixels(px,CH-1-py,1,1,gl.RGBA,gl.UNSIGNED_BYTE,_blendSampleBuf);
   gl.bindFramebuffer(gl.FRAMEBUFFER,null);
-  const sa=_blendSampleBuf[3]/255;
-  // v86d: raise threshold 0.001→0.05 + clamp to prevent near-transparent un-premultiply overflow
-  if(sa>0.05){_blendColor=[Math.min(1,_blendSampleBuf[0]/255/sa),Math.min(1,_blendSampleBuf[1]/255/sa),Math.min(1,_blendSampleBuf[2]/255/sa),sa];}
-  else{_blendColor=[0,0,0,0];}
+  // v86e: store directly as premul (no un-premultiply at sample time)
+  _blendColor[0]=_blendSampleBuf[0]/255;
+  _blendColor[1]=_blendSampleBuf[1]/255;
+  _blendColor[2]=_blendSampleBuf[2]/255;
+  _blendColor[3]=_blendSampleBuf[3]/255;
 }
 function _updateBlendColor(cx,cy){
-  // Per-point: sample canvas, lerp carry color toward sample (including alpha)
   const layer=gLayers[gActiveIdx];if(!layer)return;
   const px=Math.round(cx),py=Math.round(cy);
   if(px<0||py<0||px>=CW||py>=CH)return;
   gl.bindFramebuffer(gl.FRAMEBUFFER,layer.fbo);
   gl.readPixels(px,CH-1-py,1,1,gl.RGBA,gl.UNSIGNED_BYTE,_blendSampleBuf);
   gl.bindFramebuffer(gl.FRAMEBUFFER,null);
-  const sa=_blendSampleBuf[3]/255;
   const k=TOOLS.blender.pickup;
-  // Always lerp alpha toward sampled alpha (allows picking up transparency)
-  _blendColor[3]=_blendColor[3]*(1-k)+sa*k;
-  // Only lerp RGB if sampled pixel has meaningful color
-  // v86d: raise threshold 0.001→0.05 + clamp; prevents near-transparent overflow causing black bleed
-  if(sa>0.05){
-    const sr=Math.min(1,_blendSampleBuf[0]/255/sa),sg=Math.min(1,_blendSampleBuf[1]/255/sa),sb=Math.min(1,_blendSampleBuf[2]/255/sa);
-    _blendColor[0]=_blendColor[0]*(1-k)+sr*k;
-    _blendColor[1]=_blendColor[1]*(1-k)+sg*k;
-    _blendColor[2]=_blendColor[2]*(1-k)+sb*k;
-  }
+  // v86e: lerp in premul space — rgb and alpha decay together, no black overflow
+  _blendColor[0]=_blendColor[0]*(1-k)+(_blendSampleBuf[0]/255)*k;
+  _blendColor[1]=_blendColor[1]*(1-k)+(_blendSampleBuf[1]/255)*k;
+  _blendColor[2]=_blendColor[2]*(1-k)+(_blendSampleBuf[2]/255)*k;
+  _blendColor[3]=_blendColor[3]*(1-k)+(_blendSampleBuf[3]/255)*k;
 }
 // v21 rev10: ホールドモードは iPad Safari の多ポインタ制約で実現不可 (rev8-9 調査済).
 // erbMode は 'toggle' 固定. 下位互換のため localStorage キーだけ保持.
@@ -1712,11 +1710,18 @@ function flushBrushGPU(){
   if(blenderOn){
     gl.blendEquation(gl.FUNC_ADD);
     gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
-    const [br,bg,bb,ba]=_blendColor;
-    // shader does: out=vec4(u_inkColor.rgb*fa,fa) where fa=u_inkColor.a*v_opac*alpha
-    // so send straight rgb; alpha = carry_alpha * strength * opacity
+    // v86e: _blendColor is in PREMUL space. Convert to straight at deposit
+    // (only place where division by alpha happens, and only when pa>threshold).
+    // When pa is small, premul rgb is also small → straight rgb stays bounded.
+    const [pr,pg,pb,pa]=_blendColor;
     const blOpacity=TOOLS.blender.opacity!==undefined?TOOLS.blender.opacity:1.0;
-    gl.uniform4f(ul(PROG.brush,'u_inkColor'),br,bg,bb,ba*baseO*blOpacity);
+    if(pa>0.01){
+      const sr=Math.min(1,pr/pa),sg=Math.min(1,pg/pa),sb=Math.min(1,pb/pa);
+      gl.uniform4f(ul(PROG.brush,'u_inkColor'),sr,sg,sb,pa*baseO*blOpacity);
+    } else {
+      // No meaningful color picked up yet — deposit nothing
+      gl.uniform4f(ul(PROG.brush,'u_inkColor'),0,0,0,0);
+    }
     gl.uniform1i(ul(PROG.brush,'u_erase'),0);
   } else if(eraserOn||(inkTransparent && !_abActive)){
     gl.blendEquation(gl.FUNC_ADD);
@@ -4664,7 +4669,19 @@ makeDraggableBtn(alphaBtnEl,window.innerHeight*.72,()=>{
 const erb=document.getElementById('erb'),badge=document.getElementById('badge');
 // v21 rev10: ホールドモードは iPad Safari の仕様制約で実現不可能と判明 (rev8-9 の調査結果).
 // トグル動作のみを残す. Pointer Events 移行は維持 (描画信頼性向上のため).
-makeDraggableBtn(erb,window.innerHeight*.50,()=>{_clearFillMode();_clearEyedropMode();eraserOn=!eraserOn;if(eraserOn&&blenderOn){blenderOn=false;if(openPanel==='blender')closePanel();}erb.classList.toggle('on',eraserOn);badge.classList.toggle('show',eraserOn);showToast(eraserOn?'消しゴム ON':'ペン モード');});
+makeDraggableBtn(erb,window.innerHeight*.50,()=>{_clearFillMode();_clearEyedropMode();
+  // v86e: preserve blender state across eraser toggle
+  if(!eraserOn){
+    _blenderBeforeEraser=blenderOn;
+    eraserOn=true;
+    if(blenderOn){blenderOn=false;if(openPanel==='blender')closePanel();}
+  } else {
+    eraserOn=false;
+    if(_blenderBeforeEraser){blenderOn=true;_blenderBeforeEraser=false;}
+  }
+  erb.classList.toggle('on',eraserOn);badge.classList.toggle('show',eraserOn);
+  showToast(eraserOn?'消しゴム ON':(blenderOn?'ブレンド モード':'ペン モード'));
+});
 // rev25: EYEDR ボタン (スポイト一回モード)
 const eyedrBtn=document.getElementById('eyedr-btn');
 function syncEyedrBtn(){if(eyedrBtn)eyedrBtn.classList.toggle('on',subMode==='eyedrop');}
@@ -4814,7 +4831,7 @@ function openPanelFn(id){
   if(TABS[id])document.getElementById(TABS[id]).classList.add('act');
   rpg.classList.add('shifted');
   if(id==='brush'&&activeTool!=='pen')switchTool('pen');if(id==='marker'&&activeTool!=='marker')switchTool('marker');
-  if(id==='blender'){blenderOn=true;eraserOn=false;}else{blenderOn=false;}
+  if(id==='blender'){blenderOn=true;eraserOn=false;_blenderBeforeEraser=false;}else{blenderOn=false;_blenderBeforeEraser=false;} // v86e: clear preserved state on explicit tab tap
   if(id==='layers')requestAnimationFrame(()=>{if(penId===null)renderLayers();});
 }
 function closePanel(r=true){
@@ -5684,7 +5701,7 @@ function spActivateTool(slotIdx){
     drawStabOn('bl-stab-cv',TOOLS.blender.stab);
     openPanelFn('blender');
   }else if(slot.type==='eraser'){
-    eraserOn=true;erb.classList.add('on');badge.classList.add('show');
+    blenderOn=false;eraserOn=true;erb.classList.add('on');badge.classList.add('show'); // v86e: clear blenderOn when activating eraser slot
     eSize=s.sz||s.eSize||20;eMin=s.min||1;ePressure=!!s.pressure;eStab=s.stab||1;eThresh=s.thresh||0;
     if(s.pts){TOOLS.eraser.pts=s.pts.map(p=>({...p}));}
     Object.assign(TOOLS.eraser,{sz:eSize,min:eMin,pressure:ePressure,stab:eStab,thresh:eThresh});
