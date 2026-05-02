@@ -9,9 +9,9 @@
 <meta name="theme-color" content="#0d0d14">
 <meta name="apple-mobile-web-app-title" content="Inkstride">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Inkstride v21r77</title>
+<title>Inkstride v21r87</title>
 <!--
-  Inkstride v21r77 (BinaryPaint v20 派生)
+  Inkstride v21r87 (BinaryPaint v20 派生)
   ============================================================
   v21 改修内容 (Phase T + Phase 2′):
   ============================================================
@@ -503,7 +503,7 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
     </div>
     <button id="ps-reset" style="width:100%;margin-top:6px;padding:6px;background:var(--sf2);border:1px solid var(--bd2);border-radius:6px;color:var(--tx2);font-size:11px;cursor:pointer;touch-action:manipulation">標準に戻す (1.0)</button>
   </div>
-  <div id="sz-ver">Inkstride v21r84<br>WebGL2 + bbox undo + Pointer Events<br>iPad / Apple Pencil 対応<br>© 2025 Claude / Anthropic</div>
+  <div id="sz-ver">Inkstride v21r87<br>WebGL2 + bbox undo + Pointer Events<br>iPad / Apple Pencil 対応<br>© 2025 Claude / Anthropic</div>
   <button id="sz-reset" style="width:100%;margin-top:6px;padding:8px;background:var(--sf2);border:1px solid var(--ora);border-radius:8px;color:var(--ora);font-size:11px;cursor:pointer;touch-action:manipulation">🔧 ブラシ・パレット設定をリセット</button>
 </div>
 <div class="toppanel" id="sv-panel">
@@ -1264,6 +1264,38 @@ void main(){
   o=vec4(col.rgb,col.a*u_opacity);
 }`;
 
+// v87: レイヤー結合用シェーダー — upper を lower に焼き込む.
+// 入力: 両方ともプリマルチプライ済み RGBA テクスチャ (チャンク[0][0]).
+// 出力: プリマルチプライ済み RGBA. upper.opacity / upper.blend を反映.
+// 表示用 COMP_FS と異なり alpha を保持するため新規シェーダー.
+// 将来のレイヤーグループ/クリッピング合成にも流用可能 (孤立合成の基本演算).
+const MERGE_FS=`#version 300 es
+precision highp float;
+in vec2 v_uv;
+uniform sampler2D u_lower;
+uniform sampler2D u_upper;
+uniform float u_upperOpacity;
+uniform int u_blend; // 0=normal, 1=multiply, 2=overlay
+out vec4 o;
+void main(){
+  vec4 lp=texture(u_lower,v_uv);
+  vec4 up=texture(u_upper,v_uv);
+  float la=lp.a;
+  vec3 lrgb=la>0.001?lp.rgb/la:vec3(0.0);
+  float ua=up.a*u_upperOpacity;
+  vec3 urgb=up.a>0.001?up.rgb/up.a:vec3(0.0);
+  vec3 blended;
+  if(u_blend==1){blended=lrgb*urgb;}
+  else if(u_blend==2){blended=mix(2.0*lrgb*urgb,1.0-2.0*(1.0-lrgb)*(1.0-urgb),step(0.5,lrgb));}
+  else{blended=urgb;}
+  // 下が透明な領域では blend を normal に縮退 (multiply on transparent → upper をそのまま採用)
+  blended=mix(urgb,blended,la);
+  // src-over with blended color over lower
+  float outA=ua+la*(1.0-ua);
+  vec3 outStr=outA>0.001?(blended*ua+lrgb*la*(1.0-ua))/outA:vec3(0.0);
+  o=vec4(outStr*outA,outA);
+}`;
+
 const PROG={};
 function compileShader(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s;}
 function makeProgram(vs,fs){const p=gl.createProgram();gl.attachShader(p,compileShader(gl.VERTEX_SHADER,vs));gl.attachShader(p,compileShader(gl.FRAGMENT_SHADER,fs));gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));return p;}
@@ -1665,6 +1697,7 @@ function initWebGL(){
   PROG.chunkBlit=makeProgram(QUAD_VS,CHUNK_BLIT_FS); // Phase 4b: チャンク blit 専用
   PROG.sb=makeProgram(QUAD_VS,STROKE_BLIT_FS);
   PROG.ref=makeProgram(QUAD_VS,REF_FS);
+  PROG.merge=makeProgram(QUAD_VS,MERGE_FS); // v87: レイヤー結合用 (opacity/blend 反映)
   initCompUniforms();
   brushVAO=gl.createVertexArray();gl.bindVertexArray(brushVAO);
   const qv=new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]);
@@ -3111,16 +3144,24 @@ function _restoreToPos(pos){
     const e=timeline[i];
     if(!e)continue;
     if(e.type==='keyframe' && e.label==='stroke_diff'){
-      // pixel data があれば bbox 適用 (高速)
-      // 無ければ直前の stroke エントリが既に再描画している前提
-      if(e.before && e.after) _applyStrokeDiff(e,'after');
+      // GPU snapshot or 旧 CPU pixel data があれば bbox 適用 (高速・正確)
+      // v87: GPU afterSnap 認識を追加 (旧コードは CPU の after のみチェックしていた)
+      if(e.afterSnap || (e.before && e.after)) _applyStrokeDiff(e,'after');
     } else if(e.type==='stroke'){
       // 直後に有効な stroke_diff があれば再描画スキップ (重複作業回避)
       const next=timeline[i+1];
-      if(next && next.type==='keyframe' && next.label==='stroke_diff' && next.after){
+      if(next && next.type==='keyframe' && next.label==='stroke_diff' && (next.afterSnap || next.after)){
         continue;
       }
       _replayStroke(e);
+    } else if(e._pairedDiff){
+      // v87: 直後の stroke_diff snapshot で上書きされるならパラメトリック再生スキップ.
+      // snapshot 無し (古いエントリ) の場合のみ parametric 再生にフォールバック.
+      const next=timeline[i+1];
+      if(next && next.type==='keyframe' && next.label==='stroke_diff' && (next.afterSnap || next.after)){
+        continue;
+      }
+      _replayEvent(e);
     } else {
       _replayEvent(e);
     }
@@ -3149,9 +3190,10 @@ function undo(){
   const cur=timeline[timelinePos];
   let p;
   if(cur && cur.type==='keyframe' && cur.label==='stroke_diff'){
-    // ストロークペアをスキップ
+    // ストローク/_pairedDiff (fill 等) ペアをスキップ
+    // v87: _pairedDiff フラグ付きの parametric event (fill 等) も stroke_diff の前に置かれる.
     p=timelinePos-1;
-    while(p>0 && timeline[p] && timeline[p].type==='stroke') p--;
+    while(p>0 && timeline[p] && (timeline[p].type==='stroke' || timeline[p]._pairedDiff)) p--;
   } else {
     // plain event or operation keyframe: 1エントリ後退
     p=timelinePos-1;
@@ -3180,9 +3222,10 @@ function redo(){
 
   // Phase 2′ rev3: 「1論理ステップ前進」モデル
   // 次が stroke エントリならその直後の stroke_diff まで進む.
+  // v87: _pairedDiff (fill 等) も stroke_diff とペアなので進める.
   // それ以外なら 1 エントリ前進.
   let p=timelinePos+1;
-  while(p<timeline.length && timeline[p] && timeline[p].type==='stroke') p++;
+  while(p<timeline.length && timeline[p] && (timeline[p].type==='stroke' || timeline[p]._pairedDiff)) p++;
   if(p>=timeline.length){showToast('やり直しはありません');return;}
   const next=timeline[p];
 
@@ -4963,35 +5006,42 @@ function renderLayers(){
       e.stopPropagation();
       if(i===0){showToast('最下層のため結合できません');return;}
       const upper=gLayers[i],lower=gLayers[i-1];
-      // WebGLでupper→lower に合成
-      const r8upper=new Uint8Array(CW*CH*4),r8lower=new Uint8Array(CW*CH*4);
-      gl.bindFramebuffer(gl.READ_FRAMEBUFFER,upper.fbo);gl.readPixels(0,0,CW,CH,gl.RGBA,gl.UNSIGNED_BYTE,r8upper);
-      gl.bindFramebuffer(gl.READ_FRAMEBUFFER,lower.fbo);gl.readPixels(0,0,CW,CH,gl.RGBA,gl.UNSIGNED_BYTE,r8lower);
-      gl.bindFramebuffer(gl.READ_FRAMEBUFFER,null);
-      // Pre-multiplied alpha src-over 合成: dst = src + dst * (1 - srcA)
-      for(let p=0;p<CW*CH;p++){
-        const o=p*4;
-        const sa=r8upper[o+3];
-        if(sa===0)continue;
-        if(sa===255){
-          r8lower[o]=r8upper[o];r8lower[o+1]=r8upper[o+1];
-          r8lower[o+2]=r8upper[o+2];r8lower[o+3]=255;
-        } else {
-          const inv=1-sa/255;
-          r8lower[o  ]=Math.min(255,r8upper[o  ]+Math.round(r8lower[o  ]*inv));
-          r8lower[o+1]=Math.min(255,r8upper[o+1]+Math.round(r8lower[o+1]*inv));
-          r8lower[o+2]=Math.min(255,r8upper[o+2]+Math.round(r8lower[o+2]*inv));
-          r8lower[o+3]=Math.min(255,sa+Math.round(r8lower[o+3]*inv));
-        }
+      // v87: 結合前に必ずキーフレームを挿入 (_disposeStrokeDiffSnapshotsForLayer で
+      // upper の stroke_diff snapshot が破棄されるため, undo の安全網として KF が必須).
+      lastCaptureTime=0;captureNow('pre_merge');
+      // v87: GPU シェーダーで upper.opacity + upper.blend を反映して焼き込み.
+      // 旧コードは pre-multiplied src-over のみで opacity/blend を無視 → 表示不一致.
+      // 新コード: PROG.merge で正しい合成 (将来のグループ/クリッピング合成にも流用可).
+      const cw=lower.chunks?lower.chunks[0][0].cw:CW;
+      const ch=lower.chunks?lower.chunks[0][0].ch:CH;
+      const tmpTex=makeR8Texture(cw,ch),tmpFBO=makeFBO(tmpTex);
+      gl.bindFramebuffer(gl.FRAMEBUFFER,tmpFBO);gl.viewport(0,0,cw,ch);
+      gl.disable(gl.BLEND);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.useProgram(PROG.merge);
+      gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,lower.tex);gl.uniform1i(ul(PROG.merge,'u_lower'),0);
+      gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,upper.tex);gl.uniform1i(ul(PROG.merge,'u_upper'),1);
+      gl.uniform1f(ul(PROG.merge,'u_upperOpacity'),upper.opacity);
+      gl.uniform1i(ul(PROG.merge,'u_blend'),{normal:0,multiply:1,overlay:2}[upper.blend]||0);
+      gl.bindVertexArray(quadVAO);gl.drawArrays(gl.TRIANGLES,0,6);gl.bindVertexArray(null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+      // 旧 lower のテクスチャを破棄して tmp と差し替え (chunks[0][0] エイリアスも更新)
+      if(lower.chunks){
+        const c0=lower.chunks[0][0];
+        if(c0.tex)gl.deleteTexture(c0.tex);
+        if(c0.fbo)gl.deleteFramebuffer(c0.fbo);
+        c0.tex=tmpTex;c0.fbo=tmpFBO;
+      } else {
+        if(lower.tex)gl.deleteTexture(lower.tex);
+        if(lower.fbo)gl.deleteFramebuffer(lower.fbo);
       }
-      gl.bindTexture(gl.TEXTURE_2D,lower.tex);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,CW,CH,gl.RGBA,gl.UNSIGNED_BYTE,r8lower);gl.bindTexture(gl.TEXTURE_2D,null);
+      lower.tex=tmpTex;lower.fbo=tmpFBO;
       // upperレイヤーを削除
       const uid=upper.id;
       _disposeStrokeDiffSnapshotsForLayer(uid);
       _deleteLayerGPU(upper);gLayers.splice(i,1);
       gActiveIdx=Math.min(gActiveIdx,gLayers.length-1);
       _rec({type:'layer_delete',layerId:uid,merged:true});
-      captureNow('merge_layer');
+      lastCaptureTime=0;captureNow('merge_layer');
       scheduleDraw();renderLayers();showToast('レイヤーを結合しました');
     });
     const db=document.createElement('div');db.className='ldel';db.textContent='✕';db.addEventListener('pointerdown',e=>{
@@ -5986,6 +6036,19 @@ async function floodFill(canvasX,canvasY){
     for(const idx of toAdd)visited[idx]=1;
     if(pass%2===1)await new Promise(r=>setTimeout(r,0));
   }
+  // v87: visited 領域の bbox を計算 (stroke_diff 用)
+  // visited は GL 座標 (fy=0 が bottom). bbox は canvas 座標 (y=0 が top) に変換.
+  let _bbMinX=CW,_bbMinY=CH,_bbMaxX=-1,_bbMaxY=-1;
+  for(let fy=0;fy<CH;fy++)for(let fx=0;fx<CW;fx++){
+    if(!visited[fy*CW+fx])continue;
+    if(fx<_bbMinX)_bbMinX=fx;if(fx>_bbMaxX)_bbMaxX=fx;
+    const cy2=CH-1-fy;
+    if(cy2<_bbMinY)_bbMinY=cy2;if(cy2>_bbMaxY)_bbMaxY=cy2;
+  }
+  if(_bbMaxX<0){showToast('塗りつぶし対象なし');return;}
+  const _fillBBox={x:_bbMinX,y:_bbMinY,w:_bbMaxX-_bbMinX+1,h:_bbMaxY-_bbMinY+1};
+  // 書き込み前 GPU snapshot (undo 用)
+  const _fillBeforeSnap=_snapshotBBoxToTexture(l.fbo,_fillBBox);
   // アクティブレイヤーに書き込む
   const dstRGBA=refLayer?readR8Full(l):srcRGBA;
   for(let fy=0;fy<CH;fy++){for(let fx=0;fx<CW;fx++){
@@ -5994,7 +6057,17 @@ async function floodFill(canvasX,canvasY){
     dstRGBA[pi]=fr;dstRGBA[pi+1]=fg;dstRGBA[pi+2]=fb;dstRGBA[pi+3]=fa;
   }}
   writeR8Full(l,dstRGBA);
-  _rec({type:'fill',layerId:l.id,layerName:l.name,x:x0/CW,y:y0/CH,eraserOn,layerColor:[...inkRGBA],thresh:thresh}); // v85: save color+thresh for replay
+  // 書き込み後 GPU snapshot (redo 用)
+  const _fillAfterSnap=_snapshotBBoxToTexture(l.fbo,_fillBBox);
+  // v87: 旧形式の parametric fill event は _pairedDiff フラグ付きで保持 (slow-path fallback).
+  // これに続く stroke_diff が GPU snapshot を持つので fast-path undo はリプレイドリフト無し.
+  _rec({type:'fill',layerId:l.id,layerName:l.name,x:x0/CW,y:y0/CH,eraserOn,layerColor:[...inkRGBA],thresh:thresh,_pairedDiff:true}); // v85/v87
+  if(_fillBeforeSnap&&_fillAfterSnap){
+    _tlPush({type:'keyframe',label:'stroke_diff',layerId:l.id,bbox:_fillBBox,beforeSnap:_fillBeforeSnap,afterSnap:_fillAfterSnap,before:null,after:null});
+  } else {
+    if(_fillBeforeSnap)_disposeSnapshot(_fillBeforeSnap);
+    if(_fillAfterSnap)_disposeSnapshot(_fillAfterSnap);
+  }
   scheduleDraw();renderLayers();
   showToast('塗りつぶし完了 ('+cnt+'px)');
 }
