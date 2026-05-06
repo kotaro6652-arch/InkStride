@@ -9,9 +9,9 @@
 <meta name="theme-color" content="#0d0d14">
 <meta name="apple-mobile-web-app-title" content="Inkstride">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Inkstride v21r87</title>
+<title>Inkstride v21r87b</title>
 <!--
-  Inkstride v21r87 (BinaryPaint v20 派生)
+  Inkstride v21r87b (BinaryPaint v20 派生)
   ============================================================
   v21 改修内容 (Phase T + Phase 2′):
   ============================================================
@@ -503,7 +503,7 @@ input[type=range].native::-webkit-slider-thumb{-webkit-appearance:none;width:22p
     </div>
     <button id="ps-reset" style="width:100%;margin-top:6px;padding:6px;background:var(--sf2);border:1px solid var(--bd2);border-radius:6px;color:var(--tx2);font-size:11px;cursor:pointer;touch-action:manipulation">標準に戻す (1.0)</button>
   </div>
-  <div id="sz-ver">Inkstride v21r87<br>WebGL2 + bbox undo + Pointer Events<br>iPad / Apple Pencil 対応<br>© 2025 Claude / Anthropic</div>
+  <div id="sz-ver">Inkstride v21r87b<br>WebGL2 + bbox undo + Pointer Events<br>iPad / Apple Pencil 対応<br>© 2025 Claude / Anthropic</div>
   <button id="sz-reset" style="width:100%;margin-top:6px;padding:8px;background:var(--sf2);border:1px solid var(--ora);border-radius:8px;color:var(--ora);font-size:11px;cursor:pointer;touch-action:manipulation">🔧 ブラシ・パレット設定をリセット</button>
 </div>
 <div class="toppanel" id="sv-panel">
@@ -1276,6 +1276,7 @@ uniform sampler2D u_lower;
 uniform sampler2D u_upper;
 uniform float u_upperOpacity;
 uniform int u_blend; // 0=normal, 1=multiply, 2=overlay
+uniform vec3 u_bg;   // v87b: 表示シェーダーと一致させるため bg を base 計算に使う
 out vec4 o;
 void main(){
   vec4 lp=texture(u_lower,v_uv);
@@ -1284,16 +1285,19 @@ void main(){
   vec3 lrgb=la>0.001?lp.rgb/la:vec3(0.0);
   float ua=up.a*u_upperOpacity;
   vec3 urgb=up.a>0.001?up.rgb/up.a:vec3(0.0);
+  // v87b: 表示時の base (= bg と lower を normal 合成した結果) を blend math の入力にする.
+  //       これにより lower が部分透明の領域でも表示と一致する overlay/multiply 結果を得る.
+  vec3 baseRgb=mix(u_bg,lrgb,la);
   vec3 blended;
-  if(u_blend==1){blended=lrgb*urgb;}
-  else if(u_blend==2){blended=mix(2.0*lrgb*urgb,1.0-2.0*(1.0-lrgb)*(1.0-urgb),step(0.5,lrgb));}
+  if(u_blend==1){blended=baseRgb*urgb;}
+  else if(u_blend==2){blended=mix(2.0*baseRgb*urgb,1.0-2.0*(1.0-baseRgb)*(1.0-urgb),step(0.5,baseRgb));}
   else{blended=urgb;}
-  // 下が透明な領域では blend を normal に縮退 (multiply on transparent → upper をそのまま採用)
-  blended=mix(urgb,blended,la);
-  // src-over with blended color over lower
+  // M を normal 描画した時に表示一致させる premul 計算:
+  //   M_premul = lrgb*la*(1-ua) + blended*ua  (bg 寄与は M_alpha 経由で復元される)
+  //   M_alpha  = ua + la*(1-ua)               (src-over)
   float outA=ua+la*(1.0-ua);
-  vec3 outStr=outA>0.001?(blended*ua+lrgb*la*(1.0-ua))/outA:vec3(0.0);
-  o=vec4(outStr*outA,outA);
+  vec3 outPremul=lrgb*la*(1.0-ua)+blended*ua;
+  o=vec4(outPremul,outA);
 }`;
 
 const PROG={};
@@ -3131,6 +3135,9 @@ function _restoreKeyframeSnap(snap){
 
 function _restoreToPos(pos){
   if(pos<0)return;undoBusy=true;
+  // v87b: _replayStroke / _replayFill は gActiveIdx と eraserOn を副作用として書き換えるため,
+  // slow-path 完了後にユーザーの選択中レイヤー/ツール状態が壊れる. 復元のため事前に退避.
+  const _savedActiveIdx=gActiveIdx,_savedEraserOn=eraserOn;
   // Phase 2′: 完全 keyframe (label !== 'stroke_diff') を anchor として探索
   let kf=-1;
   for(let i=pos;i>=0;i--){
@@ -3167,6 +3174,9 @@ function _restoreToPos(pos){
     }
   }
   if(segCount>0)flushBrushGPU();
+  // v87b: 退避したユーザー状態を復元 (replay 副作用の打ち消し)
+  gActiveIdx=Math.min(_savedActiveIdx,gLayers.length-1);
+  eraserOn=_savedEraserOn;
   undoBusy=false;
   scheduleDraw();if(openPanel==='layers'){renderLayers();debouncedUpdateThumbs();}
 }
@@ -5022,6 +5032,7 @@ function renderLayers(){
       gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,upper.tex);gl.uniform1i(ul(PROG.merge,'u_upper'),1);
       gl.uniform1f(ul(PROG.merge,'u_upperOpacity'),upper.opacity);
       gl.uniform1i(ul(PROG.merge,'u_blend'),{normal:0,multiply:1,overlay:2}[upper.blend]||0);
+      gl.uniform3fv(ul(PROG.merge,'u_bg'),bgRGB); // v87b: overlay/multiply で表示一致のため bg を渡す
       gl.bindVertexArray(quadVAO);gl.drawArrays(gl.TRIANGLES,0,6);gl.bindVertexArray(null);
       gl.bindFramebuffer(gl.FRAMEBUFFER,null);
       // 旧 lower のテクスチャを破棄して tmp と差し替え (chunks[0][0] エイリアスも更新)
@@ -6059,10 +6070,14 @@ async function floodFill(canvasX,canvasY){
   writeR8Full(l,dstRGBA);
   // 書き込み後 GPU snapshot (redo 用)
   const _fillAfterSnap=_snapshotBBoxToTexture(l.fbo,_fillBBox);
-  // v87: 旧形式の parametric fill event は _pairedDiff フラグ付きで保持 (slow-path fallback).
-  // これに続く stroke_diff が GPU snapshot を持つので fast-path undo はリプレイドリフト無し.
-  _rec({type:'fill',layerId:l.id,layerName:l.name,x:x0/CW,y:y0/CH,eraserOn,layerColor:[...inkRGBA],thresh:thresh,_pairedDiff:true}); // v85/v87
-  if(_fillBeforeSnap&&_fillAfterSnap){
+  // v87: GPU snapshot 取得成功時のみ _pairedDiff フラグを付与し stroke_diff を push.
+  // 失敗時は flag 無しで従来通り parametric replay にフォールバック.
+  // (flag だけ付けて stroke_diff 無しだと undo が fill を skip して巻き戻し不能になる).
+  const _diffOK=!!(_fillBeforeSnap&&_fillAfterSnap);
+  const _ev={type:'fill',layerId:l.id,layerName:l.name,x:x0/CW,y:y0/CH,eraserOn,layerColor:[...inkRGBA],thresh:thresh}; // v85
+  if(_diffOK)_ev._pairedDiff=true; // v87
+  _rec(_ev);
+  if(_diffOK){
     _tlPush({type:'keyframe',label:'stroke_diff',layerId:l.id,bbox:_fillBBox,beforeSnap:_fillBeforeSnap,afterSnap:_fillAfterSnap,before:null,after:null});
   } else {
     if(_fillBeforeSnap)_disposeSnapshot(_fillBeforeSnap);
